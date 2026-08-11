@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 20:19]
+- Correção do fluxo de onboarding do convite de Conta Conjunta:
+  * Ao abrir um link `?invite=TOKEN`, o sistema encerra automaticamente a sessão ativa do navegador (para evitar abrir a dashboard do inviter quando testando no mesmo navegador).
+  * Adicionado endpoint público `api/shared_account.php?action=check_invite&token=TOKEN` que valida o convite e retorna o e-mail convidado.
+  * O formulário de cadastro pré-preenche o e-mail convidado e personaliza o título com o nome de quem convidou.
+  * Versão atualizada (`v=100`) enviada ao GitHub.
+
 [11/08/2026 - 20:12]
 - Implementação do fluxo de Convite por E-mail com Token Direto para Conta Conjunta:
   * Tabela `account_invites` em `api/config.php` para armazenar tokens de convites de e-mails não cadastrados.
