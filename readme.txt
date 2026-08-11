@@ -2,6 +2,9 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 17:15]
+- Conexão e envio (git push) de todo o código-fonte limpo para o repositório oficial no GitHub (https://github.com/Pinheiro07/pricexp.git).
+
 [11/08/2026 - 17:13]
 - Auditoria completa de segurança e privacidade do repositório antes da publicação.
 - Remoção de scripts de teste (api/test_db.php e api/test_smtp.php) do controle de versão.
