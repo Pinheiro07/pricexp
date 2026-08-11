@@ -1903,6 +1903,10 @@ function togglePassword(inputId, btn) {
 async function fetchSharedAccountStatus() {
     const unconnectedCard = document.getElementById('shared-unconnected-card');
     const connectedCard   = document.getElementById('shared-connected-card');
+    const activityCard    = document.getElementById('shared-partner-activity-card');
+    const activityTitle   = document.getElementById('shared-partner-activity-title');
+    const activityList    = document.getElementById('shared-partner-transactions-list');
+    
     if (!unconnectedCard || !connectedCard) return;
 
     try {
@@ -1913,12 +1917,60 @@ async function fetchSharedAccountStatus() {
                 unconnectedCard.style.display = 'none';
                 connectedCard.style.display   = 'block';
 
-                document.getElementById('shared-partner-name').innerText          = `${data.partner.first_name} ${data.partner.last_name}`.trim();
+                const partnerFullName  = `${data.partner.first_name || ''} ${data.partner.last_name || ''}`.trim() || 'Parceiro(a)';
+                const partnerFirstName = data.partner.first_name || 'Parceiro(a)';
+
+                document.getElementById('shared-partner-name').innerText          = partnerFullName;
                 document.getElementById('shared-partner-email-display').innerText  = data.partner.email;
-                document.getElementById('shared-partner-avatar').src               = `uploads/${data.partner.profile_picture || 'default.png'}`;
+                
+                const avatarEl = document.getElementById('shared-partner-avatar');
+                if (avatarEl) {
+                    if (data.partner.profile_picture && data.partner.profile_picture !== 'default.png') {
+                        avatarEl.src = `uploads/${data.partner.profile_picture}`;
+                    } else {
+                        avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(partnerFullName)}&background=10b981&color=fff`;
+                    }
+                }
+
+                // Renderizar Lançamentos do Parceiro(a)
+                if (activityCard && activityList) {
+                    activityCard.style.display = 'block';
+                    if (activityTitle) {
+                        activityTitle.innerHTML = `<i data-lucide="activity"></i> Lançamentos Realizados por ${partnerFirstName}`;
+                    }
+
+                    activityList.innerHTML = '';
+                    const txs = data.partner_transactions || [];
+
+                    if (txs.length === 0) {
+                        activityList.innerHTML = `<p class="text-muted text-center" style="padding: 1.5rem; font-size: 0.9rem;">Nenhum lançamento realizado por ${partnerFirstName} ainda.</p>`;
+                    } else {
+                        txs.forEach(tx => {
+                            const isReceita = tx.type === 'receita';
+                            const colorClass = isReceita ? 'text-success' : 'text-danger';
+                            const sign = isReceita ? '+' : '-';
+
+                            const item = document.createElement('div');
+                            item.className = 'tx-item';
+                            item.style.padding = '0.75rem 1rem';
+                            item.innerHTML = `
+                                <div class="tx-left">
+                                    <span class="tx-desc" style="font-weight:600;">${tx.description}</span>
+                                    <span class="tx-cat-date" style="font-size:0.82rem; color:var(--text-muted);">${tx.category} ${tx.bank_name ? '• ' + tx.bank_name : ''} • ${formatDate(tx.date)}</span>
+                                </div>
+                                <div class="tx-actions">
+                                    <span class="tx-amount ${colorClass}" style="font-weight:600;">${sign} ${formatCurrency(tx.amount)}</span>
+                                </div>
+                            `;
+                            activityList.appendChild(item);
+                        });
+                    }
+                    lucide.createIcons();
+                }
             } else {
                 unconnectedCard.style.display = 'block';
                 connectedCard.style.display   = 'none';
+                if (activityCard) activityCard.style.display = 'none';
             }
         }
     } catch (e) {

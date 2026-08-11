@@ -480,53 +480,65 @@
                 </div>
             </section>
 
-            <!-- ===== ABA: CONTA CONJUNTA / CASAL ===== -->
+            <!-- ===== ABA: CONTA CONJUNTA ===== -->
             <section id="tab-shared" class="tab-content">
                 <header>
-                    <h2>Conta Conjunta 👫</h2>
+                    <h2 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="users"></i> Conta Conjunta</h2>
                     <p>Compartilhe o controle financeiro, cartões e lançamentos com seu parceiro(a).</p>
                 </header>
 
-                <div class="dashboard-grid" style="grid-template-columns: 1fr; max-width: 650px;">
+                <div class="dashboard-grid" style="grid-template-columns: 1fr; max-width: 800px; gap: 2rem; margin-top: 1rem;">
                     <!-- Status: NÃO CONECTADO -->
-                    <div class="card form-container" id="shared-unconnected-card">
-                        <h3><i data-lucide="user-plus"></i> Conectar com Parceiro(a)</h3>
-                        <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5;">
+                    <div class="card form-container" id="shared-unconnected-card" style="padding: 2.25rem;">
+                        <h3 style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="user-plus"></i> Conectar com Parceiro(a)</h3>
+                        <p class="text-muted" style="font-size: 0.92rem; margin-bottom: 1.75rem; line-height: 1.6;">
                             Ao conectar com seu parceiro(a), ambos passarão a visualizar e gerenciar o mesmo ambiente financeiro (lançamentos, cartões, categorias e saldo), mantendo logins e senhas individuais.
                         </p>
 
                         <form id="shared-connect-form">
-                            <div class="form-group">
+                            <div class="form-group" style="margin-bottom: 1.25rem;">
                                 <label for="shared-partner-email">E-mail do Parceiro(a)</label>
-                                <input type="email" id="shared-partner-email" placeholder="parceiro@exemplo.com" required>
+                                <input type="email" id="shared-partner-email" placeholder="parceiro@exemplo.com" required style="padding: 0.85rem 1rem; width: 100%;">
                             </div>
-                            <div id="shared-msg" class="mt-2 text-center" style="display:none; font-size: 0.9rem;"></div>
-                            <button type="submit" class="btn-primary" id="btn-shared-connect" style="margin-top: 1rem;">
+                            <div id="shared-msg" class="mt-2 text-center" style="display:none; font-size: 0.9rem; margin-bottom: 1rem;"></div>
+                            <button type="submit" class="btn-primary" id="btn-shared-connect" style="width: 100%; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600;">
                                 <i data-lucide="link"></i> Conectar Conta Conjunta
                             </button>
                         </form>
                     </div>
 
                     <!-- Status: CONECTADO -->
-                    <div class="card form-container" id="shared-connected-card" style="display: none; border: 1px solid rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.03);">
-                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
-                            <img src="" id="shared-partner-avatar" class="profile-avatar" style="width: 64px; height: 64px;">
-                            <div>
-                                <h3 id="shared-partner-name" style="margin: 0; color: var(--text-main);">...</h3>
-                                <p id="shared-partner-email-display" class="text-muted" style="margin: 0.25rem 0 0; font-size: 0.9rem;"></p>
-                                <span class="badge text-success" style="background: rgba(16, 185, 129, 0.15); font-weight: 600; margin-top: 0.5rem; display: inline-block; padding: 4px 10px; border-radius: 20px;">
+                    <div class="card form-container" id="shared-connected-card" style="display: none; padding: 2.25rem; border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.02); border-radius: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                            <img src="" id="shared-partner-avatar" class="profile-avatar" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-color);" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=P&background=10b981&color=fff';">
+                            <div style="flex: 1; min-width: 200px;">
+                                <h3 id="shared-partner-name" style="margin: 0; font-size: 1.2rem; color: var(--text-main); font-weight: 600;">...</h3>
+                                <p id="shared-partner-email-display" class="text-muted" style="margin: 0.35rem 0 0.5rem; font-size: 0.9rem;"></p>
+                                <span class="badge text-success" style="background: rgba(16, 185, 129, 0.15); font-weight: 600; font-size: 0.82rem; padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 0.4rem;">
                                     ✓ Conta Conjunta Ativa
                                 </span>
                             </div>
+                            <button type="button" class="btn-secondary" id="btn-shared-disconnect" style="background-color: transparent; color: var(--danger-color); border: 1.5px solid var(--danger-color); padding: 0.65rem 1.25rem; font-size: 0.88rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i data-lucide="unlink"></i> Desconectar
+                            </button>
                         </div>
 
-                        <p class="text-muted" style="font-size: 0.88rem; line-height: 1.5; margin-bottom: 1.5rem;">
-                            Vocês estão compartilhando o mesmo espaço financeiro. Todos os lançamentos criados por qualquer um de vocês aparecerão sincronizados instantaneamente.
+                        <p class="text-muted" style="font-size: 0.9rem; line-height: 1.6; margin: 0;">
+                            Vocês compartilham o mesmo espaço financeiro. Todos os lançamentos criados por qualquer um de vocês aparecem sincronizados automaticamente.
                         </p>
+                    </div>
 
-                        <button type="button" class="btn-secondary" id="btn-shared-disconnect" style="background-color: transparent; color: var(--danger-color); border: 2px solid var(--danger-color); width: 100%;">
-                            <i data-lucide="unlink"></i> Desconectar Conta Conjunta
-                        </button>
+                    <!-- ATIVIDADE DO PARCEIRO(A) -->
+                    <div class="card list-container" id="shared-partner-activity-card" style="display: none; padding: 2.25rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                            <h3 id="shared-partner-activity-title" style="margin: 0; font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                                <i data-lucide="activity"></i> Lançamentos Realizados pelo Parceiro(a)
+                            </h3>
+                        </div>
+
+                        <div id="shared-partner-transactions-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            <!-- Preenchido via JS -->
+                        </div>
                     </div>
                 </div>
             </section>
@@ -676,6 +688,6 @@
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     
     <!-- Custom JS -->
-    <script src="app.js?v=102"></script>
+    <script src="app.js?v=103"></script>
 </body>
 </html>

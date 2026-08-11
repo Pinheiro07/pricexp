@@ -48,16 +48,36 @@ if ($method === 'GET') {
     }
 
     if ($partner) {
+        $workspaceOwnerId = getWorkspaceUserId($pdo, $user_id);
+        $partnerId        = (int)$partner['id'];
+
+        // Buscar lançamentos criados especificamente pelo parceiro(a)
+        $stmtT = $pdo->prepare("
+            SELECT id, type, category, description, amount, date, bank_name 
+            FROM transactions 
+            WHERE user_id = ? AND created_by_user_id = ?
+            ORDER BY date DESC, id DESC 
+            LIMIT 20
+        ");
+        $stmtT->execute([$workspaceOwnerId, $partnerId]);
+        $partnerTx = $stmtT->fetchAll();
+
+        foreach ($partnerTx as &$tx) {
+            $tx['id']     = (int)$tx['id'];
+            $tx['amount'] = (float)$tx['amount'];
+        }
+
         echo json_encode([
-            'is_connected' => true,
-            'is_owner'     => $is_owner,
-            'partner'      => [
-                'id'              => (int)$partner['id'],
+            'is_connected'         => true,
+            'is_owner'             => $is_owner,
+            'partner'              => [
+                'id'              => $partnerId,
                 'email'           => $partner['email'],
                 'first_name'      => $partner['first_name'] ?? 'Parceiro(a)',
                 'last_name'       => $partner['last_name'] ?? '',
                 'profile_picture' => $partner['profile_picture'] ?? 'default.png'
-            ]
+            ],
+            'partner_transactions' => $partnerTx
         ]);
     } else {
         echo json_encode(['is_connected' => false]);
