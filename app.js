@@ -1850,8 +1850,8 @@ if (sharedConnectForm) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: emailInput.value })
             });
-            const data = await res.json();
-            if (data.success) {
+            const data = await res.json().catch(() => null);
+            if (data && data.success) {
                 msgEl.style.color = '#10b981';
                 msgEl.innerText   = data.message || 'Conta conectada com sucesso!';
                 msgEl.style.display = 'block';
@@ -1863,7 +1863,7 @@ if (sharedConnectForm) {
                 }, 1000);
             } else {
                 msgEl.style.color = 'var(--danger-color)';
-                msgEl.innerText   = data.error || 'Erro ao conectar conta.';
+                msgEl.innerText   = (data && data.error) ? data.error : 'Erro ao conectar conta. Verifique se a API foi enviada para o servidor.';
                 msgEl.style.display = 'block';
             }
         } catch (err) {
