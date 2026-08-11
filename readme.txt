@@ -2,6 +2,10 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 18:15]
+- Inclusão do envio do campo `debug_code` nos retornos JSON de registro e login em `api/login.php` quando DEBUG_MODE está ativado, permitindo validação imediata.
+- Orientação sobre o código mestre de contingência (`000000`) ativado durante o período de configuração do servidor SMTP.
+
 [11/08/2026 - 17:15]
 - Conexão e envio (git push) de todo o código-fonte limpo para o repositório oficial no GitHub (https://github.com/Pinheiro07/pricexp.git).
 
