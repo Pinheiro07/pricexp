@@ -135,7 +135,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             sendEmail($to, $subject, $messageHtml);
 
-            echo json_encode(['success' => true, 'require_verification' => true, 'email' => $email]);
+            $resRegData = ['success' => true, 'require_verification' => true, 'email' => $email];
+            if (defined('DEBUG_MODE') && DEBUG_MODE === true) {
+                $resRegData['debug_code'] = $code;
+            }
+            echo json_encode($resRegData);
         } catch (\Exception $e) {
             echo json_encode(['success' => false, 'error' => 'Erro interno ao cadastrar: ' . $e->getMessage()]);
         }
@@ -245,11 +249,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             sendEmail($to, $subject, $messageHtml);
 
-            echo json_encode([
+            $resData = [
                 'success' => true, 
                 'require_verification' => true, 
                 'email' => $email
-            ]);
+            ];
+            if (defined('DEBUG_MODE') && DEBUG_MODE === true) {
+                $resData['debug_code'] = $code;
+            }
+            echo json_encode($resData);
             exit;
         } else {
             echo json_encode(['success' => false, 'error' => 'E-mail ou senha incorretos.']);
