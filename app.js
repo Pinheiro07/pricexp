@@ -390,8 +390,40 @@ function showApp(userData) {
 }
 
 function showAuth() {
+    // 1. Limpar parâmetros de URL (como ?invite=)
+    if (window.history && window.history.replaceState && !window.location.search.includes('invite')) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    // 2. Garantir modo de Login por padrão ("Entrar na sua conta")
+    isLoginMode = true;
     authScreen.style.display = 'flex';
     appContainer.style.display = 'none';
+    
+    if (authForm) authForm.style.display = 'block';
+    if (verificationForm) verificationForm.style.display = 'none';
+    if (authError) authError.style.display = 'none';
+    
+    if (authTitle) authTitle.textContent = 'Entrar na sua conta';
+    if (authSubtitle) {
+        authSubtitle.textContent = 'Gerencie suas finanças em um só lugar';
+        authSubtitle.style.color = '';
+        authSubtitle.style.fontWeight = '';
+    }
+    if (authBtn) authBtn.textContent = 'Entrar';
+    if (authSwitchText) authSwitchText.textContent = 'Não tem uma conta?';
+    if (authSwitchLink) authSwitchLink.textContent = 'Cadastre-se';
+    if (registerFields) registerFields.style.display = 'none';
+    
+    const confirmPasswordGroup = document.getElementById('confirm-password-group');
+    if (confirmPasswordGroup) confirmPasswordGroup.style.display = 'none';
+    
+    const firstnameInput = document.getElementById('auth-firstname');
+    if (firstnameInput) firstnameInput.removeAttribute('required');
+    
+    const inviteInput = document.getElementById('auth-invite-token');
+    if (inviteInput) inviteInput.value = '';
+
     checkInviteLink();
 }
 
@@ -600,6 +632,9 @@ if (verificationForm) {
 btnLogout.addEventListener('click', async () => {
     await fetch('api/login.php?action=logout');
     transactions = [];
+    if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
     showAuth();
 });
 
@@ -608,6 +643,9 @@ if (btnLogoutMobile) {
     btnLogoutMobile.addEventListener('click', async () => {
         await fetch('api/login.php?action=logout');
         transactions = [];
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
         showAuth();
     });
 }
