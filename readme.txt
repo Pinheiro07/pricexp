@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 20:23]
+- Implementação de ativação e auto-login imediatos ao cadastrar via convite de Conta Conjunta:
+  * Em `api/login.php`, cadastros com `invite_token` válido ativam a conta instantaneamente (`is_active = 1`), gravam a sessão PHP e definem o cookie de 30 dias.
+  * Em `app.js`, ao receber `auto_login: true`, limpa o parâmetro `?invite` da URL e abre diretamente o app/dashboard do novo parceiro.
+  * Versão atualizada (`v=101`) enviada ao GitHub.
+
 [11/08/2026 - 20:19]
 - Correção do fluxo de onboarding do convite de Conta Conjunta:
   * Ao abrir um link `?invite=TOKEN`, o sistema encerra automaticamente a sessão ativa do navegador (para evitar abrir a dashboard do inviter quando testando no mesmo navegador).
