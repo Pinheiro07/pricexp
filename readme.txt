@@ -2,6 +2,9 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 18:41]
+- Elaboração do plano de implementação e arquitetura para a funcionalidade de Conta Conjunta / Espaço Compartilhado para casais.
+
 [11/08/2026 - 18:26]
 - Remoção completa do código mestre de debug (`000000`) e desativação da flag DEBUG_MODE (`define('DEBUG_MODE', false);`) em `api/login.php` e `api/config.php` para reforço total de segurança em produção.
 
