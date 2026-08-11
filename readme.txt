@@ -2,6 +2,10 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 16:53]
+- Instalação e configuração do ambiente Git (MinGit 2.55.0 para Windows) e inclusão nas variáveis de ambiente PATH do usuário.
+- Inicialização do repositório Git local, renomeação da branch principal para 'main' e realização do primeiro commit ("Initial commit - PriceXP Finance App").
+
 [11/08/2026 - 16:30]
 - Criação do arquivo .gitignore configurado para ignorar caches (.agents, graphify-out), imagens de upload temporárias e arquivos de teste antes do envio para o GitHub.
 - Preparação do repositório para upload no GitHub.
