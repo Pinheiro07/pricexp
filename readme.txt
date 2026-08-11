@@ -2,6 +2,15 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 18:45]
+- Implementação completa do Sistema de Conta Conjunta (Casais/Espaço Compartilhado):
+  * Auto-migrações em api/config.php (shared_owner_id em users, created_by_user_id em transactions, helper getWorkspaceUserId).
+  * Criação do endpoint de API api/shared_account.php (conexão por e-mail, consulta de status, desconexão).
+  * Atualização de api/transactions.php, api/cards.php, api/categories.php, api/import_ofx.php para compartilhamento de ambiente.
+  * Criação da aba e interface 'Conta Conjunta 👫' em index.html.
+  * Lógica de conexão, desvinculação e exibição do autor do lançamento (created_by_name) em app.js.
+  * Envio das alterações para o GitHub.
+
 [11/08/2026 - 18:41]
 - Elaboração do plano de implementação e arquitetura para a funcionalidade de Conta Conjunta / Espaço Compartilhado para casais.
 
