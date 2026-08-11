@@ -122,14 +122,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+
+            // Se o usuário está se cadastrando por um convite válido, ativa a conta e faz auto-login imediato
+            if ($shared_owner_id !== null) {
+                $stmt = $pdo->prepare("INSERT INTO users (first_name, last_name, email, password_hash, profile_picture, is_active, shared_owner_id) VALUES (?, ?, ?, ?, ?, 1, ?)");
+                $stmt->execute([$first_name, $last_name, $email, $hash, $profile_picture, $shared_owner_id]);
+                $new_id = $pdo->lastInsertId();
+
+                // Ativar sessão PHP imediatamente
+                $_SESSION['user_id']         = $new_id;
+                $_SESSION['email']           = $email;
+                $_SESSION['first_name']      = $first_name;
+                $_SESSION['last_name']       = $last_name;
+                $_SESSION['profile_picture'] = $profile_picture;
+                $_SESSION['last_activity']    = time();
+
+                // Gravar token de 30 dias para auto-login futuro
+                $token = bin2hex(random_bytes(32));
+                $token_hash = hash('sha256', $token);
+                $expires_at = date('Y-m-d H:i:s', time() + 30 * 86400);
+                $stmtTok = $pdo->prepare("INSERT INTO user_remember_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)");
+                $stmtTok->execute([$new_id, $token_hash, $expires_at]);
+                setcookie('remember_token', $token, time() + 30 * 86400, '/', '', true, true);
+
+                echo json_encode([
+                    'success'    => true,
+                    'auto_login' => true,
+                    'user'       => [
+                        'email'           => $email,
+                        'first_name'      => $first_name,
+                        'last_name'       => $last_name,
+                        'profile_picture' => $profile_picture
+                    ]
+                ]);
+                exit;
+            }
+
             // Gerar código de verificação seguro de 6 dígitos
             $code = (string)random_int(100000, 999999);
             $expires = date('Y-m-d H:i:s', time() + 900); // 15 minutos
 
-            // Inserir no Banco (Como inativo: is_active = 0, vinculando shared_owner_id se convidado)
-            $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO users (first_name, last_name, email, password_hash, profile_picture, is_active, verification_code, code_expires_at, shared_owner_id) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)");
-            $stmt->execute([$first_name, $last_name, $email, $hash, $profile_picture, $code, $expires, $shared_owner_id]);
+            // Inserir no Banco (Como inativo: is_active = 0)
+            $stmt = $pdo->prepare("INSERT INTO users (first_name, last_name, email, password_hash, profile_picture, is_active, verification_code, code_expires_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?)");
+            $stmt->execute([$first_name, $last_name, $email, $hash, $profile_picture, $code, $expires]);
 
             // Enviar e-mail de confirmação usando PHPMailer
             $to = $email;

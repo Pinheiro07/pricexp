@@ -510,7 +510,15 @@ authForm.addEventListener('submit', async (e) => {
         
         if (data.success) {
             authError.style.display = 'none';
-            if (data.require_verification) {
+            if (data.auto_login && data.user) {
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+                showApp(data.user);
+                await fetchTransactions();
+                await fetchCards();
+                authForm.reset();
+            } else if (data.require_verification) {
                 document.getElementById('verify-email').value = data.email;
                 authForm.style.display = 'none';
                 verificationForm.style.display = 'block';
@@ -519,7 +527,6 @@ authForm.addEventListener('submit', async (e) => {
                 await checkSession();
                 authForm.reset();
             }
-            
         } else {
             authError.textContent = data.error || 'Ocorreu um erro.';
             authError.style.display = 'block';
