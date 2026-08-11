@@ -1,13 +1,27 @@
-# Ignorar caches e temporários do IDE / assistente
+# Caches e temporários do IDE / assistente
 .agents/
 graphify-out/
 *.log
 .DS_Store
 Thumbs.db
 
-# Ignorar uploads de fotos de perfil dos usuários
+# Credenciais locais e chaves privadas (caso crie no futuro)
+.env
+.env.local
+config.local.php
+*.pem
+*.key
+
+# Backups e dumps de Banco de Dados de Produção
+*.sql.gz
+*.dump
+!init.sql
+
+# Uploads de usuários (fotos de perfil, documentos)
 uploads/*
 !uploads/.gitkeep
 
-# Arquivos temporários ou de teste local
+# Arquivos de teste temporários locais
 test.php
+api/test_smtp.php
+api/test_db.php
