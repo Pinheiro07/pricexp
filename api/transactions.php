@@ -83,8 +83,8 @@ if ($method === 'PUT') {
     $card_id     = !empty($data['card_id']) ? intval($data['card_id']) : null;
     $bank_name   = !empty($data['bank_name']) ? trim($data['bank_name']) : 'Geral';
 
-    $stmt = $pdo->prepare("UPDATE transactions SET type=?, category=?, description=?, amount=?, date=?, card_id=?, bank_name=?, created_by_user_id=? WHERE id=? AND user_id=?");
-    $stmt->execute([$type, $category, $description, $amount, $date, $card_id, $bank_name, $user_id, $id, $workspace_id]);
+    $stmt = $pdo->prepare("UPDATE transactions SET type=?, category=?, description=?, amount=?, date=?, card_id=?, bank_name=? WHERE id=? AND user_id=?");
+    $stmt->execute([$type, $category, $description, $amount, $date, $card_id, $bank_name, $id, $workspace_id]);
 
     echo json_encode(['success' => true]);
     exit;

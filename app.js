@@ -945,17 +945,27 @@ function renderTransactions() {
 // --- EDIT TRANSACTION MODAL ---
 const editTxModal = document.getElementById('edit-tx-modal');
 const editTxForm  = document.getElementById('edit-tx-form');
+let currentEditCardId = null;
 
 function openEditTxModal(id) {
+    if (!editTxModal) return;
     id = parseInt(id);
     const tx = transactions.find(t => parseInt(t.id) === id);
     if (!tx) return;
 
-    document.getElementById('edit-tx-id').value          = tx.id;
-    document.getElementById('edit-tx-description').value = tx.description;
-    document.getElementById('edit-tx-amount').value      = tx.amount;
-    document.getElementById('edit-tx-date').value        = tx.date;
-    document.getElementById('edit-tx-msg').style.display = 'none';
+    currentEditCardId = tx.card_id !== undefined ? tx.card_id : null;
+
+    const idEl   = document.getElementById('edit-tx-id');
+    const descEl = document.getElementById('edit-tx-description');
+    const amtEl  = document.getElementById('edit-tx-amount');
+    const dtEl   = document.getElementById('edit-tx-date');
+    const msgEl  = document.getElementById('edit-tx-msg');
+
+    if (idEl)   idEl.value   = tx.id;
+    if (descEl) descEl.value = tx.description;
+    if (amtEl)  amtEl.value  = tx.amount;
+    if (dtEl)   dtEl.value   = tx.date;
+    if (msgEl)  msgEl.style.display = 'none';
 
     // Tipo
     const typeRadio = document.querySelector(`input[name="edit-type"][value="${tx.type}"]`);
@@ -963,18 +973,20 @@ function openEditTxModal(id) {
 
     // Banco — adiciona entrada personalizada se não existir
     const bankSel = document.getElementById('edit-tx-bank');
-    const bankVal = tx.bank_name || 'Geral';
-    let bankExists = false;
-    for (let opt of bankSel.options) {
-        if (opt.value === bankVal) { bankExists = true; break; }
+    if (bankSel) {
+        const bankVal = tx.bank_name || 'Geral';
+        let bankExists = false;
+        for (let opt of bankSel.options) {
+            if (opt.value === bankVal) { bankExists = true; break; }
+        }
+        if (!bankExists) {
+            const opt = document.createElement('option');
+            opt.value = bankVal;
+            opt.textContent = bankVal;
+            bankSel.appendChild(opt);
+        }
+        bankSel.value = bankVal;
     }
-    if (!bankExists) {
-        const opt = document.createElement('option');
-        opt.value = bankVal;
-        opt.textContent = bankVal;
-        bankSel.appendChild(opt);
-    }
-    bankSel.value = bankVal;
 
     // Categorias
     populateEditCategorySelect(tx.type, tx.category);
@@ -990,74 +1002,107 @@ function openEditTxModal(id) {
 
 function populateEditCategorySelect(type, selected) {
     const catSel = document.getElementById('edit-tx-category');
+    if (!catSel) return;
     catSel.innerHTML = '';
-    const cats = (CATEGORIES || []).filter(c => c.type === type || c.type === 'all');
-    // fallback estático se CATEGORIES ainda não carregou
-    const fallback = {
-        receita: ['Salário','Freelance','Investimento','Outros'],
-        despesa: ['Alimentação','Moradia','Transporte','Saúde','Educação','Lazer','Outros'],
-        investimento: ['Renda Fixa','Ações','Fundos','Criptomoedas','Outros']
-    };
-    const list = cats.length > 0 ? cats.map(c => c.name) : (fallback[type] || ['Outros']);
+
+    let list = [];
+    if (CATEGORIES && Array.isArray(CATEGORIES[type])) {
+        list = CATEGORIES[type];
+    } else {
+        const fallback = {
+            receita: ["Salário Líquido", "13º Salário Líquido", "Férias Líquida", "Bônus + Comissões + PLR", "Renda Extra Líquida", "Outras Receitas"],
+            despesa: ["Casa", "Saúde", "Locomoção", "Lazer", "Transporte", "Investimentos", "Outras Despesas"]
+        };
+        list = fallback[type] || ["Outros"];
+    }
+
     list.forEach(name => {
         const opt = document.createElement('option');
         opt.value = name;
         opt.textContent = name;
         catSel.appendChild(opt);
     });
-    if (selected) catSel.value = selected;
+
+    if (selected) {
+        let exists = false;
+        for (let opt of catSel.options) {
+            if (opt.value === selected) { exists = true; break; }
+        }
+        if (!exists) {
+            const opt = document.createElement('option');
+            opt.value = selected;
+            opt.textContent = selected;
+            catSel.appendChild(opt);
+        }
+        catSel.value = selected;
+    }
 }
 
 function closeEditTxModal() {
-    editTxModal.style.display = 'none';
+    if (editTxModal) editTxModal.style.display = 'none';
     document.body.style.overflow = '';
 }
 
-document.getElementById('btn-close-edit-tx').addEventListener('click', closeEditTxModal);
-document.getElementById('btn-cancel-edit-tx').addEventListener('click', closeEditTxModal);
-editTxModal.addEventListener('click', (e) => { if (e.target === editTxModal) closeEditTxModal(); });
+const btnCloseEditTx = document.getElementById('btn-close-edit-tx');
+const btnCancelEditTx = document.getElementById('btn-cancel-edit-tx');
+if (btnCloseEditTx) btnCloseEditTx.addEventListener('click', closeEditTxModal);
+if (btnCancelEditTx) btnCancelEditTx.addEventListener('click', closeEditTxModal);
+if (editTxModal) {
+    editTxModal.addEventListener('click', (e) => { if (e.target === editTxModal) closeEditTxModal(); });
+}
 
-editTxForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const saveBtn = document.getElementById('btn-save-edit-tx');
-    const msgEl   = document.getElementById('edit-tx-msg');
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Salvando...';
-    msgEl.style.display = 'none';
-
-    const typeRadio = document.querySelector('input[name="edit-type"]:checked');
-    const payload = {
-        id:          parseInt(document.getElementById('edit-tx-id').value),
-        type:        typeRadio ? typeRadio.value : 'despesa',
-        category:    document.getElementById('edit-tx-category').value,
-        description: document.getElementById('edit-tx-description').value,
-        amount:      parseFloat(document.getElementById('edit-tx-amount').value),
-        date:        document.getElementById('edit-tx-date').value,
-        bank_name:   document.getElementById('edit-tx-bank').value,
-    };
-
-    try {
-        const res = await fetch('api/transactions.php', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (data.success) {
-            closeEditTxModal();
-            await fetchTransactions();
-        } else {
-            msgEl.textContent = data.error || 'Erro ao salvar.';
-            msgEl.style.display = 'block';
+if (editTxForm) {
+    editTxForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const saveBtn = document.getElementById('btn-save-edit-tx');
+        const msgEl   = document.getElementById('edit-tx-msg');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Salvando...';
         }
-    } catch (err) {
-        msgEl.textContent = 'Erro de conexão.';
-        msgEl.style.display = 'block';
-    }
+        if (msgEl) msgEl.style.display = 'none';
 
-    saveBtn.disabled = false;
-    saveBtn.textContent = '💾 Salvar Alterações';
-});
+        const typeRadio = document.querySelector('input[name="edit-type"]:checked');
+        const payload = {
+            id:          parseInt(document.getElementById('edit-tx-id').value),
+            type:        typeRadio ? typeRadio.value : 'despesa',
+            category:    document.getElementById('edit-tx-category').value,
+            description: document.getElementById('edit-tx-description').value,
+            amount:      parseFloat(document.getElementById('edit-tx-amount').value),
+            date:        document.getElementById('edit-tx-date').value,
+            bank_name:   document.getElementById('edit-tx-bank').value,
+            card_id:     currentEditCardId
+        };
+
+        try {
+            const res = await fetch('api/transactions.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeEditTxModal();
+                await fetchTransactions();
+                await fetchCards();
+                await fetchSharedAccountStatus();
+            } else if (msgEl) {
+                msgEl.textContent = data.error || 'Erro ao salvar.';
+                msgEl.style.display = 'block';
+            }
+        } catch (err) {
+            if (msgEl) {
+                msgEl.textContent = 'Erro de conexão.';
+                msgEl.style.display = 'block';
+            }
+        }
+
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Salvar Alterações';
+        }
+    });
+}
 
 
 // Collapsible Mobile Header Bar on Scroll
