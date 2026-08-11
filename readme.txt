@@ -2,6 +2,9 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 18:26]
+- Remoção completa do código mestre de debug (`000000`) e desativação da flag DEBUG_MODE (`define('DEBUG_MODE', false);`) em `api/login.php` e `api/config.php` para reforço total de segurança em produção.
+
 [11/08/2026 - 18:23]
 - Validação bem-sucedida de conexão socket e autenticação SMTP via servidor Mailcow (mail.bitdesksupport.com.br porta 587 TLS).
 - Criação de `api/config.example.php` e inclusão de `api/config.php` no `.gitignore` para proteção absoluta das credenciais SMTP reais contra vazamento no GitHub.
