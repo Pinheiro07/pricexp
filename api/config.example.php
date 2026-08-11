@@ -11,11 +11,11 @@ header("Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval
 define('DEBUG_MODE', true); // Altere para false em produção para exigir e-mail real
 
 // Configurações SMTP para MailCow ou outro servidor de e-mail
-define('SMTP_HOST', 'mail.seudominio.com'); // Ex: mail.seuprovedor.com
+define('SMTP_HOST', 'mail.seuprovedor.com'); // Ex: mail.bitdesksupport.com.br
 define('SMTP_PORT', 587);                    // 587 (TLS), 465 (SSL) ou 25
-define('SMTP_USER', 'no-reply@pricexp.com');
+define('SMTP_USER', 'no-reply@seudominio.com');
 define('SMTP_PASS', 'sua-senha-aqui');
-define('SMTP_FROM', 'no-reply@pricexp.com');
+define('SMTP_FROM', 'no-reply@seudominio.com');
 define('SMTP_SECURE', 'tls');                // 'tls', 'ssl' ou ''
 
 $host = '172.17.0.1;port=3307';

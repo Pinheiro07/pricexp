@@ -5,10 +5,11 @@ graphify-out/
 .DS_Store
 Thumbs.db
 
-# Credenciais locais e chaves privadas (caso crie no futuro)
+# Credenciais locais e chaves privadas
 .env
 .env.local
 config.local.php
+api/config.php
 *.pem
 *.key
 
