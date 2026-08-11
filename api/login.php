@@ -135,11 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             sendEmail($to, $subject, $messageHtml);
 
-            $resRegData = ['success' => true, 'require_verification' => true, 'email' => $email];
-            if (defined('DEBUG_MODE') && DEBUG_MODE === true) {
-                $resRegData['debug_code'] = $code;
-            }
-            echo json_encode($resRegData);
+            echo json_encode(['success' => true, 'require_verification' => true, 'email' => $email]);
         } catch (\Exception $e) {
             echo json_encode(['success' => false, 'error' => 'Erro interno ao cadastrar: ' . $e->getMessage()]);
         }
@@ -162,10 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
-        // Suporte ao código de debug se DEBUG_MODE estiver ativo
-        $is_debug_code = (defined('DEBUG_MODE') && DEBUG_MODE === true && $code === '000000');
-
-        if ($user && (($user['verification_code'] === $code && strtotime($user['code_expires_at']) > time()) || $is_debug_code)) {
+        if ($user && ($user['verification_code'] === $code && strtotime($user['code_expires_at']) > time())) {
             // Ativa o usuário
             $stmt = $pdo->prepare("UPDATE users SET is_active = 1, verification_code = NULL, code_expires_at = NULL WHERE id = ?");
             $stmt->execute([$user['id']]);
@@ -249,15 +242,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             sendEmail($to, $subject, $messageHtml);
 
-            $resData = [
+            echo json_encode([
                 'success' => true, 
                 'require_verification' => true, 
                 'email' => $email
-            ];
-            if (defined('DEBUG_MODE') && DEBUG_MODE === true) {
-                $resData['debug_code'] = $code;
-            }
-            echo json_encode($resData);
+            ]);
             exit;
         } else {
             echo json_encode(['success' => false, 'error' => 'E-mail ou senha incorretos.']);

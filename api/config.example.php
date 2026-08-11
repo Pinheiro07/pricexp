@@ -8,7 +8,7 @@ header("Referrer-Policy: strict-origin-when-cross-origin");
 header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 header("Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:;");
 
-define('DEBUG_MODE', true); // Altere para false em produção para exigir e-mail real
+define('DEBUG_MODE', false); // Produção: exige validação real por e-mail
 
 // Configurações SMTP para MailCow ou outro servidor de e-mail
 define('SMTP_HOST', 'mail.seuprovedor.com'); // Ex: mail.bitdesksupport.com.br
