@@ -1,11 +1,29 @@
 <?php
 require 'config.php';
+$action = $_GET['action'] ?? '';
+
+if ($action === 'check_invite') {
+    header('Content-Type: application/json');
+    $token = $_GET['token'] ?? '';
+    if ($token) {
+        $token_hash = hash('sha256', $token);
+        $stmt = $pdo->prepare("SELECT ai.invite_email, u.first_name AS owner_name FROM account_invites ai JOIN users u ON ai.owner_user_id = u.id WHERE ai.token_hash = ?");
+        $stmt->execute([$token_hash]);
+        $row = $stmt->fetch();
+        if ($row) {
+            echo json_encode(['valid' => true, 'email' => $row['invite_email'], 'owner_name' => $row['owner_name']]);
+            exit;
+        }
+    }
+    echo json_encode(['valid' => false]);
+    exit;
+}
+
 requireLogin();
 header('Content-Type: application/json');
 
 $method  = $_SERVER['REQUEST_METHOD'];
 $user_id = $_SESSION['user_id'];
-$action  = $_GET['action'] ?? '';
 
 if ($method === 'GET') {
     // 1. Verificar se o próprio usuário é membro de uma conta cujo dono é outro usuário

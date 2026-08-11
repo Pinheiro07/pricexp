@@ -328,6 +328,18 @@ function renderMobileAlerts() {
 
 // --- AUTHENTICATION ---
 async function checkSession() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteToken = urlParams.get('invite');
+
+    // Se houver um token de convite na URL, encerra a sessão ativa para que o novo parceiro crie sua própria conta
+    if (inviteToken) {
+        try {
+            await fetch('api/login.php?action=logout');
+        } catch (e) {}
+        showAuth();
+        return;
+    }
+
     try {
         const res = await fetch('api/login.php?action=check');
         const data = await res.json();
@@ -383,7 +395,7 @@ function showAuth() {
     checkInviteLink();
 }
 
-function checkInviteLink() {
+async function checkInviteLink() {
     const urlParams = new URLSearchParams(window.location.search);
     const inviteToken = urlParams.get('invite');
     if (inviteToken) {
@@ -393,10 +405,29 @@ function checkInviteLink() {
         if (isLoginMode && authSwitchLink) {
             authSwitchLink.click();
         }
-        if (authSubtitle) {
-            authSubtitle.textContent = '🎉 Você foi convidado para a Conta Conjunta! Complete seu cadastro:';
-            authSubtitle.style.color = '#10b981';
-            authSubtitle.style.fontWeight = '600';
+
+        try {
+            const res = await fetch(`api/shared_account.php?action=check_invite&token=${inviteToken}`);
+            const data = await res.json();
+            if (data && data.valid) {
+                const emailInput = document.getElementById('auth-email');
+                if (emailInput && data.email) emailInput.value = data.email;
+                if (authSubtitle) {
+                    authSubtitle.textContent = `🎉 ${data.owner_name || 'Seu parceiro(a)'} convidou você para a Conta Conjunta! Complete seu cadastro:`;
+                    authSubtitle.style.color = '#10b981';
+                    authSubtitle.style.fontWeight = '600';
+                }
+            } else if (authSubtitle) {
+                authSubtitle.textContent = '🎉 Você foi convidado para a Conta Conjunta! Complete seu cadastro:';
+                authSubtitle.style.color = '#10b981';
+                authSubtitle.style.fontWeight = '600';
+            }
+        } catch (e) {
+            if (authSubtitle) {
+                authSubtitle.textContent = '🎉 Você foi convidado para a Conta Conjunta! Complete seu cadastro:';
+                authSubtitle.style.color = '#10b981';
+                authSubtitle.style.fontWeight = '600';
+            }
         }
     }
 }
