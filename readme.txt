@@ -2,6 +2,14 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 20:12]
+- Implementação do fluxo de Convite por E-mail com Token Direto para Conta Conjunta:
+  * Tabela `account_invites` em `api/config.php` para armazenar tokens de convites de e-mails não cadastrados.
+  * Disparo automático de e-mail com botão/link `https://pricexp.com/?invite=TOKEN` em `api/shared_account.php`.
+  * Leitura automática do token `?invite=` na URL e abertura automática do formulário de cadastro em `app.js`.
+  * Vinculação automática à Conta Conjunta ao concluir o cadastro em `api/login.php`.
+  * Publicado no GitHub.
+
 [11/08/2026 - 20:01]
 - Orientação e checklist completo dos arquivos da pasta api/ e frontend a serem atualizados no servidor VPS.
 
