@@ -2,6 +2,10 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 18:19]
+- Verificação de auditoria no arquivo api/config.php local vs servidor VPS: confirmação de que os dados reais de SMTP foram editados diretamente na VPS (Mailcow bitdesksupport).
+- Análise de diagnóstico sobre portas SMTP (587 TLS vs 465 SSL vs 25 local) e orientação sobre credenciais.
+
 [11/08/2026 - 18:15]
 - Inclusão do envio do campo `debug_code` nos retornos JSON de registro e login em `api/login.php` quando DEBUG_MODE está ativado, permitindo validação imediata.
 - Orientação sobre o código mestre de contingência (`000000`) ativado durante o período de configuração do servidor SMTP.
