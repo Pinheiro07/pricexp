@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 20:31]
+- Correção no evento de Logout do aplicativo:
+  * Ao clicar em 'Sair', força o reset da tela de autenticação para o modo de Login ('Entrar na sua conta').
+  * Limpa parâmetros residuais de convite (`?invite=`) da barra de endereços do navegador para evitar re-abrir a tela de cadastro ao deslogar.
+  * Versão atualizada (`v=102`) enviada ao GitHub.
+
 [11/08/2026 - 20:23]
 - Implementação de ativação e auto-login imediatos ao cadastrar via convite de Conta Conjunta:
   * Em `api/login.php`, cadastros com `invite_token` válido ativam a conta instantaneamente (`is_active = 1`), gravam a sessão PHP e definem o cookie de 30 dias.
