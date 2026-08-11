@@ -1,0 +1,6 @@
+- `[ ]` Criar o cabeçalho superior mobile no HTML (`index.html`)
+- `[ ]` Criar o painel de notificações/alertas no HTML (`index.html`)
+- `[ ]` Escrever os estilos do cabeçalho, gaveta deslizante (drawer), backdrop e alertas no CSS (`style.css`)
+- `[ ]` Implementar o controle JS para abrir/fechar o menu e notificações no JS (`app.js`)
+- `[ ]` Otimizar as ações do menu lateral para fechar após navegação
+- `[ ]` Testar e validar o resultado final

@@ -1,0 +1,13 @@
+# Ignorar caches e temporários do IDE / assistente
+.agents/
+graphify-out/
+*.log
+.DS_Store
+Thumbs.db
+
+# Ignorar uploads de fotos de perfil dos usuários
+uploads/*
+!uploads/.gitkeep
+
+# Arquivos temporários ou de teste local
+test.php
