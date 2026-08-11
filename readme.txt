@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 20:41]
+- Ajuste fino de espaçamento vertical entre containers na aba Conta Conjunta:
+  * Substituição do container CSS `.dashboard-grid` por layout Flexbox com direção de coluna e margem de 2.25rem entre o card do perfil e a lista de lançamentos do parceiro(a).
+  * Separação estética de borda (`border-top`) para a descrição de compartilhamento de ambiente.
+  * Versão atualizada (`v=104`) enviada ao GitHub.
+
 [11/08/2026 - 20:38]
 - Redesign completo e exibição de Lançamentos do Parceiro(a) na aba Conta Conjunta:
   * Remoção de emojis brutos do cabeçalho; adição de ícone vetorial Lucide `users`.
