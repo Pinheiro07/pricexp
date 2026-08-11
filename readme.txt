@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 20:50]
+- Correção completa da funcionalidade de Edição de Lançamentos:
+  * Solucionado o `TypeError` em `populateEditCategorySelect` ao tentar filtrar o objeto global `CATEGORIES` como um array.
+  * Preservação do vínculo de cartão (`card_id`) e do criador original (`created_by_user_id`) ao atualizar a transação em `api/transactions.php`.
+  * Recarregamento automático do painel e da Conta Conjunta ao salvar a edição.
+  * Versão atualizada (`v=105`) enviada ao GitHub.
+
 [11/08/2026 - 20:41]
 - Ajuste fino de espaçamento vertical entre containers na aba Conta Conjunta:
   * Substituição do container CSS `.dashboard-grid` por layout Flexbox com direção de coluna e margem de 2.25rem entre o card do perfil e a lista de lançamentos do parceiro(a).
