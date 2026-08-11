@@ -2,6 +2,15 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 20:38]
+- Redesign completo e exibição de Lançamentos do Parceiro(a) na aba Conta Conjunta:
+  * Remoção de emojis brutos do cabeçalho; adição de ícone vetorial Lucide `users`.
+  * Redimensionamento e espaçamentos elegantes dos cards (`padding: 2.25rem`, `gap: 2rem`) evitando textos colados nas bordas.
+  * Tratamento de foto de perfil com avatar com iniciais via `ui-avatars.com`.
+  * Atualização de `api/shared_account.php` para retornar `partner_transactions` (lançamentos criados pelo parceiro/administrador).
+  * Criação do card 'Lançamentos Realizados por [Nome do Parceiro]' em `index.html` e renderização dinâmica em `app.js`.
+  * Versão atualizada (`v=103`) enviada ao GitHub.
+
 [11/08/2026 - 20:31]
 - Correção no evento de Logout do aplicativo:
   * Ao clicar em 'Sair', força o reset da tela de autenticação para o modo de Login ('Entrar na sua conta').
