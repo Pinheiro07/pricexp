@@ -2,6 +2,9 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 20:01]
+- Orientação e checklist completo dos arquivos da pasta api/ e frontend a serem atualizados no servidor VPS.
+
 [11/08/2026 - 18:45]
 - Implementação completa do Sistema de Conta Conjunta (Casais/Espaço Compartilhado):
   * Auto-migrações em api/config.php (shared_owner_id em users, created_by_user_id em transactions, helper getWorkspaceUserId).

@@ -380,6 +380,25 @@ function showApp(userData) {
 function showAuth() {
     authScreen.style.display = 'flex';
     appContainer.style.display = 'none';
+    checkInviteLink();
+}
+
+function checkInviteLink() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteToken = urlParams.get('invite');
+    if (inviteToken) {
+        const inviteInput = document.getElementById('auth-invite-token');
+        if (inviteInput) inviteInput.value = inviteToken;
+        
+        if (isLoginMode && authSwitchLink) {
+            authSwitchLink.click();
+        }
+        if (authSubtitle) {
+            authSubtitle.textContent = '🎉 Você foi convidado para a Conta Conjunta! Complete seu cadastro:';
+            authSubtitle.style.color = '#10b981';
+            authSubtitle.style.fontWeight = '600';
+        }
+    }
 }
 
 authSwitchLink.addEventListener('click', (e) => {

@@ -106,14 +106,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            // Verificar se veio token de convite para Conta Conjunta
+            $invite_token = $_POST['invite_token'] ?? $_GET['invite'] ?? '';
+            $shared_owner_id = null;
+            if (!empty($invite_token)) {
+                $token_hash = hash('sha256', $invite_token);
+                $stmtInv = $pdo->prepare("SELECT id, owner_user_id FROM account_invites WHERE token_hash = ?");
+                $stmtInv->execute([$token_hash]);
+                $invRow = $stmtInv->fetch();
+                if ($invRow) {
+                    $shared_owner_id = (int)$invRow['owner_user_id'];
+                    // Excluir convite consumido
+                    $stmtDelInv = $pdo->prepare("DELETE FROM account_invites WHERE id = ?");
+                    $stmtDelInv->execute([$invRow['id']]);
+                }
+            }
+
             // Gerar código de verificação seguro de 6 dígitos
             $code = (string)random_int(100000, 999999);
             $expires = date('Y-m-d H:i:s', time() + 900); // 15 minutos
 
-            // Inserir no Banco (Como inativo: is_active = 0)
+            // Inserir no Banco (Como inativo: is_active = 0, vinculando shared_owner_id se convidado)
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO users (first_name, last_name, email, password_hash, profile_picture, is_active, verification_code, code_expires_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?)");
-            $stmt->execute([$first_name, $last_name, $email, $hash, $profile_picture, $code, $expires]);
+            $stmt = $pdo->prepare("INSERT INTO users (first_name, last_name, email, password_hash, profile_picture, is_active, verification_code, code_expires_at, shared_owner_id) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)");
+            $stmt->execute([$first_name, $last_name, $email, $hash, $profile_picture, $code, $expires, $shared_owner_id]);
 
             // Enviar e-mail de confirmação usando PHPMailer
             $to = $email;

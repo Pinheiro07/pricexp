@@ -68,8 +68,56 @@ if ($method === 'POST') {
         $stmt->execute([$partner_email]);
         $targetUser = $stmt->fetch();
 
+        require_once __DIR__ . '/mail_helper.php';
+        $workspaceOwnerId = getWorkspaceUserId($pdo, $user_id);
+
         if (!$targetUser) {
-            echo json_encode(['success' => false, 'error' => 'Nenhum usuário cadastrado foi encontrado com este e-mail. Peça para seu parceiro(a) se cadastrar no app primeiro!']);
+            // E-mail não cadastrado: Gerar convite por e-mail com token seguro
+            $token      = bin2hex(random_bytes(16));
+            $token_hash = hash('sha256', $token);
+
+            // Remover convites antigos para o mesmo e-mail
+            $stmtDel = $pdo->prepare("DELETE FROM account_invites WHERE LOWER(invite_email) = LOWER(?)");
+            $stmtDel->execute([$partner_email]);
+
+            // Salvar novo convite
+            $stmtIns = $pdo->prepare("INSERT INTO account_invites (owner_user_id, invite_email, token_hash) VALUES (?, ?, ?)");
+            $stmtIns->execute([$workspaceOwnerId, $partner_email, $token_hash]);
+
+            // Nome do inviter
+            $stmtOwner = $pdo->prepare("SELECT first_name FROM users WHERE id = ?");
+            $stmtOwner->execute([$user_id]);
+            $ownerRow = $stmtOwner->fetch();
+            $ownerName = $ownerRow['first_name'] ?? 'Seu parceiro(a)';
+
+            // Montar link de convite
+            $protocol   = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
+            $domain     = $_SERVER['HTTP_HOST'] ?? 'pricexp.com';
+            $inviteLink = "{$protocol}://{$domain}/?invite={$token}";
+
+            $subject = "Convite para Conta Conjunta - PriceXP";
+            $messageHtml = "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;'>
+                <h2 style='color: #10b981; text-align: center;'>PriceXP</h2>
+                <p>Olá!</p>
+                <p><strong>{$ownerName}</strong> convidou você para compartilharem o gerenciamento financeiro juntos na <strong>Conta Conjunta do PriceXP</strong>!</p>
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='{$inviteLink}' style='background: linear-gradient(135deg, #1e3a8a, #10b981); color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;'>
+                        🚀 Aceitar Convite & Cadastrar
+                    </a>
+                </div>
+                <p style='font-size: 0.85rem; color: #64748b;'>Ou copie e cole este link no seu navegador:<br><a href='{$inviteLink}' style='color: #2563eb;'>{$inviteLink}</a></p>
+                <p style='color: #718096; font-size: 12px; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px;'>
+                    Se você não conhece a pessoa que enviou este convite, ignore este e-mail.
+                </p>
+            </div>";
+
+            sendEmail($partner_email, $subject, $messageHtml);
+
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Convite enviado por e-mail! Seu parceiro(a) poderá se cadastrar direto pelo link.'
+            ]);
             exit;
         }
 
@@ -79,8 +127,7 @@ if ($method === 'POST') {
             exit;
         }
 
-        // Conectar: O usuário informado passa a ter o $user_id atual como shared_owner_id
-        $workspaceOwnerId = getWorkspaceUserId($pdo, $user_id);
+        // Conectar: O usuário informado passa a ter o $workspaceOwnerId como shared_owner_id
         $stmtUp = $pdo->prepare("UPDATE users SET shared_owner_id = ? WHERE id = ?");
         $stmtUp->execute([$workspaceOwnerId, $targetUser['id']]);
 
