@@ -2,6 +2,10 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 18:23]
+- Validação bem-sucedida de conexão socket e autenticação SMTP via servidor Mailcow (mail.bitdesksupport.com.br porta 587 TLS).
+- Criação de `api/config.example.php` e inclusão de `api/config.php` no `.gitignore` para proteção absoluta das credenciais SMTP reais contra vazamento no GitHub.
+
 [11/08/2026 - 18:19]
 - Verificação de auditoria no arquivo api/config.php local vs servidor VPS: confirmação de que os dados reais de SMTP foram editados diretamente na VPS (Mailcow bitdesksupport).
 - Análise de diagnóstico sobre portas SMTP (587 TLS vs 465 SSL vs 25 local) e orientação sobre credenciais.
