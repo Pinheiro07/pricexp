@@ -3,12 +3,13 @@ require 'config.php';
 requireLogin();
 header('Content-Type: application/json');
 
-$method = $_SERVER['REQUEST_METHOD'];
+$method  = $_SERVER['REQUEST_METHOD'];
 $user_id = $_SESSION['user_id'];
+$workspace_id = getWorkspaceUserId($pdo, $user_id);
 
 if ($method === 'GET') {
     $stmt = $pdo->prepare("SELECT * FROM credit_cards WHERE user_id = ? ORDER BY name ASC");
-    $stmt->execute([$user_id]);
+    $stmt->execute([$workspace_id]);
     $cards = $stmt->fetchAll();
     
     // Convert limits to float
@@ -35,7 +36,7 @@ if ($method === 'POST') {
     }
     
     $stmt = $pdo->prepare("INSERT INTO credit_cards (user_id, name, credit_limit, closing_day, due_day) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$user_id, $name, $credit_limit, $closing_day, $due_day]);
+    $stmt->execute([$workspace_id, $name, $credit_limit, $closing_day, $due_day]);
     
     echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
     exit;
@@ -44,7 +45,7 @@ if ($method === 'POST') {
 if ($method === 'DELETE') {
     $id = $_GET['id'] ?? 0;
     $stmt = $pdo->prepare("DELETE FROM credit_cards WHERE id = ? AND user_id = ?");
-    $stmt->execute([$id, $user_id]);
+    $stmt->execute([$id, $workspace_id]);
     
     echo json_encode(['success' => true]);
     exit;

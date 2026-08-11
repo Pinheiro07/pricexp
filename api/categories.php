@@ -4,6 +4,7 @@ requireLogin();
 header('Content-Type: application/json');
 
 $user_id = $_SESSION['user_id'];
+$workspace_id = getWorkspaceUserId($pdo, $user_id);
 $method = $_SERVER['REQUEST_METHOD'];
 
 // Default built-in categories matching app.js
@@ -15,7 +16,7 @@ $system_categories = [
 if ($method === 'GET') {
     try {
         $stmt = $pdo->prepare("SELECT name, type FROM custom_categories WHERE user_id = ? ORDER BY name ASC");
-        $stmt->execute([$user_id]);
+        $stmt->execute([$workspace_id]);
         $custom = $stmt->fetchAll();
         
         $categories = $system_categories;
@@ -51,7 +52,7 @@ if ($method === 'POST') {
 
     try {
         $stmt = $pdo->prepare("INSERT INTO custom_categories (user_id, name, type) VALUES (?, ?, ?)");
-        $stmt->execute([$user_id, $name, $type]);
+        $stmt->execute([$workspace_id, $name, $type]);
         echo json_encode(['success' => true, 'name' => $name]);
     } catch (\PDOException $e) {
         if ($e->getCode() == 23000) {

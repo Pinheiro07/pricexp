@@ -3,12 +3,21 @@ require 'config.php';
 requireLogin();
 header('Content-Type: application/json');
 
-$method = $_SERVER['REQUEST_METHOD'];
+$method  = $_SERVER['REQUEST_METHOD'];
 $user_id = $_SESSION['user_id'];
 
+// ID do workspace (owner da conta se for conta conjunta, ou o próprio user_id)
+$workspace_id = getWorkspaceUserId($pdo, $user_id);
+
 if ($method === 'GET') {
-    $stmt = $pdo->prepare("SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC, id DESC");
-    $stmt->execute([$user_id]);
+    $stmt = $pdo->prepare("
+        SELECT t.*, u.first_name AS created_by_name 
+        FROM transactions t 
+        LEFT JOIN users u ON t.created_by_user_id = u.id 
+        WHERE t.user_id = ? 
+        ORDER BY t.date DESC, t.id DESC
+    ");
+    $stmt->execute([$workspace_id]);
     $transactions = $stmt->fetchAll();
     
     // Convert types for JS
@@ -25,17 +34,17 @@ if ($method === 'GET') {
 if ($method === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     
-    $type = $data['type'] ?? '';
-    $category = $data['category'] ?? '';
-    $description = $data['description'] ?? '';
-    $amount = $data['amount'] ?? 0;
-    $date = $data['date'] ?? '';
+    $type         = $data['type'] ?? '';
+    $category     = $data['category'] ?? '';
+    $description  = $data['description'] ?? '';
+    $amount       = $data['amount'] ?? 0;
+    $date         = $data['date'] ?? '';
     $installments = $data['installments'] ?? 1;
-    $repeat_type = $data['repeat_type'] ?? 'none';
-    $card_id = !empty($data['card_id']) ? intval($data['card_id']) : null;
-    $bank_name = !empty($data['bank_name']) ? trim($data['bank_name']) : 'Geral';
+    $repeat_type  = $data['repeat_type'] ?? 'none';
+    $card_id      = !empty($data['card_id']) ? intval($data['card_id']) : null;
+    $bank_name    = !empty($data['bank_name']) ? trim($data['bank_name']) : 'Geral';
 
-    $stmt = $pdo->prepare("INSERT INTO transactions (user_id, type, category, description, amount, date, card_id, bank_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, card_id, bank_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
     if ($repeat_type !== 'none' && $installments > 1) {
         $baseDate = new DateTime($date);
@@ -50,10 +59,10 @@ if ($method === 'POST') {
                 $currentDesc .= " ($currentNum/$installments)";
             }
             
-            $stmt->execute([$user_id, $type, $category, $currentDesc, $amount, $currentDateStr, $card_id, $bank_name]);
+            $stmt->execute([$workspace_id, $user_id, $type, $category, $currentDesc, $amount, $currentDateStr, $card_id, $bank_name]);
         }
     } else {
-        $stmt->execute([$user_id, $type, $category, $description, $amount, $date, $card_id, $bank_name]);
+        $stmt->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $card_id, $bank_name]);
     }
     
     echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
@@ -74,8 +83,8 @@ if ($method === 'PUT') {
     $card_id     = !empty($data['card_id']) ? intval($data['card_id']) : null;
     $bank_name   = !empty($data['bank_name']) ? trim($data['bank_name']) : 'Geral';
 
-    $stmt = $pdo->prepare("UPDATE transactions SET type=?, category=?, description=?, amount=?, date=?, card_id=?, bank_name=? WHERE id=? AND user_id=?");
-    $stmt->execute([$type, $category, $description, $amount, $date, $card_id, $bank_name, $id, $user_id]);
+    $stmt = $pdo->prepare("UPDATE transactions SET type=?, category=?, description=?, amount=?, date=?, card_id=?, bank_name=?, created_by_user_id=? WHERE id=? AND user_id=?");
+    $stmt->execute([$type, $category, $description, $amount, $date, $card_id, $bank_name, $user_id, $id, $workspace_id]);
 
     echo json_encode(['success' => true]);
     exit;
@@ -84,7 +93,7 @@ if ($method === 'PUT') {
 if ($method === 'DELETE') {
     $id = $_GET['id'] ?? 0;
     $stmt = $pdo->prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?");
-    $stmt->execute([$id, $user_id]);
+    $stmt->execute([$id, $workspace_id]);
     
     echo json_encode(['success' => true]);
     exit;

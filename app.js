@@ -634,6 +634,7 @@ tabs.forEach(tab => {
         document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
         if(tab.dataset.tab === 'dashboard') updateDashboard();
         if(tab.dataset.tab === 'cartoes') renderCards();
+        if(tab.dataset.tab === 'shared') fetchSharedAccountStatus();
 
         // Fechar gaveta mobile ao navegar
         const sidebar = document.querySelector('.sidebar');
@@ -822,13 +823,14 @@ function renderTransactions() {
         const isReceita = tx.type === 'receita';
         const colorClass = isReceita ? 'text-success' : 'text-danger';
         const sign = isReceita ? '+' : '-';
+        const authorTag = tx.created_by_name ? ` • ${tx.created_by_name}` : '';
         
         const item = document.createElement('div');
         item.className = 'tx-item';
         item.innerHTML = `
             <div class="tx-left">
                 <span class="tx-desc">${tx.description}</span>
-                <span class="tx-cat-date">${tx.category} ${tx.bank_name ? '• ' + tx.bank_name : ''} • ${formatDate(tx.date)}</span>
+                <span class="tx-cat-date">${tx.category} ${tx.bank_name ? '• ' + tx.bank_name : ''}${authorTag} • ${formatDate(tx.date)}</span>
             </div>
             <div class="tx-actions">
                 <span class="tx-amount ${colorClass}">${sign} ${formatCurrency(tx.amount)}</span>
@@ -1800,4 +1802,97 @@ function togglePassword(inputId, btn) {
         icon.setAttribute('data-lucide', 'eye');
     }
     lucide.createIcons();
+}
+
+// --- CONTA CONJUNTA (JOINT ACCOUNT) ---
+async function fetchSharedAccountStatus() {
+    const unconnectedCard = document.getElementById('shared-unconnected-card');
+    const connectedCard   = document.getElementById('shared-connected-card');
+    if (!unconnectedCard || !connectedCard) return;
+
+    try {
+        const res = await fetch('api/shared_account.php');
+        if (res.ok) {
+            const data = await res.json();
+            if (data.is_connected && data.partner) {
+                unconnectedCard.style.display = 'none';
+                connectedCard.style.display   = 'block';
+
+                document.getElementById('shared-partner-name').innerText          = `${data.partner.first_name} ${data.partner.last_name}`.trim();
+                document.getElementById('shared-partner-email-display').innerText  = data.partner.email;
+                document.getElementById('shared-partner-avatar').src               = `uploads/${data.partner.profile_picture || 'default.png'}`;
+            } else {
+                unconnectedCard.style.display = 'block';
+                connectedCard.style.display   = 'none';
+            }
+        }
+    } catch (e) {
+        console.error('Failed to fetch shared account status', e);
+    }
+}
+
+const sharedConnectForm = document.getElementById('shared-connect-form');
+if (sharedConnectForm) {
+    sharedConnectForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const emailInput = document.getElementById('shared-partner-email');
+        const msgEl      = document.getElementById('shared-msg');
+        const btn        = document.getElementById('btn-shared-connect');
+
+        if (!emailInput || !emailInput.value) return;
+
+        btn.disabled = true;
+        msgEl.style.display = 'none';
+
+        try {
+            const res = await fetch('api/shared_account.php?action=connect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: emailInput.value })
+            });
+            const data = await res.json();
+            if (data.success) {
+                msgEl.style.color = '#10b981';
+                msgEl.innerText   = data.message || 'Conta conectada com sucesso!';
+                msgEl.style.display = 'block';
+                emailInput.value  = '';
+                setTimeout(() => {
+                    fetchSharedAccountStatus();
+                    fetchTransactions();
+                    fetchCards();
+                }, 1000);
+            } else {
+                msgEl.style.color = 'var(--danger-color)';
+                msgEl.innerText   = data.error || 'Erro ao conectar conta.';
+                msgEl.style.display = 'block';
+            }
+        } catch (err) {
+            msgEl.style.color = 'var(--danger-color)';
+            msgEl.innerText   = 'Erro de conexão com o servidor.';
+            msgEl.style.display = 'block';
+        }
+
+        btn.disabled = false;
+    });
+}
+
+const btnSharedDisconnect = document.getElementById('btn-shared-disconnect');
+if (btnSharedDisconnect) {
+    btnSharedDisconnect.addEventListener('click', async () => {
+        if (!confirm('Deseja realmente desconectar a Conta Conjunta? Cada usuário voltará a ver apenas seu espaço individual.')) return;
+
+        try {
+            const res = await fetch('api/shared_account.php?action=disconnect', {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (data.success) {
+                fetchSharedAccountStatus();
+                fetchTransactions();
+                fetchCards();
+            }
+        } catch (e) {
+            alert('Erro ao desconectar conta conjunta.');
+        }
+    });
 }

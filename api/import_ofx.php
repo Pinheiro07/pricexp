@@ -9,11 +9,12 @@ $user_id = $_SESSION['user_id'];
 // COMMIT MODE: Salva as transações já editadas pelo usuário
 // Recebe JSON no body: { "mode": "commit", "transactions": [...] }
 // ======================================================
+$workspace_id = getWorkspaceUserId($pdo, $user_id);
 $rawInput = file_get_contents('php://input');
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($rawInput)) {
     $payload = json_decode($rawInput, true);
     if ($payload && isset($payload['mode']) && $payload['mode'] === 'commit' && isset($payload['transactions'])) {
-        $stmt = $pdo->prepare("INSERT INTO transactions (user_id, type, category, description, amount, date, bank_name) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $count = 0;
         foreach ($payload['transactions'] as $tx) {
             $type = $tx['type'] ?? 'despesa';
@@ -24,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($rawInput)) {
             $bank_name = !empty($tx['bank_name']) ? trim($tx['bank_name']) : 'Geral';
             if ($amount <= 0 || empty($date)) continue;
             if (empty($category)) $category = ($type === 'despesa') ? 'Outras Despesas' : 'Outras Receitas';
-            $stmt->execute([$user_id, $type, $category, $description, $amount, $date, $bank_name]);
+            $stmt->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $bank_name]);
             $count++;
         }
         echo json_encode(['success' => true, 'imported_count' => $count]);
