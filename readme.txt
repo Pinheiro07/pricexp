@@ -2,6 +2,11 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 17:13]
+- Auditoria completa de segurança e privacidade do repositório antes da publicação.
+- Remoção de scripts de teste (api/test_db.php e api/test_smtp.php) do controle de versão.
+- Atualização das regras do .gitignore para bloquear credenciais (.env, .pem, .key), fotos de usuários (uploads/) e dumps de banco de dados (.sql, .dump).
+
 [11/08/2026 - 16:53]
 - Instalação e configuração do ambiente Git (MinGit 2.55.0 para Windows) e inclusão nas variáveis de ambiente PATH do usuário.
 - Inicialização do repositório Git local, renomeação da branch principal para 'main' e realização do primeiro commit ("Initial commit - PriceXP Finance App").
