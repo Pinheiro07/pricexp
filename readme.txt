@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 14:51]
+- Remoção de Fixação do Cabeçalho Mobile ao Rolar a Tela:
+  * Alteração da classe `.mobile-header-bar` no CSS de `position: fixed` para `position: relative` com `width: 100%`.
+  * Remoção do `padding-top: 60px` do container principal `.app-container`.
+  * Agora a barra superior com o logo e o botão de ajuda rola naturalmente com o conteúdo da página, deixando a tela completamente limpa durante a navegação.
+  * Versão atualizada (`v=116`) enviada ao GitHub.
+
 [12/08/2026 - 13:35]
 - Botão Dedicado de Ajuda/Tutorial no Cabeçalho Mobile:
   * Inclusão do botão circular de ajuda `#btn-start-tour-mobile` com ícone `help-circle` no canto superior direito do cabeçalho fixo mobile `.mobile-header-bar`.
