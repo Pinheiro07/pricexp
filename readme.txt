@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:54]
+- Recriação do `favicon.ico` e `favicon.png` com a Logo Colorida Oficial (`logo_login.png`):
+  * Extraído diretamente o emblema colorido original (verde e azul) de `logo_login.png` com recorte limpo proporcional.
+  * Recompilados tanto o `favicon.png` quanto o `favicon.ico` para conterem o mesmo ícone colorido de alta definição.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:52]
 - Sincronização do Favicon Oficial do Usuário (`favicon.png` & `favicon.ico`):
   * Compilado o arquivo `favicon.ico` a partir da imagem oficial fornecida pelo usuário em `favicon.png`.
