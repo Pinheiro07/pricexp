@@ -2,6 +2,11 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:28]
+- Cobertura de 100% de Auditoria para Todas as Ações do Sistema:
+  * Inclusão de registro de logs de auditoria em 100% dos endpoints: criação/edição/exclusão de lançamentos (únicos e parcelados), importação de extratos OFX/CSV, cadastro e exclusão de cartões de crédito, criação de categorias personalizadas, envios de convites, vinculações e desconexões de conta conjunta, logins e atualizações de perfil.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:25]
 - Correção de Erro de Migração SQL 1146 (user_activity_logs):
   * Adicionada instrução auto-executável `CREATE TABLE IF NOT EXISTS user_activity_logs` diretamente na inicialização do `api/admin_users.php` e dentro do bloco de fallback do `logUserActivity()` no `api/config.php`.
