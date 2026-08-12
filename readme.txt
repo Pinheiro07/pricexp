@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:03]
+- Padronização Completa dos Títulos dos Cabeçalhos das Abas (`v=121`):
+  * Padronização da estrutura HTML e CSS da classe `.top-header` em todas as 5 abas (*Visão Geral, Lançamentos, Cartões, Minha Conta e Conta Conjunta*).
+  * Uniformizados o tamanho do título (`font-size: 1.75rem` / `1.45rem` no mobile), alinhamento vertical dos ícones Lucide (`gap: 0.5rem`), cor e espaçamento dos textos descritivos (`font-size: 0.95rem` com `color: var(--text-muted)`).
+  * Flex-box padronizado para botões de ação à direita (Importar Extrato e Ver Tutorial).
+  * Versão atualizada (`v=121`) enviada ao GitHub.
+
 [12/08/2026 - 14:58]
 - Remoção do Botão do Cabeçalho Mobile e Definição de Fluxo Estático (`v=120`):
   * Removido o botão de ajuda `#btn-start-tour-mobile` do cabeçalho superior do celular (mantendo o botão de tutorial apenas em Minha Conta e na Barra Lateral).
