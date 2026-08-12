@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:38]
+- Atualização do Título da Aba do Navegador & Adição do Favicon Oficial:
+  * Alterado o título da aplicação em `index.html` para `PriceXP - Controle Financeiro Inteligente`.
+  * Criado o arquivo de ícone de aba `favicon.png` (com o emblema de carteira neon verde/azul e gráfico de crescimento) e vinculado no `<head>` com as tags `rel="icon"` e `rel="apple-touch-icon"`.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:28]
 - Cobertura de 100% de Auditoria para Todas as Ações do Sistema:
   * Inclusão de registro de logs de auditoria em 100% dos endpoints: criação/edição/exclusão de lançamentos (únicos e parcelados), importação de extratos OFX/CSV, cadastro e exclusão de cartões de crédito, criação de categorias personalizadas, envios de convites, vinculações e desconexões de conta conjunta, logins e atualizações de perfil.
