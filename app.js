@@ -2324,11 +2324,22 @@ function renderTourStep(stepIndex) {
     let targetEl = step.target ? document.querySelector(step.target) : null;
     if (targetEl) {
         targetEl.classList.add('tour-target-highlight');
-        targetEl.scrollIntoView({ behavior: 'smooth', block: isMobileView() ? 'center' : 'start' });
+        if (isMobileView()) {
+            const headerOffset = 75;
+            const elementPosition = targetEl.getBoundingClientRect().top + window.pageYOffset;
+            const offsetPosition = Math.max(0, elementPosition - headerOffset);
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        } else {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
 
         setTimeout(() => {
             if (tooltip) positionTooltipNextToTarget(tooltip, targetEl);
-        }, 350);
+        }, 400);
     } else if (tooltip) {
         tooltip.style.top = '50%';
         tooltip.style.left = '50%';
@@ -2337,11 +2348,33 @@ function renderTourStep(stepIndex) {
 }
 
 function positionTooltipNextToTarget(tooltip, targetEl) {
+    if (!tooltip) return;
+
     if (isMobileView()) {
-        tooltip.style.top = 'auto';
-        tooltip.style.bottom = '80px';
-        tooltip.style.left = '50%';
-        tooltip.style.transform = 'translateX(-50%)';
+        const viewportHeight = window.innerHeight;
+        let isTargetAtBottom = false;
+
+        if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+            // Se o centro do elemento estiver na metade inferior da tela
+            if (rect.top + (rect.height / 2) > viewportHeight * 0.55) {
+                isTargetAtBottom = true;
+            }
+        }
+
+        if (isTargetAtBottom) {
+            // Posiciona o card no topo da tela mobile (abaixo do cabeçalho)
+            tooltip.style.top = '75px';
+            tooltip.style.bottom = 'auto';
+            tooltip.style.left = '50%';
+            tooltip.style.transform = 'translateX(-50%)';
+        } else {
+            // Posiciona o card no rodapé da tela mobile (acima do menu inferior)
+            tooltip.style.top = 'auto';
+            tooltip.style.bottom = '80px';
+            tooltip.style.left = '50%';
+            tooltip.style.transform = 'translateX(-50%)';
+        }
         return;
     }
 
