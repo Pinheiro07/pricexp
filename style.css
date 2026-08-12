@@ -984,6 +984,10 @@ button {
         display: block;
     }
 
+    .dashboard-logo {
+        height: 85px !important;
+    }
+
     /* ===== BOTTOM NAV BAR ===== */
     .mobile-bottom-nav {
         display: flex !important;
