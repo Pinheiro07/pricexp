@@ -122,12 +122,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            $whatsapp = preg_replace('/\D/', '', $_POST['whatsapp'] ?? '');
             $hash = password_hash($password, PASSWORD_DEFAULT);
 
             // Se o usuário está se cadastrando por um convite válido, ativa a conta e faz auto-login imediato
             if ($shared_owner_id !== null) {
-                $stmt = $pdo->prepare("INSERT INTO users (first_name, last_name, email, password_hash, profile_picture, is_active, shared_owner_id) VALUES (?, ?, ?, ?, ?, 1, ?)");
-                $stmt->execute([$first_name, $last_name, $email, $hash, $profile_picture, $shared_owner_id]);
+                $stmt = $pdo->prepare("INSERT INTO users (first_name, last_name, email, password_hash, profile_picture, is_active, shared_owner_id, whatsapp) VALUES (?, ?, ?, ?, ?, 1, ?, ?)");
+                $stmt->execute([$first_name, $last_name, $email, $hash, $profile_picture, $shared_owner_id, $whatsapp]);
                 $new_id = $pdo->lastInsertId();
 
                 // Ativar sessão PHP imediatamente
@@ -164,8 +165,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $expires = date('Y-m-d H:i:s', time() + 900); // 15 minutos
 
             // Inserir no Banco (Como inativo: is_active = 0)
-            $stmt = $pdo->prepare("INSERT INTO users (first_name, last_name, email, password_hash, profile_picture, is_active, verification_code, code_expires_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?)");
-            $stmt->execute([$first_name, $last_name, $email, $hash, $profile_picture, $code, $expires]);
+            $stmt = $pdo->prepare("INSERT INTO users (first_name, last_name, email, password_hash, profile_picture, is_active, verification_code, code_expires_at, whatsapp) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)");
+            $stmt->execute([$first_name, $last_name, $email, $hash, $profile_picture, $code, $expires, $whatsapp]);
 
             // Enviar e-mail de confirmação usando PHPMailer
             $to = $email;

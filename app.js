@@ -1608,6 +1608,9 @@ function populateProfileForm(userData) {
     document.getElementById('profile-firstname').value = userData.first_name || '';
     document.getElementById('profile-lastname').value = userData.last_name || '';
     document.getElementById('profile-email').value = userData.email || '';
+    if (document.getElementById('profile-whatsapp')) {
+        document.getElementById('profile-whatsapp').value = userData.whatsapp || '';
+    }
     
     if (userData.profile_picture && userData.profile_picture !== 'default.png') {
         profilePhotoPreview.src = 'uploads/' + userData.profile_picture;

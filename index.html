@@ -65,7 +65,10 @@
                             <input type="text" id="auth-lastname" name="last_name">
                         </div>
                     </div>
-                    
+                    <div class="form-group">
+                        <label>WhatsApp (com DDD)</label>
+                        <input type="tel" id="auth-whatsapp" name="whatsapp" placeholder="Ex: 11999998888">
+                    </div>
                 </div>
                 <input type="hidden" id="auth-invite-token" name="invite_token">
 
@@ -484,6 +487,12 @@
                             <div class="form-group">
                                 <label>E-mail</label>
                                 <input type="email" id="profile-email" name="email" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 0.4rem;"><i data-lucide="phone"></i> WhatsApp para Lançamentos Automáticos (com DDD)</label>
+                                <input type="tel" id="profile-whatsapp" name="whatsapp" placeholder="Ex: 11999998888">
+                                <small class="text-muted" style="display: block; margin-top: 0.25rem; font-size: 0.78rem;">Envie texto ou áudio (Ex: "Gastei 50 no mercado no Nubank") para lançar direto pelo celular!</small>
                             </div>
                             
                             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0;">

@@ -76,9 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update') {
         }
     }
 
+    $whatsapp = preg_replace('/\D/', '', $_POST['whatsapp'] ?? '');
+
     // Prepara os dados para atualização
-    $query = "UPDATE users SET first_name = ?, last_name = ?, email = ?, profile_picture = ?";
-    $params = [$first_name, $last_name, $email, $profile_picture];
+    $query = "UPDATE users SET first_name = ?, last_name = ?, email = ?, profile_picture = ?, whatsapp = ?";
+    $params = [$first_name, $last_name, $email, $profile_picture, $whatsapp];
     
     if ($password !== '') {
         $query .= ", password_hash = ?";
@@ -142,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action === 'delete') {
 }
 
 // Se for GET normal, devolve os dados atuais para preencher o form
-$stmt = $pdo->prepare("SELECT first_name, last_name, email, profile_picture FROM users WHERE id = ?");
+$stmt = $pdo->prepare("SELECT first_name, last_name, email, profile_picture, whatsapp FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 echo json_encode($stmt->fetch());
 ?>
