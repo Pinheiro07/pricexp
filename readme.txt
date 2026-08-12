@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:50]
+- Injeção Dinâmica de Favicon de Alto Contraste com Timestamp (`Date.now()`):
+  * Recriação das imagens `favicon.png` e `favicon.ico` com fundo sólido arredondado de alto contraste (`#0b0f19`), destacando o emblema em abas claras ou escuras.
+  * Injetado script JavaScript na `<head>` de `index.html` que anexa a tag de Favicon com timestamp dinâmico (`?v=Date.now()`), burlando de forma forçada qualquer banco de dados de cache em disco do Chrome/Edge.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:48]
 - Incorporação de Favicon Inline Data-URI (SVG Embutido no HTML):
   * Adicionada a tag `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,...">` contendo o vetor gráfico do PriceXP diretamente dentro do código de `index.html`.
