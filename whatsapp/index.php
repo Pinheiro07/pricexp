@@ -9,19 +9,25 @@ $possible_urls = [
     'http://172.18.0.1:8085',
     'http://172.19.0.1:8085',
     'http://172.20.0.1:8085',
+    'http://172.21.0.1:8085',
+    'http://172.22.0.1:8085',
     'http://evolution-api:8080',
     'http://localhost:8085'
 ];
 
 $api_url = 'http://172.17.0.1:8085';
+$debug_log = [];
+
 foreach ($possible_urls as $url) {
     $ch = curl_init($url . '/instance/fetchInstances');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['apikey: ' . $api_key]);
     $res = curl_exec($ch);
+    $err = curl_error($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
+    $debug_log[] = "$url => HTTP $http_code " . ($err ? "($err)" : "");
     if ($http_code === 200) {
         $api_url = $url;
         break;
@@ -194,6 +200,13 @@ if (!$is_open) {
                 <li>Vá em <strong>⋮ Menu → Aparelhos Conectados → Conectar um aparelho</strong>.</li>
                 <li>Aponta a câmera para o QR Code acima!</li>
             </ol>
+        </div>
+
+        <div style="margin-top: 1rem; font-size: 0.72rem; color: #6b7280; text-align: left; background: #000; padding: 0.75rem; border-radius: 8px; font-family: monospace;">
+            <strong>Diagnostics:</strong> Active: <?= $api_url ?><br>
+            <?php foreach ($debug_log as $log): ?>
+                - <?= htmlspecialchars($log) ?><br>
+            <?php endforeach; ?>
         </div>
     </div>
 </body>
