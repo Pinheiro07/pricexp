@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 13:14]
+- Adaptação Completa do Tutorial para Dispositivos Móveis (Mobile First):
+  * Criação da lista dedicada `MOBILE_TOUR_STEPS` adaptada para smartphones, guiando a navegação por toque na barra inferior fixa (`#mobile-bottom-nav`).
+  * Fixação do card explicativo `.tour-tooltip-card` ancorado no rodapé da tela (`bottom: 80px`), posicionado perfeitamente acima da barra de navegação sem tampar formulários ou botões.
+  * Integração do botão 'Ver Tutorial' no menu mobile e navegação de abas reativa (`switchTab()`) compatível com dispositivos móveis.
+  * Versão atualizada (`v=113`) enviada ao GitHub.
+
 [12/08/2026 - 13:05]
 - Correção de Contraste e Nitidez dos Rótulos e Textos no Tutorial:
   * Forçado contraste máximo em todos os elementos `<label>`, textos e parágrafos dentro de `.tour-target-highlight` com `color: var(--text-main) !important` e opacidade total `opacity: 1`.
