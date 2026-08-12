@@ -2,6 +2,15 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 12:14]
+- Padronização visual dos cabeçalhos das abas Lançamentos, Cartões e Minha Conta:
+  * Adicionados ícones vetoriais Lucide alinhados com `display: flex; align-items: center; gap: 0.5rem` nos títulos `<h2>` e `<h3>` de todas as telas.
+  * Lançamentos: ícone `list` no título principal, `plus-circle` no formulário e `history` no histórico.
+  * Cartões: ícone `credit-card` no título principal, `plus-circle` no formulário e `wallet` na lista de cartões.
+  * Minha Conta: ícone `user` no título principal, `user-check` em dados pessoais e `shield-check` em segurança.
+  * Visão Geral: ícones `bar-chart-2`, `pie-chart` e `trending-up` nos títulos dos gráficos.
+  * Versão atualizada (`v=108`) enviada ao GitHub.
+
 [11/08/2026 - 21:05]
 - Integração de bancos customizados no formulário de Edição de Lançamento:
   * Criação da função centralizada `populateBankSelectElement(selectEl, selectedVal)` compartilhada entre o formulário principal e o modal de edição `#edit-tx-modal`.
