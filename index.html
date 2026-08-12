@@ -4,13 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PriceXP - Controle Financeiro Inteligente</title>
-    <!-- Favicon (Inline SVG Data-URI + Fallbacks) -->
+    <!-- Favicon (Inline SVG Data-URI + Fallbacks + Dynamic Injector) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0f19'/%3E%3Cpath d='M16 46L28 22M28 46L16 22' stroke='%233b82f6' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M34 46L48 18M38 18H48V28' stroke='%2310b981' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='48' cy='18' r='3' fill='%2310b981'/%3E%3C/svg%3E">
-    <link rel="shortcut icon" href="favicon.ico?v=10">
-    <link rel="icon" type="image/x-icon" href="favicon.ico?v=10">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=10">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon.png?v=10">
-    <link rel="apple-touch-icon" sizes="180x180" href="favicon.png?v=10">
+    <link rel="shortcut icon" href="favicon.ico?v=999">
+    <link rel="icon" type="image/x-icon" href="favicon.ico?v=999">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=999">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon.png?v=999">
+    <script>
+        (function() {
+            var ts = Date.now();
+            var l1 = document.createElement('link');
+            l1.rel = 'icon';
+            l1.type = 'image/png';
+            l1.href = 'favicon.png?v=' + ts;
+            document.head.appendChild(l1);
+        })();
+    </script>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chart.js -->
