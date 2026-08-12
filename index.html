@@ -232,15 +232,15 @@
 
                 <div class="charts-grid">
                     <div class="card chart-container">
-                        <h3>Receitas vs Despesas Mensal</h3>
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="bar-chart-2"></i> Receitas vs Despesas Mensal</h3>
                         <div class="canvas-wrapper"><canvas id="barChart"></canvas></div>
                     </div>
                     <div class="card chart-container">
-                        <h3>Despesas por Categoria</h3>
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="pie-chart"></i> Despesas por Categoria</h3>
                         <div class="canvas-wrapper"><canvas id="pieChart"></canvas></div>
                     </div>
                     <div class="card chart-container full-width">
-                        <h3>Evolução do Saldo</h3>
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="trending-up"></i> Evolução do Saldo</h3>
                         <div class="canvas-wrapper"><canvas id="lineChart"></canvas></div>
                     </div>
                 </div>
@@ -250,7 +250,7 @@
             <section id="tab-lancamentos" class="tab-content">
                 <div class="top-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
                     <div>
-                        <h2>Lançamentos</h2>
+                        <h2 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="list"></i> Lançamentos</h2>
                         <p>Adicione e gerencie suas despesas e receitas</p>
                     </div>
                     <div>
@@ -264,6 +264,7 @@
                 <div class="transactions-layout">
                     <!-- Formulário -->
                     <div class="card form-container">
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;"><i data-lucide="plus-circle"></i> Novo Lançamento</h3>
                         <form id="transaction-form">
                             <div class="form-group">
                                 <label>Tipo de Lançamento</label>
@@ -355,7 +356,7 @@
 
                     <!-- Lista Recentes -->
                     <div class="card list-container">
-                        <h3>Lançamentos Recentes</h3>
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;"><i data-lucide="history"></i> Lançamentos Recentes</h3>
                         <div class="transaction-list" id="transaction-list">
                             <p class="text-muted text-center" style="padding: 2rem;">Carregando...</p>
                         </div>
@@ -366,14 +367,14 @@
             <!-- CARTOES TAB -->
             <section id="tab-cartoes" class="tab-content">
                 <header class="top-header">
-                    <h2>Meus Cartões de Crédito</h2>
+                    <h2 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="credit-card"></i> Meus Cartões de Crédito</h2>
                     <p>Cadastre e gerencie seus cartões e acompanhe faturas.</p>
                 </header>
                 
                 <div class="transactions-layout">
                     <!-- Cadastro de Cartão -->
                     <div class="card form-container">
-                        <h3>Cadastrar Novo Cartão</h3>
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;"><i data-lucide="plus-circle"></i> Cadastrar Novo Cartão</h3>
                         <form id="card-form">
                             <div class="form-group">
                                 <label for="card-name">Nome do Cartão</label>
@@ -401,7 +402,7 @@
 
                     <!-- Lista de Cartões e Faturas -->
                     <div class="card list-container">
-                        <h3>Cartões Ativos</h3>
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;"><i data-lucide="wallet"></i> Cartões Ativos</h3>
                         <div id="cards-list" style="display: flex; flex-direction: column; gap: 1rem;">
                             <!-- Dinamicamente gerado -->
                         </div>
@@ -411,14 +412,15 @@
 
             <!-- CONFIG TAB -->
             <section id="tab-config" class="tab-content">
-                <header class="topç-header">
-                    <h2>Configurações do Perfil</h2>
+                <header class="top-header">
+                    <h2 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="user"></i> Minha Conta</h2>
+                    <p class="text-muted" style="margin-top: 0.25rem;">Gerencie seus dados pessoais, foto de perfil e segurança.</p>
                 </header>
                 
                 <div class="transactions-layout">
                     <!-- Profile Form -->
                     <div class="card form-container">
-                        <h3>Dados Pessoais</h3>
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;"><i data-lucide="user-check"></i> Dados Pessoais</h3>
                         <form id="profile-form" enctype="multipart/form-data">
                             
                             <div class="form-group" style="text-align: center; margin-bottom: 2rem;">
@@ -447,9 +449,9 @@
                                 <input type="email" id="profile-email" name="email" required>
                             </div>
                             
-                            <hr style="border: 0; border-topç: 1px solid var(--border-color); margin: 2rem 0;">
+                            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0;">
                             
-                            <h3>Segurança</h3>
+                            <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;"><i data-lucide="shield-check"></i> Segurança</h3>
                             <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1rem;">Preencha a senha atual apenas se for alterar o E-mail ou a Nova Senha.</p>
 
                             <div class="form-group">
@@ -464,13 +466,13 @@
 
                             <div id="profile-msg" class="mt-2 text-center" style="display:none; font-size: 0.9rem;"></div>
                             
-                            <button type="submit" class="btn-primary" id="btn-save-profile" style="margin-topç: 1rem;">Salvar Alterações</button>
+                            <button type="submit" class="btn-primary" id="btn-save-profile" style="margin-top: 1rem;">Salvar Alterações</button>
                         </form>
                     </div>
 
                     <!-- Danger Zone -->
                     <div class="card list-container" style="border: 1px solid var(--danger-color);">
-                        <h3 class="text-danger"><i data-lucide="alert-triangle"></i> Zona de Perigo</h3>
+                        <h3 class="text-danger" style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="alert-triangle"></i> Zona de Perigo</h3>
                         <p class="text-muted" style="margin-bottom: 1rem;">Ação excluir sua conta, todos os seus lançamentos, receitas, despesas e configurações serão apagados <strong>permanentemente</strong>. Essa ação não pode ser desfeita.</p>
                         
                         <button type="button" class="btn-secondary" id="btn-delete-account" style="background-color: transparent; color: var(--danger-color); border: 2px solid var(--danger-color); width: 100%;">
@@ -688,6 +690,6 @@
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     
     <!-- Custom JS -->
-    <script src="app.js?v=107"></script>
+    <script src="app.js?v=108"></script>
 </body>
 </html>
