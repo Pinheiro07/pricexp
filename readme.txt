@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 21:05]
+- Integração de bancos customizados no formulário de Edição de Lançamento:
+  * Criação da função centralizada `populateBankSelectElement(selectEl, selectedVal)` compartilhada entre o formulário principal e o modal de edição `#edit-tx-modal`.
+  * Garante que bancos adicionados via botão '+' apareçam no menu suspenso de edição e fiquem pré-selecionados ao editar.
+  * Versão atualizada (`v=107`) enviada ao GitHub.
+
 [11/08/2026 - 21:00]
 - Persistência permanente de novos Bancos/Instituições adicionados pelo botão '+':
   * Salvamento automático do novo banco no `localStorage` sob a chave `custom_user_banks`.
