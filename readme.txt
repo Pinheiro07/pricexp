@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 13:05]
+- Correção de Contraste e Nitidez dos Rótulos e Textos no Tutorial:
+  * Forçado contraste máximo em todos os elementos `<label>`, textos e parágrafos dentro de `.tour-target-highlight` com `color: var(--text-main) !important` e opacidade total `opacity: 1`.
+  * Garantida a opacidade sólida de fundo dos cards com `background-color: var(--bg-card) !important` impedindo transparência indesejada.
+  * Ajuste do contraste dos rótulos gerais de formulário no modo escuro.
+  * Versão atualizada (`v=112`) enviada ao GitHub.
+
 [12/08/2026 - 13:02]
 - Ajuste e Inteligência de Posicionamento do Card do Tutorial (Sem Sobreposição):
   * Recálculo dinâmico de posição `positionTooltipNextToTarget()` com algoritmo de 4 direções (Abaixo, Acima, Direita, Esquerda) garantindo que a caixa explicativa nunca fique em cima do conteúdo destacado.
