@@ -1,15 +1,32 @@
 <?php
 // Portal de Conexão WhatsApp PriceXP
-$api_url = 'http://172.17.0.1:8085';
-
-// Tenta testar conexões com o container Evolution API
-$test_local = @file_get_contents('http://localhost:8085/instance/fetchInstances', false, stream_context_create(['http' => ['timeout' => 2]]));
-if ($test_local !== false) {
-    $api_url = 'http://localhost:8085';
-}
-
 $api_key = 'pricexp_evo_api_key_2833441530';
 $instance = 'pricexp-bot';
+
+// Auto-detecta o IP exato da VPS/Docker container
+$possible_urls = [
+    'http://172.17.0.1:8085',
+    'http://172.18.0.1:8085',
+    'http://172.19.0.1:8085',
+    'http://172.20.0.1:8085',
+    'http://evolution-api:8080',
+    'http://localhost:8085'
+];
+
+$api_url = 'http://172.17.0.1:8085';
+foreach ($possible_urls as $url) {
+    $ch = curl_init($url . '/instance/fetchInstances');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['apikey: ' . $api_key]);
+    $res = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($http_code === 200) {
+        $api_url = $url;
+        break;
+    }
+}
 
 function evo_request($url, $method = 'GET', $data = null) {
     global $api_key;
