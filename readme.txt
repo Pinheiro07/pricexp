@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:57]
+- Ajuste da Nova Imagem `favicon.png` Enviada pelo Usuário para Proporção 1:1 Quadrada:
+  * Recortadas as margens da nova imagem `favicon.png` enviada pelo usuário (originalmente 1536x1024) e convertida para 512x512 com proporção 1:1 perfeita sem distorções.
+  * Reconstruído o arquivo `favicon.ico` sincronizado em todas as resoluções.
+  * Atualizadas as tags de versão (`v=300`) em `index.html`.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:54]
 - Recriação do `favicon.ico` e `favicon.png` com a Logo Colorida Oficial (`logo_login.png`):
   * Extraído diretamente o emblema colorido original (verde e azul) de `logo_login.png` com recorte limpo proporcional.
