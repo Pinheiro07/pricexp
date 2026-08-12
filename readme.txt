@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 16:05]
+- Ampliação da Logo Horizontal e Subtítulo no Cabeçalho do Dashboard (`v=123`):
+  * Aumentada a altura da logo horizontal do topo da aba Visão Geral (`.dashboard-logo`) de `75px` para `115px` no desktop (e `85px` no mobile).
+  * Aumentado o tamanho da fonte do texto descritivo abaixo da logo ("Aqui está o resumo das suas finanças.") para `1.15rem` com peso médio `font-weight: 500`.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:58]
 - Ampliação Máxima do Emblema do Favicon (`v=400`):
   * Removidos 100% dos espaçamentos internos/margens da logo, expandindo a imagem para preencher totalmente as extremidades da tela de 512x512 pixels (0px de padding).
