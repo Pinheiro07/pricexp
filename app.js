@@ -2325,7 +2325,7 @@ function renderTourStep(stepIndex) {
     if (targetEl) {
         targetEl.classList.add('tour-target-highlight');
         if (isMobileView()) {
-            const headerOffset = 75;
+            const headerOffset = 15;
             const elementPosition = targetEl.getBoundingClientRect().top + window.pageYOffset;
             const offsetPosition = Math.max(0, elementPosition - headerOffset);
 
