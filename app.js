@@ -652,28 +652,40 @@ if (btnLogoutMobile) {
 
 const DEFAULT_BANKS = ["Geral", "Nubank", "Itaú", "Bradesco", "Banco do Brasil", "Inter", "Santander", "C6 Bank", "Sicredi", "Caixa", "Outro"];
 
-function populateTransactionBankSelector() {
-    const bankSelect = document.getElementById('bank-name');
-    if (!bankSelect) return;
-    const currentVal = bankSelect.value;
-    
-    // Obter bancos adicionais salvos em localStorage e em transações existentes
+function getAvailableBanks() {
     const customBanks = JSON.parse(localStorage.getItem('custom_user_banks') || '[]');
-    const txBanks = transactions.map(t => t.bank_name).filter(Boolean);
-    const allBanks = Array.from(new Set([...DEFAULT_BANKS, ...customBanks, ...txBanks]));
-    
-    bankSelect.innerHTML = '';
+    const txBanks = (transactions || []).map(t => t.bank_name).filter(Boolean);
+    return Array.from(new Set([...DEFAULT_BANKS, ...customBanks, ...txBanks]));
+}
+
+function populateBankSelectElement(selectEl, selectedVal) {
+    if (!selectEl) return;
+    const allBanks = getAvailableBanks();
+    selectEl.innerHTML = '';
     allBanks.forEach(bank => {
         const opt = document.createElement('option');
         opt.value = bank;
         opt.textContent = bank === 'Geral' ? 'Conta Geral / Dinheiro' : (bank === 'Outro' ? 'Outro / Carteira' : bank);
-        bankSelect.appendChild(opt);
+        selectEl.appendChild(opt);
     });
-    
-    if (currentVal && allBanks.includes(currentVal)) {
-        bankSelect.value = currentVal;
+
+    if (selectedVal && allBanks.includes(selectedVal)) {
+        selectEl.value = selectedVal;
+    } else if (selectedVal) {
+        const opt = document.createElement('option');
+        opt.value = selectedVal;
+        opt.textContent = selectedVal;
+        selectEl.appendChild(opt);
+        selectEl.value = selectedVal;
     } else {
-        bankSelect.value = 'Geral';
+        selectEl.value = 'Geral';
+    }
+}
+
+function populateTransactionBankSelector() {
+    const bankSelect = document.getElementById('bank-name');
+    if (bankSelect) {
+        populateBankSelectElement(bankSelect, bankSelect.value);
     }
 }
 
@@ -971,21 +983,10 @@ function openEditTxModal(id) {
     const typeRadio = document.querySelector(`input[name="edit-type"][value="${tx.type}"]`);
     if (typeRadio) typeRadio.checked = true;
 
-    // Banco — adiciona entrada personalizada se não existir
+    // Banco — popula com todos os bancos disponíveis (padrões, customizados e existentes)
     const bankSel = document.getElementById('edit-tx-bank');
     if (bankSel) {
-        const bankVal = tx.bank_name || 'Geral';
-        let bankExists = false;
-        for (let opt of bankSel.options) {
-            if (opt.value === bankVal) { bankExists = true; break; }
-        }
-        if (!bankExists) {
-            const opt = document.createElement('option');
-            opt.value = bankVal;
-            opt.textContent = bankVal;
-            bankSel.appendChild(opt);
-        }
-        bankSel.value = bankVal;
+        populateBankSelectElement(bankSel, tx.bank_name || 'Geral');
     }
 
     // Categorias
