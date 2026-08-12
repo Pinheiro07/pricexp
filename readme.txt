@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:42]
+- Ajuste e Ampliação Proporcional do Favicon (`favicon.png?v=2`):
+  * Recorte automático da margem transparente vazia do símbolo da logo (bounding box preciso), tornando o símbolo do PriceXP grande, centralizado e totalmente proporcional na aba do navegador.
+  * Inclusão de tamanhos explícitos (`32x32`, `16x16`, `180x180`) e versão `?v=2` em `index.html`.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:38]
 - Atualização do Título da Aba do Navegador & Adição do Favicon Oficial:
   * Alterado o título da aplicação em `index.html` para `PriceXP - Controle Financeiro Inteligente`.
