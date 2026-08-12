@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:58]
+- Ampliação Máxima do Emblema do Favicon (`v=400`):
+  * Removidos 100% dos espaçamentos internos/margens da logo, expandindo a imagem para preencher totalmente as extremidades da tela de 512x512 pixels (0px de padding).
+  * O símbolo agora aparece significativamente maior, mais visível e destacado na aba do navegador.
+  * Recompilados `favicon.png` e `favicon.ico` com versão `v=400` em `index.html`.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:57]
 - Ajuste da Nova Imagem `favicon.png` Enviada pelo Usuário para Proporção 1:1 Quadrada:
   * Recortadas as margens da nova imagem `favicon.png` enviada pelo usuário (originalmente 1536x1024) e convertida para 512x512 com proporção 1:1 perfeita sem distorções.
