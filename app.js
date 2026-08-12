@@ -2097,6 +2097,10 @@ if (btnSharedDisconnect) {
 // ==========================================================================
 // INTERACTIVE ONBOARDING TOUR ENGINE (SPOTLIGHT & GUIDED STEPS)
 // ==========================================================================
+function isMobileView() {
+    return window.innerWidth <= 768;
+}
+
 const TOUR_STEPS = [
     {
         title: 'Boas-vindas ao PriceXP! 🚀',
@@ -2170,11 +2174,87 @@ const TOUR_STEPS = [
     }
 ];
 
+const MOBILE_TOUR_STEPS = [
+    {
+        title: 'PriceXP no Celular! 📱',
+        badge: 'Guia Mobile',
+        body: 'Bem-vindo! No smartphone, o PriceXP conta com uma navegação prática no rodapé para você controlar tudo facilmente com um toque.',
+        target: null,
+        tab: 'dashboard'
+    },
+    {
+        title: 'Navegação por Toque 📲',
+        badge: 'Passo 1 de 9',
+        body: 'Use a barra fixa no rodapé para alternar instantaneamente entre a <b>Dashboard</b>, <b>Lançamentos</b>, <b>Cartões</b> e <b>Minha Conta</b>.',
+        target: '#mobile-bottom-nav',
+        tab: 'dashboard'
+    },
+    {
+        title: 'Resumo & Saldo Atual 💳',
+        badge: 'Passo 2 de 9',
+        body: 'Acompanhe suas Receitas, Saídas e o Saldo Atual em tempo real diretamente nos cards superiores.',
+        target: '.summary-cards',
+        tab: 'dashboard'
+    },
+    {
+        title: 'Filtros Rápidos 🔍',
+        badge: 'Passo 3 de 9',
+        body: 'Filtre suas movimentações por banco ou altere a exibição entre os meses do ano no menu do topo.',
+        target: '.dashboard-filter',
+        tab: 'dashboard'
+    },
+    {
+        title: 'Lançar Receita ou Saída 📝',
+        badge: 'Passo 4 de 9',
+        body: 'Toque no botão de <b>Lançamentos</b> no rodapé para registrar novos gastos, entradas ou valores parcelados.',
+        target: '#transaction-form',
+        tab: 'lancamentos'
+    },
+    {
+        title: 'Importar Extrato Bancário 📥',
+        badge: 'Passo 5 de 9',
+        body: 'Importe extratos em arquivo <b>OFX ou CSV</b> do seu banco diretamente pelo celular.',
+        target: '#tab-lancamentos .top-header button',
+        tab: 'lancamentos'
+    },
+    {
+        title: 'Gerenciar Cartões 💳',
+        badge: 'Passo 6 de 9',
+        body: 'Cadastre cartões de crédito, limite e acompanhe o valor da fatura atual em tempo real.',
+        target: '#card-form',
+        tab: 'cartoes'
+    },
+    {
+        title: 'Conta Conjunta 👫',
+        badge: 'Passo 7 de 9',
+        body: 'Conecte com seu parceiro(a) para compartilharem o saldo e gastos em tempo real.',
+        target: '#tab-shared .card:first-child',
+        tab: 'shared'
+    },
+    {
+        title: 'Minha Conta & Segurança 👤',
+        badge: 'Passo 8 de 9',
+        body: 'Atualize sua foto de perfil, dados pessoais e senha a qualquer momento.',
+        target: '#profile-form',
+        tab: 'config'
+    },
+    {
+        title: 'Tudo pronto no Celular! 🎉',
+        badge: 'Tutorial Concluído',
+        body: 'Você já sabe usar o PriceXP no smartphone! Se quiser rever este guia, acesse a aba <b>Minha Conta</b> e toque em <b>"Ver Tutorial"</b>.',
+        target: null,
+        tab: 'dashboard'
+    }
+];
+
 let currentTourStep = 0;
 
 function switchTab(tabName) {
     const desktopBtn = document.querySelector(`.nav-links li[data-tab="${tabName}"]`);
     if (desktopBtn) desktopBtn.click();
+
+    const mobBtn = document.querySelector(`.mob-nav-btn[data-mobile-tab="${tabName}"]`);
+    if (mobBtn) mobBtn.click();
 }
 
 function startTour(forceStart = false) {
@@ -2185,8 +2265,13 @@ function startTour(forceStart = false) {
     renderTourStep(0);
 }
 
+function getActiveTourSteps() {
+    return isMobileView() ? MOBILE_TOUR_STEPS : TOUR_STEPS;
+}
+
 function renderTourStep(stepIndex) {
-    const step = TOUR_STEPS[stepIndex];
+    const steps = getActiveTourSteps();
+    const step = steps[stepIndex];
     if (!step) {
         endTour();
         return;
@@ -2204,8 +2289,8 @@ function renderTourStep(stepIndex) {
     });
 
     const isFirst = stepIndex === 0;
-    const isLast = stepIndex === TOUR_STEPS.length - 1;
-    const progressPercent = Math.round(((stepIndex + 1) / TOUR_STEPS.length) * 100);
+    const isLast = stepIndex === steps.length - 1;
+    const progressPercent = Math.round(((stepIndex + 1) / steps.length) * 100);
 
     if (tooltip) {
         tooltip.innerHTML = `
@@ -2214,7 +2299,7 @@ function renderTourStep(stepIndex) {
             </div>
             <div class="tour-header">
                 <span class="tour-step-badge">${step.badge}</span>
-                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">${stepIndex + 1} / ${TOUR_STEPS.length}</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">${stepIndex + 1} / ${steps.length}</span>
             </div>
             <div class="tour-title">${step.title}</div>
             <div class="tour-body">${step.body}</div>
@@ -2239,7 +2324,7 @@ function renderTourStep(stepIndex) {
     let targetEl = step.target ? document.querySelector(step.target) : null;
     if (targetEl) {
         targetEl.classList.add('tour-target-highlight');
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        targetEl.scrollIntoView({ behavior: 'smooth', block: isMobileView() ? 'center' : 'start' });
 
         setTimeout(() => {
             if (tooltip) positionTooltipNextToTarget(tooltip, targetEl);
@@ -2252,6 +2337,14 @@ function renderTourStep(stepIndex) {
 }
 
 function positionTooltipNextToTarget(tooltip, targetEl) {
+    if (isMobileView()) {
+        tooltip.style.top = 'auto';
+        tooltip.style.bottom = '80px';
+        tooltip.style.left = '50%';
+        tooltip.style.transform = 'translateX(-50%)';
+        return;
+    }
+
     const rect = targetEl.getBoundingClientRect();
     const tooltipRect = tooltip.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
@@ -2265,33 +2358,23 @@ function positionTooltipNextToTarget(tooltip, targetEl) {
     let top = 0;
     let left = 0;
 
-    // Tenta posicionar ABAIXO do elemento se houver espaço
     if (spaceBelow >= tooltipRect.height + 20) {
         top = rect.bottom + 16;
         left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-    }
-    // Tenta posicionar ACIMA do elemento se houver espaço
-    else if (spaceAbove >= tooltipRect.height + 20) {
+    } else if (spaceAbove >= tooltipRect.height + 20) {
         top = rect.top - tooltipRect.height - 16;
         left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-    }
-    // Tenta posicionar À DIREITA se houver espaço
-    else if (spaceRight >= tooltipRect.width + 20) {
+    } else if (spaceRight >= tooltipRect.width + 20) {
         top = Math.max(20, rect.top + (rect.height / 2) - (tooltipRect.height / 2));
         left = rect.right + 16;
-    }
-    // Tenta posicionar À ESQUERDA se houver espaço
-    else if (spaceLeft >= tooltipRect.width + 20) {
+    } else if (spaceLeft >= tooltipRect.width + 20) {
         top = Math.max(20, rect.top + (rect.height / 2) - (tooltipRect.height / 2));
         left = rect.left - tooltipRect.width - 16;
-    }
-    // Em telas pequenas ou elementos muito altos, posiciona na parte inferior da tela sem cobrir o topo do elemento
-    else {
+    } else {
         top = viewportHeight - tooltipRect.height - 24;
         left = (viewportWidth / 2) - (tooltipRect.width / 2);
     }
 
-    // Ajusta limites para nunca ultrapassar a tela
     if (left < 16) left = 16;
     if (left + tooltipRect.width > viewportWidth - 16) {
         left = viewportWidth - tooltipRect.width - 16;
@@ -2307,7 +2390,8 @@ function positionTooltipNextToTarget(tooltip, targetEl) {
 }
 
 function nextTourStep() {
-    if (currentTourStep < TOUR_STEPS.length - 1) {
+    const steps = getActiveTourSteps();
+    if (currentTourStep < steps.length - 1) {
         currentTourStep++;
         renderTourStep(currentTourStep);
     } else {

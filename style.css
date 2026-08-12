@@ -1378,3 +1378,28 @@ body.light-theme .credit-card-item .card-value-success {
     color: #ffffff;
 }
 
+@media (max-width: 768px) {
+    .tour-tooltip-card {
+        position: fixed !important;
+        bottom: 80px !important;
+        top: auto !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 92vw !important;
+        max-width: 420px !important;
+        padding: 1.25rem 1.25rem !important;
+        border-radius: 16px !important;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
+        z-index: 10000 !important;
+    }
+
+    .tour-target-highlight {
+        scroll-margin-top: 70px;
+        scroll-margin-bottom: 240px;
+    }
+
+    .mobile-bottom-nav.tour-target-highlight {
+        z-index: 10001 !important;
+    }
+}
+
