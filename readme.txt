@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[11/08/2026 - 21:00]
+- Persistência permanente de novos Bancos/Instituições adicionados pelo botão '+':
+  * Salvamento automático do novo banco no `localStorage` sob a chave `custom_user_banks`.
+  * Atualização da função `populateTransactionBankSelector()` para mesclar bancos padrões, bancos customizados salvos e bancos das transações existentes.
+  * Mantém o novo banco fixo nas opções mesmo antes de criar lançamentos e após recarregar a página.
+  * Versão atualizada (`v=106`) enviada ao GitHub.
+
 [11/08/2026 - 20:50]
 - Correção completa da funcionalidade de Edição de Lançamentos:
   * Solucionado o `TypeError` em `populateEditCategorySelect` ao tentar filtrar o objeto global `CATEGORIES` como um array.
