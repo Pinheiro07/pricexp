@@ -2,6 +2,15 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:22]
+- Painel Admin de Auditoria de Logs & Exclusão Direta de Lançamentos:
+  * Criação do sistema de auditoria com a tabela `user_activity_logs` e a função helper `logUserActivity()` registrando em tempo real: criação/edição/exclusão de lançamentos, importação de extrato OFX/CSV, cadastro/exclusão de cartões, logins e edições de perfil.
+  * Nova Aba no Painel Admin '📋 Logs de Auditoria & Atividades' com filtros por Usuário, Tipo de Ação, Data Inicial e Data Final.
+  * Sistema de Proteção de Privacidade Financeira: valores (R$), bancos e descrições borrados por padrão com a classe CSS `.financial-blur`.
+  * Barra de Desbloqueio Admin com Chave de Acesso (`pricexp2026`): ao validar a chave, o desfoque é desativado para gerar relatórios detalhados ao cliente suporte, além do botão '🖨️ Imprimir Relatório'.
+  * Nova Aba no Painel Admin '💸 Lançamentos do Banco': busca e exclusão direta de qualquer lançamento de qualquer usuário do banco com registro do log `ADMIN_EXCLUIR_LANCAMENTO`.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:12]
 - Inclusão da Aba Conta Conjunta na Barra Inferior Mobile (`v=122`):
   * Adicionado o botão dedicado 'Conjunta 👫' com ícone de usuários na barra fixa de navegação inferior por toque (`#mobile-bottom-nav`), permitindo acesso direto em smartphones (*Dashboard, Lançamentos, Cartões, Conjunta e Minha Conta*).
