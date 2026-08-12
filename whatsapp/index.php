@@ -62,7 +62,6 @@ if ($action === 'recreate') {
     evo_request($api_url . '/instance/create', 'POST', [
         'instanceName' => $instance,
         'qrcode' => true,
-        'number' => '552833441530',
         'integration' => 'WHATSAPP-BAILEYS'
     ]);
     sleep(1);
@@ -97,7 +96,6 @@ if (empty($instances) || (is_array($instances) && count($instances) === 0)) {
     evo_request($api_url . '/instance/create', 'POST', [
         'instanceName' => $instance,
         'qrcode' => true,
-        'number' => '552833441530',
         'integration' => 'WHATSAPP-BAILEYS'
     ]);
 }
