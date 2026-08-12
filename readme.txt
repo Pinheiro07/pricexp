@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 12:17]
+- Redesign do card Zona de Perigo na aba Minha Conta:
+  * Aplicação de `padding: 2.25rem` e espaçamento entre o título, parágrafo descritivo e botão de exclusão.
+  * Correção do texto 'Ao excluir sua conta' e inclusão de ícone vetorial `trash-2` no botão.
+  * Versão atualizada (`v=109`) enviada ao GitHub.
+
 [12/08/2026 - 12:14]
 - Padronização visual dos cabeçalhos das abas Lançamentos, Cartões e Minha Conta:
   * Adicionados ícones vetoriais Lucide alinhados com `display: flex; align-items: center; gap: 0.5rem` nos títulos `<h2>` e `<h3>` de todas as telas.
