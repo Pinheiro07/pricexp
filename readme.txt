@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 13:30]
+- Eliminação de Sobreposição de Orientação no Tutorial Mobile (Algoritmo Oposto):
+  * Ajuste automático de rolagem mobile (`headerOffset = 75`) alinhando o elemento destacado na parte superior visível da tela do celular.
+  * Inteligência de posicionamento dinâmico: se o elemento destacado estiver na metade inferior da tela (ex: barra de navegação `#mobile-bottom-nav`), o card explicativo move-se para o topo (`top: 75px`). Se o elemento estiver no topo/meio, o card move-se para o rodapé (`bottom: 80px`).
+  * Garante 100% de visibilidade sem cobrir formulários, botões ou dados no smartphone.
+  * Versão atualizada (`v=114`) enviada ao GitHub.
+
 [12/08/2026 - 13:14]
 - Adaptação Completa do Tutorial para Dispositivos Móveis (Mobile First):
   * Criação da lista dedicada `MOBILE_TOUR_STEPS` adaptada para smartphones, guiando a navegação por toque na barra inferior fixa (`#mobile-bottom-nav`).
