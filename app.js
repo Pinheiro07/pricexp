@@ -2123,7 +2123,7 @@ const TOUR_STEPS = [
         title: 'Gráficos de Desempenho 📊',
         badge: 'Passo 3 de 9',
         body: 'Visualize a distribuição de despesas por categoria, a relação de Receita x Despesa mensal e a evolução do seu patrimônio.',
-        target: '.charts-grid',
+        target: '.charts-grid > div:first-child',
         tab: 'dashboard'
     },
     {
@@ -2137,28 +2137,28 @@ const TOUR_STEPS = [
         title: 'Importar Extrato Bancário 📥',
         badge: 'Passo 5 de 9',
         body: 'Economize tempo! Importe seus extratos bancários em arquivo <b>OFX ou CSV</b> para lançar movimentações automaticamente.',
-        target: '#tab-lancamentos .top-header',
+        target: '#tab-lancamentos .top-header button',
         tab: 'lancamentos'
     },
     {
         title: 'Gestão de Cartões de Crédito 💳',
         badge: 'Passo 6 de 9',
         body: 'Controle os limites, dias de fechamento e vencimento dos seus cartões de crédito e acompanhe o valor das suas faturas atuais.',
-        target: '#tab-cartoes .transactions-layout',
+        target: '#card-form',
         tab: 'cartoes'
     },
     {
         title: 'Conta Conjunta (Espaço Compartilhado) 👫',
         badge: 'Passo 7 de 9',
         body: 'Conecte seu ambiente financeiro com seu parceiro(a)! Vocês compartilharão lançamentos, cartões e saldo mantendo senhas individuais.',
-        target: '#tab-shared > div',
+        target: '#tab-shared .card:first-child',
         tab: 'shared'
     },
     {
         title: 'Minha Conta & Segurança 👤',
         badge: 'Passo 8 de 9',
         body: 'Personalize sua foto de perfil, altere seu nome, e-mail ou senha com total proteção e criptografia.',
-        target: '#tab-config .transactions-layout',
+        target: '#profile-form',
         tab: 'config'
     },
     {
@@ -2239,11 +2239,11 @@ function renderTourStep(stepIndex) {
     let targetEl = step.target ? document.querySelector(step.target) : null;
     if (targetEl) {
         targetEl.classList.add('tour-target-highlight');
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         setTimeout(() => {
             if (tooltip) positionTooltipNextToTarget(tooltip, targetEl);
-        }, 300);
+        }, 350);
     } else if (tooltip) {
         tooltip.style.top = '50%';
         tooltip.style.left = '50%';
@@ -2257,16 +2257,48 @@ function positionTooltipNextToTarget(tooltip, targetEl) {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    let top = rect.bottom + 16;
-    let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const spaceRight = viewportWidth - rect.right;
+    const spaceLeft = rect.left;
 
-    if (top + tooltipRect.height > viewportHeight - 20) {
-        top = Math.max(20, rect.top - tooltipRect.height - 16);
+    let top = 0;
+    let left = 0;
+
+    // Tenta posicionar ABAIXO do elemento se houver espaço
+    if (spaceBelow >= tooltipRect.height + 20) {
+        top = rect.bottom + 16;
+        left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+    }
+    // Tenta posicionar ACIMA do elemento se houver espaço
+    else if (spaceAbove >= tooltipRect.height + 20) {
+        top = rect.top - tooltipRect.height - 16;
+        left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+    }
+    // Tenta posicionar À DIREITA se houver espaço
+    else if (spaceRight >= tooltipRect.width + 20) {
+        top = Math.max(20, rect.top + (rect.height / 2) - (tooltipRect.height / 2));
+        left = rect.right + 16;
+    }
+    // Tenta posicionar À ESQUERDA se houver espaço
+    else if (spaceLeft >= tooltipRect.width + 20) {
+        top = Math.max(20, rect.top + (rect.height / 2) - (tooltipRect.height / 2));
+        left = rect.left - tooltipRect.width - 16;
+    }
+    // Em telas pequenas ou elementos muito altos, posiciona na parte inferior da tela sem cobrir o topo do elemento
+    else {
+        top = viewportHeight - tooltipRect.height - 24;
+        left = (viewportWidth / 2) - (tooltipRect.width / 2);
     }
 
+    // Ajusta limites para nunca ultrapassar a tela
     if (left < 16) left = 16;
     if (left + tooltipRect.width > viewportWidth - 16) {
         left = viewportWidth - tooltipRect.width - 16;
+    }
+    if (top < 16) top = 16;
+    if (top + tooltipRect.height > viewportHeight - 16) {
+        top = viewportHeight - tooltipRect.height - 16;
     }
 
     tooltip.style.top = `${top}px`;
