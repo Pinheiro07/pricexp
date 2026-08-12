@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:25]
+- Correção de Erro de Migração SQL 1146 (user_activity_logs):
+  * Adicionada instrução auto-executável `CREATE TABLE IF NOT EXISTS user_activity_logs` diretamente na inicialização do `api/admin_users.php` e dentro do bloco de fallback do `logUserActivity()` no `api/config.php`.
+  * Resolve instantaneamente qualquer ausência prévia da tabela de logs no MySQL da VPS.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:22]
 - Painel Admin de Auditoria de Logs & Exclusão Direta de Lançamentos:
   * Criação do sistema de auditoria com a tabela `user_activity_logs` e a função helper `logUserActivity()` registrando em tempo real: criação/edição/exclusão de lançamentos, importação de extrato OFX/CSV, cadastro/exclusão de cartões, logins e edições de perfil.
