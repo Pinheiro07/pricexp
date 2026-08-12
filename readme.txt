@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:45]
+- Geração do Arquivo Padrão `favicon.ico` para Compatibilidade Universal:
+  * Gerado o arquivo binário `favicon.ico` (contendo as resoluções 16x16, 32x32, 48x48 e 64x64) para garantir suporte nativo imediato em 100% dos navegadores (Chrome, Edge, Firefox, Safari).
+  * Adicionadas as tags `<link rel="shortcut icon" href="favicon.ico?v=3">` e `<link rel="icon" type="image/x-icon" href="favicon.ico?v=3">` em `index.html`.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:42]
 - Ajuste e Ampliação Proporcional do Favicon (`favicon.png?v=2`):
   * Recorte automático da margem transparente vazia do símbolo da logo (bounding box preciso), tornando o símbolo do PriceXP grande, centralizado e totalmente proporcional na aba do navegador.
