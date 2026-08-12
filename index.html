@@ -471,12 +471,14 @@
                     </div>
 
                     <!-- Danger Zone -->
-                    <div class="card list-container" style="border: 1px solid var(--danger-color);">
-                        <h3 class="text-danger" style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="alert-triangle"></i> Zona de Perigo</h3>
-                        <p class="text-muted" style="margin-bottom: 1rem;">Ação excluir sua conta, todos os seus lançamentos, receitas, despesas e configurações serão apagados <strong>permanentemente</strong>. Essa ação não pode ser desfeita.</p>
+                    <div class="card list-container" style="padding: 2.25rem; border: 1px solid rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.02); border-radius: 1rem;">
+                        <h3 class="text-danger" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem; font-size: 1.15rem; font-weight: 600;"><i data-lucide="alert-triangle"></i> Zona de Perigo</h3>
+                        <p class="text-muted" style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.75rem;">
+                            Ao excluir sua conta, todos os seus lançamentos, receitas, despesas e configurações serão apagados <strong>permanentemente</strong>. Essa ação não pode ser desfeita.
+                        </p>
                         
-                        <button type="button" class="btn-secondary" id="btn-delete-account" style="background-color: transparent; color: var(--danger-color); border: 2px solid var(--danger-color); width: 100%;">
-                            Excluir Minha Conta
+                        <button type="button" class="btn-secondary" id="btn-delete-account" style="background-color: transparent; color: var(--danger-color); border: 1.5px solid var(--danger-color); padding: 0.75rem 1.25rem; width: 100%; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 8px;">
+                            <i data-lucide="trash-2"></i> Excluir Minha Conta
                         </button>
                     </div>
                 </div>
@@ -690,6 +692,6 @@
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     
     <!-- Custom JS -->
-    <script src="app.js?v=108"></script>
+    <script src="app.js?v=109"></script>
 </body>
 </html>
