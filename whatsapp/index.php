@@ -65,6 +65,10 @@ if ($action === 'recreate') {
         'number' => '552833441530',
         'integration' => 'WHATSAPP-BAILEYS'
     ]);
+    sleep(1);
+    evo_request($api_url . '/instance/restart/' . $instance, 'POST');
+    sleep(1);
+    evo_request($api_url . '/instance/connect/' . $instance, 'GET');
     header('Location: index.php');
     exit;
 }
@@ -81,6 +85,11 @@ if (is_array($instances) && !empty($instances)) {
             if ($status === 'open') $is_open = true;
         }
     }
+}
+
+// Acorda a instância se estiver em estado 'close'
+if ($status === 'close' && empty($action)) {
+    evo_request($api_url . '/instance/restart/' . $instance, 'POST');
 }
 
 // Se não houver instância, cria automaticamente
