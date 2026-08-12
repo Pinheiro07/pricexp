@@ -933,8 +933,8 @@ button {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        position: relative;
-        width: 100%;
+        position: relative !important;
+        width: 100% !important;
         height: 58px;
         background: linear-gradient(135deg, #1e3a8a 0%, #10b981 100%);
         padding: 0 1rem;
