@@ -11,7 +11,7 @@
     <!-- Icons (Lucide) -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=120">
+    <link rel="stylesheet" href="style.css?v=121">
 </head>
 <body class="light-theme">
     
@@ -249,9 +249,9 @@
 
             <!-- LANÇAMENTOS TAB -->
             <section id="tab-lancamentos" class="tab-content">
-                <div class="top-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                <header class="top-header">
                     <div>
-                        <h2 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="list"></i> Lançamentos</h2>
+                        <h2><i data-lucide="list"></i> Lançamentos</h2>
                         <p>Adicione e gerencie suas despesas e receitas</p>
                     </div>
                     <div>
@@ -260,7 +260,7 @@
                             <i data-lucide="upload"></i> Importar Extrato (OFX / CSV)
                         </button>
                     </div>
-                </div>
+                </header>
                 
                 <div class="transactions-layout">
                     <!-- Formulário -->
@@ -368,8 +368,10 @@
             <!-- CARTOES TAB -->
             <section id="tab-cartoes" class="tab-content">
                 <header class="top-header">
-                    <h2 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="credit-card"></i> Meus Cartões de Crédito</h2>
-                    <p>Cadastre e gerencie seus cartões e acompanhe faturas.</p>
+                    <div>
+                        <h2><i data-lucide="credit-card"></i> Meus Cartões de Crédito</h2>
+                        <p>Cadastre e gerencie seus cartões e acompanhe faturas</p>
+                    </div>
                 </header>
                 
                 <div class="transactions-layout">
@@ -414,11 +416,11 @@
             <!-- CONFIG TAB -->
             <section id="tab-config" class="tab-content">
                 <header class="top-header">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; width: 100%;">
-                        <div>
-                            <h2 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="user"></i> Minha Conta</h2>
-                            <p class="text-muted" style="margin-top: 0.25rem;">Gerencie seus dados pessoais, foto de perfil e segurança.</p>
-                        </div>
+                    <div>
+                        <h2><i data-lucide="user"></i> Minha Conta</h2>
+                        <p>Gerencie seus dados pessoais, foto de perfil e segurança</p>
+                    </div>
+                    <div>
                         <button class="btn-secondary btn-start-tour-page" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; font-weight: 600; font-size: 0.88rem;">
                             <i data-lucide="help-circle"></i> Ver Tutorial Guia
                         </button>
@@ -494,9 +496,11 @@
 
             <!-- ===== ABA: CONTA CONJUNTA ===== -->
             <section id="tab-shared" class="tab-content">
-                <header style="margin-bottom: 1.75rem;">
-                    <h2 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;"><i data-lucide="users"></i> Conta Conjunta</h2>
-                    <p class="text-muted" style="margin: 0;">Compartilhe o controle financeiro, cartões e lançamentos com seu parceiro(a).</p>
+                <header class="top-header">
+                    <div>
+                        <h2><i data-lucide="users"></i> Conta Conjunta</h2>
+                        <p>Compartilhe o controle financeiro, cartões e lançamentos com seu parceiro(a)</p>
+                    </div>
                 </header>
 
                 <div style="display: flex; flex-direction: column; gap: 2.25rem; max-width: 850px;">
@@ -704,6 +708,6 @@
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     
     <!-- Custom JS -->
-    <script src="app.js?v=120"></script>
+    <script src="app.js?v=121"></script>
 </body>
 </html>

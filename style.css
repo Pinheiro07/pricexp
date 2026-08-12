@@ -226,14 +226,28 @@ h1, h2, h3, h4 { font-weight: 600; }
 }
 
 .top-header {
-    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+    width: 100%;
 }
 .top-header h2 {
     font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-main);
 }
 .top-header p {
     color: var(--text-muted);
+    font-size: 0.95rem;
     margin-top: 0.25rem;
+    margin-bottom: 0;
 }
 
 /* Cards */
@@ -890,7 +904,7 @@ button {
         flex-direction: column;
         gap: 0.75rem !important;
         width: 100%;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
     }
     
     .top-header > div:first-child {
@@ -898,6 +912,11 @@ button {
         flex-direction: column;
         align-items: center;
         width: 100%;
+    }
+
+    .top-header h2 {
+        font-size: 1.45rem;
+        justify-content: center;
     }
     
     .top-header p {
