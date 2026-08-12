@@ -2460,3 +2460,16 @@ if (btnStartTour) {
         startTour(true);
     });
 }
+
+const btnStartTourMobile = document.getElementById('btn-start-tour-mobile');
+if (btnStartTourMobile) {
+    btnStartTourMobile.addEventListener('click', () => {
+        startTour(true);
+    });
+}
+
+document.querySelectorAll('.btn-start-tour-page').forEach(btn => {
+    btn.addEventListener('click', () => {
+        startTour(true);
+    });
+});
