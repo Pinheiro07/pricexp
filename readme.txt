@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:48]
+- Incorporação de Favicon Inline Data-URI (SVG Embutido no HTML):
+  * Adicionada a tag `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,...">` contendo o vetor gráfico do PriceXP diretamente dentro do código de `index.html`.
+  * Elimina qualquer dependência de requisição HTTP separada, 404 de arquivos ou travamento no cache de favicons do navegador.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:45]
 - Geração do Arquivo Padrão `favicon.ico` para Compatibilidade Universal:
   * Gerado o arquivo binário `favicon.ico` (contendo as resoluções 16x16, 32x32, 48x48 e 64x64) para garantir suporte nativo imediato em 100% dos navegadores (Chrome, Edge, Firefox, Safari).
