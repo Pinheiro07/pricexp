@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 13:35]
+- Botão Dedicado de Ajuda/Tutorial no Cabeçalho Mobile:
+  * Inclusão do botão circular de ajuda `#btn-start-tour-mobile` com ícone `help-circle` no canto superior direito do cabeçalho fixo mobile `.mobile-header-bar`.
+  * Permite ao usuário re-executar o tutorial interativo a qualquer momento com um único toque no topo da tela do celular.
+  * Inclusão também do botão 'Ver Tutorial Guia' no cabeçalho da aba Minha Conta.
+  * Versão atualizada (`v=115`) enviada ao GitHub.
+
 [12/08/2026 - 13:30]
 - Eliminação de Sobreposição de Orientação no Tutorial Mobile (Algoritmo Oposto):
   * Ajuste automático de rolagem mobile (`headerOffset = 75`) alinhando o elemento destacado na parte superior visível da tela do celular.
