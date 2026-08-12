@@ -176,6 +176,7 @@
             
             <div class="logout-container" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.5rem;">
                 <a id="btn-admin-panel" href="api/admin_users.php" class="btn-secondary" style="display: none; justify-content: center; width: 100%; font-size: 0.9rem; padding: 0.5rem 1rem; text-decoration: none; color: #60a5fa; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 600;"><i data-lucide="shield-check"></i> <span>Painel Admin</span></a>
+                <button id="btn-start-tour" class="btn-secondary" style="justify-content: center; width: 100%; font-size: 0.9rem; padding: 0.5rem 1rem;"><i data-lucide="help-circle"></i> <span>Ver Tutorial</span></button>
                 <button id="btn-toggle-theme" class="btn-secondary" style="justify-content: center; width: 100%; font-size: 0.9rem; padding: 0.5rem 1rem;"><i data-lucide="sun"></i> <span>Tema Claro</span></button>
                 <button id="btn-logout" class="btn-secondary" style="justify-content: center; width: 100%; font-size: 0.9rem; padding: 0.5rem 1rem;"><i data-lucide="log-out"></i> Sair</button>
             </div>
@@ -688,10 +689,14 @@
         </div>
     </div>
 
+    <!-- Interactive Onboarding Tour Elements -->
+    <div id="tour-overlay" style="display: none;"></div>
+    <div id="tour-tooltip" class="tour-tooltip-card" style="display: none;"></div>
+
     <!-- External Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     
     <!-- Custom JS -->
-    <script src="app.js?v=109"></script>
+    <script src="app.js?v=110"></script>
 </body>
 </html>

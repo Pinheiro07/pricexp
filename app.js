@@ -387,6 +387,10 @@ function showApp(userData) {
     tabs[0].click(); // Go to dashboard
     lucide.createIcons();
     populateProfileForm(userData);
+
+    setTimeout(() => {
+        startTour(false);
+    }, 1200);
 }
 
 function showAuth() {
@@ -2087,5 +2091,223 @@ if (btnSharedDisconnect) {
         } catch (e) {
             alert('Erro ao desconectar conta conjunta.');
         }
+    });
+}
+
+// ==========================================================================
+// INTERACTIVE ONBOARDING TOUR ENGINE (SPOTLIGHT & GUIDED STEPS)
+// ==========================================================================
+const TOUR_STEPS = [
+    {
+        title: 'Boas-vindas ao PriceXP! 🚀',
+        badge: 'Guia do Primeiro Acesso',
+        body: 'Sua plataforma inteligente de gestão financeira pessoal e conjunta! Vamos fazer um tour guiado rápido por todas as funcionalidades.',
+        target: null,
+        tab: 'dashboard'
+    },
+    {
+        title: 'Resumo Financeiro & Saldo 💳',
+        badge: 'Passo 1 de 9',
+        body: 'Acompanhe em tempo real o total das suas <b>Receitas</b>, <b>Despesas / Investimentos</b> acumulados e o seu <b>Saldo Atual</b>.',
+        target: '.summary-cards',
+        tab: 'dashboard'
+    },
+    {
+        title: 'Filtros Inteligentes 🔍',
+        badge: 'Passo 2 de 9',
+        body: 'Filtre suas finanças por instituição financeira (Geral, Nubank, Itaú, etc.) e altere a visualização entre Mensal, Anual ou Todos os Tempos.',
+        target: '.dashboard-filter',
+        tab: 'dashboard'
+    },
+    {
+        title: 'Gráficos de Desempenho 📊',
+        badge: 'Passo 3 de 9',
+        body: 'Visualize a distribuição de despesas por categoria, a relação de Receita x Despesa mensal e a evolução do seu patrimônio.',
+        target: '.charts-grid',
+        tab: 'dashboard'
+    },
+    {
+        title: 'Lançamentos & Transações 📝',
+        badge: 'Passo 4 de 9',
+        body: 'Cadastre suas receitas e saídas facilmente. Você pode definir categorias, bancos, repetições (fixas ou parceladas) e formas de pagamento.',
+        target: '#transaction-form',
+        tab: 'lancamentos'
+    },
+    {
+        title: 'Importar Extrato Bancário 📥',
+        badge: 'Passo 5 de 9',
+        body: 'Economize tempo! Importe seus extratos bancários em arquivo <b>OFX ou CSV</b> para lançar movimentações automaticamente.',
+        target: '#tab-lancamentos .top-header',
+        tab: 'lancamentos'
+    },
+    {
+        title: 'Gestão de Cartões de Crédito 💳',
+        badge: 'Passo 6 de 9',
+        body: 'Controle os limites, dias de fechamento e vencimento dos seus cartões de crédito e acompanhe o valor das suas faturas atuais.',
+        target: '#tab-cartoes .transactions-layout',
+        tab: 'cartoes'
+    },
+    {
+        title: 'Conta Conjunta (Espaço Compartilhado) 👫',
+        badge: 'Passo 7 de 9',
+        body: 'Conecte seu ambiente financeiro com seu parceiro(a)! Vocês compartilharão lançamentos, cartões e saldo mantendo senhas individuais.',
+        target: '#tab-shared > div',
+        tab: 'shared'
+    },
+    {
+        title: 'Minha Conta & Segurança 👤',
+        badge: 'Passo 8 de 9',
+        body: 'Personalize sua foto de perfil, altere seu nome, e-mail ou senha com total proteção e criptografia.',
+        target: '#tab-config .transactions-layout',
+        tab: 'config'
+    },
+    {
+        title: 'Tudo pronto para começar! 🎉',
+        badge: 'Tutorial Concluído',
+        body: 'Você já conhece todas as ferramentas do PriceXP! Se quiser rever este guia a qualquer momento, clique no botão <b>"Ver Tutorial"</b> no menu lateral.',
+        target: null,
+        tab: 'dashboard'
+    }
+];
+
+let currentTourStep = 0;
+
+function switchTab(tabName) {
+    const desktopBtn = document.querySelector(`.nav-links li[data-tab="${tabName}"]`);
+    if (desktopBtn) desktopBtn.click();
+}
+
+function startTour(forceStart = false) {
+    const completed = localStorage.getItem('pricexp_tour_completed');
+    if (completed === 'true' && !forceStart) return;
+
+    currentTourStep = 0;
+    renderTourStep(0);
+}
+
+function renderTourStep(stepIndex) {
+    const step = TOUR_STEPS[stepIndex];
+    if (!step) {
+        endTour();
+        return;
+    }
+
+    if (step.tab) switchTab(step.tab);
+
+    const overlay = document.getElementById('tour-overlay');
+    const tooltip = document.getElementById('tour-tooltip');
+
+    if (overlay) overlay.style.display = 'block';
+
+    document.querySelectorAll('.tour-target-highlight').forEach(el => {
+        el.classList.remove('tour-target-highlight');
+    });
+
+    const isFirst = stepIndex === 0;
+    const isLast = stepIndex === TOUR_STEPS.length - 1;
+    const progressPercent = Math.round(((stepIndex + 1) / TOUR_STEPS.length) * 100);
+
+    if (tooltip) {
+        tooltip.innerHTML = `
+            <div class="tour-progress-track">
+                <div class="tour-progress-fill" style="width: ${progressPercent}%;"></div>
+            </div>
+            <div class="tour-header">
+                <span class="tour-step-badge">${step.badge}</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">${stepIndex + 1} / ${TOUR_STEPS.length}</span>
+            </div>
+            <div class="tour-title">${step.title}</div>
+            <div class="tour-body">${step.body}</div>
+            <div class="tour-footer">
+                <button class="tour-btn-skip" onclick="endTour()">Pular Tutorial</button>
+                <div class="tour-nav-btns">
+                    ${!isFirst ? `<button class="tour-btn tour-btn-prev" onclick="prevTourStep()"><i data-lucide="arrow-left"></i> Anterior</button>` : ''}
+                    <button class="tour-btn tour-btn-next" onclick="nextTourStep()">
+                        ${isLast ? 'Concluir 🎉' : 'Próximo <i data-lucide="arrow-right"></i>'}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        if (window.lucide && window.lucide.createIcons) {
+            window.lucide.createIcons();
+        }
+
+        tooltip.style.display = 'block';
+    }
+
+    let targetEl = step.target ? document.querySelector(step.target) : null;
+    if (targetEl) {
+        targetEl.classList.add('tour-target-highlight');
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        setTimeout(() => {
+            if (tooltip) positionTooltipNextToTarget(tooltip, targetEl);
+        }, 300);
+    } else if (tooltip) {
+        tooltip.style.top = '50%';
+        tooltip.style.left = '50%';
+        tooltip.style.transform = 'translate(-50%, -50%)';
+    }
+}
+
+function positionTooltipNextToTarget(tooltip, targetEl) {
+    const rect = targetEl.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let top = rect.bottom + 16;
+    let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+
+    if (top + tooltipRect.height > viewportHeight - 20) {
+        top = Math.max(20, rect.top - tooltipRect.height - 16);
+    }
+
+    if (left < 16) left = 16;
+    if (left + tooltipRect.width > viewportWidth - 16) {
+        left = viewportWidth - tooltipRect.width - 16;
+    }
+
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+    tooltip.style.transform = 'none';
+}
+
+function nextTourStep() {
+    if (currentTourStep < TOUR_STEPS.length - 1) {
+        currentTourStep++;
+        renderTourStep(currentTourStep);
+    } else {
+        endTour();
+    }
+}
+
+function prevTourStep() {
+    if (currentTourStep > 0) {
+        currentTourStep--;
+        renderTourStep(currentTourStep);
+    }
+}
+
+function endTour() {
+    localStorage.setItem('pricexp_tour_completed', 'true');
+    const overlay = document.getElementById('tour-overlay');
+    const tooltip = document.getElementById('tour-tooltip');
+
+    if (overlay) overlay.style.display = 'none';
+    if (tooltip) tooltip.style.display = 'none';
+
+    document.querySelectorAll('.tour-target-highlight').forEach(el => {
+        el.classList.remove('tour-target-highlight');
+    });
+
+    switchTab('dashboard');
+}
+
+const btnStartTour = document.getElementById('btn-start-tour');
+if (btnStartTour) {
+    btnStartTour.addEventListener('click', () => {
+        startTour(true);
     });
 }
