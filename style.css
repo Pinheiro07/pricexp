@@ -330,8 +330,10 @@ h1, h2, h3, h4 { font-weight: 600; }
 label {
     display: block;
     margin-bottom: 0.5rem;
-    color: var(--text-muted);
+    color: var(--text-main);
+    font-weight: 500;
     font-size: 0.9rem;
+    opacity: 0.95;
 }
 
 input[type="text"], input[type="number"], input[type="date"], input[type="month"], input[type="email"], input[type="password"], select {
@@ -1237,9 +1239,30 @@ body.light-theme .credit-card-item .card-value-success {
     position: relative !important;
     z-index: 9999 !important;
     box-shadow: 0 0 0 4px #10b981, 0 0 25px rgba(16, 185, 129, 0.6) !important;
-    border-radius: 8px !important;
+    border-radius: 12px !important;
+    background-color: var(--bg-card) !important;
     transition: box-shadow 0.3s ease, transform 0.3s ease !important;
     animation: tourPulse 2s infinite !important;
+}
+
+.tour-target-highlight label {
+    color: var(--text-main) !important;
+    font-weight: 600 !important;
+    opacity: 1 !important;
+}
+
+.tour-target-highlight h1,
+.tour-target-highlight h2,
+.tour-target-highlight h3,
+.tour-target-highlight h4,
+.tour-target-highlight p,
+.tour-target-highlight span {
+    opacity: 1 !important;
+}
+
+.tour-target-highlight .text-muted {
+    color: var(--text-main) !important;
+    opacity: 0.85 !important;
 }
 
 @keyframes tourPulse {
