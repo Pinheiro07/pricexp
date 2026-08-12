@@ -2,6 +2,14 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 16:24]
+- Implementação Completa da Integração de Lançamentos via WhatsApp:
+  * Auto-migração da coluna `whatsapp` na tabela `users` do banco de dados `financas_db` em `api/config.php`.
+  * Adicionados os campos de WhatsApp no formulário de Cadastro e na aba Minha Conta (`tab-config`).
+  * Atualizadas as APIs `api/login.php` e `api/profile.php` para armazenar e carregar o número do celular.
+  * Criado o endpoint de Webhook **`api/whatsapp_webhook.php`** preparado para receber mensagens/áudios (Evolution API / Z-API / Meta Webhook), extrair dados financeiros (tipo, valor, banco, categoria, descrição) e gravar diretamente no banco de dados com log de auditoria `WHATSAPP_LANCAMENTO`.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 16:05]
 - Ampliação da Logo Horizontal e Subtítulo no Cabeçalho do Dashboard (`v=123`):
   * Aumentada a altura da logo horizontal do topo da aba Visão Geral (`.dashboard-logo`) de `75px` para `115px` no desktop (e `85px` no mobile).
