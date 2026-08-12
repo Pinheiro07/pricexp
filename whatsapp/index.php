@@ -95,12 +95,19 @@ if (empty($instances) || (is_array($instances) && count($instances) === 0)) {
 
 // Busca QR Code
 $qr_data = null;
+$pairing_code = null;
+$qr_debug = null;
+
 if (!$is_open) {
     $qr_resp = evo_request($api_url . '/instance/connect/' . $instance);
+    $qr_debug = json_encode($qr_resp);
+    
     if (!empty($qr_resp['base64'])) {
         $qr_data = $qr_resp['base64'];
     } elseif (!empty($qr_resp['qrcode']['base64'])) {
         $qr_data = $qr_resp['qrcode']['base64'];
+    } elseif (!empty($qr_resp['code'])) {
+        $qr_data = $qr_resp['code'];
     }
     
     // Tenta também pegar o código de pareamento
@@ -204,6 +211,8 @@ if (!$is_open) {
 
         <div style="margin-top: 1rem; font-size: 0.72rem; color: #6b7280; text-align: left; background: #000; padding: 0.75rem; border-radius: 8px; font-family: monospace;">
             <strong>Diagnostics:</strong> Active: <?= $api_url ?><br>
+            <strong>Status:</strong> <?= htmlspecialchars($status) ?><br>
+            <strong>QR Output:</strong> <?= htmlspecialchars($qr_debug ?? 'N/A') ?><br>
             <?php foreach ($debug_log as $log): ?>
                 - <?= htmlspecialchars($log) ?><br>
             <?php endforeach; ?>
