@@ -657,9 +657,10 @@ function populateTransactionBankSelector() {
     if (!bankSelect) return;
     const currentVal = bankSelect.value;
     
-    // Obter bancos adicionais salvos em transações antigas
+    // Obter bancos adicionais salvos em localStorage e em transações existentes
+    const customBanks = JSON.parse(localStorage.getItem('custom_user_banks') || '[]');
     const txBanks = transactions.map(t => t.bank_name).filter(Boolean);
-    const allBanks = Array.from(new Set([...DEFAULT_BANKS, ...txBanks]));
+    const allBanks = Array.from(new Set([...DEFAULT_BANKS, ...customBanks, ...txBanks]));
     
     bankSelect.innerHTML = '';
     allBanks.forEach(bank => {
@@ -674,6 +675,36 @@ function populateTransactionBankSelector() {
     } else {
         bankSelect.value = 'Geral';
     }
+}
+
+const btnAddBank = document.getElementById('btn-add-bank');
+if (btnAddBank) {
+    btnAddBank.addEventListener('click', () => {
+        const newBank = prompt('Digite o nome do novo banco ou instituição:');
+        if (!newBank) return;
+        
+        const trimmedBank = newBank.trim();
+        if (trimmedBank === '') return;
+        
+        // Salvar banco no localStorage para ficar fixo permanentemente
+        const customBanks = JSON.parse(localStorage.getItem('custom_user_banks') || '[]');
+        if (!customBanks.some(b => b.toLowerCase() === trimmedBank.toLowerCase())) {
+            customBanks.push(trimmedBank);
+            localStorage.setItem('custom_user_banks', JSON.stringify(customBanks));
+        }
+        
+        populateTransactionBankSelector();
+        
+        const bankSelect = document.getElementById('bank-name');
+        if (bankSelect) {
+            for (let opt of bankSelect.options) {
+                if (opt.value.toLowerCase() === trimmedBank.toLowerCase()) {
+                    bankSelect.value = opt.value;
+                    break;
+                }
+            }
+        }
+    });
 }
 
 // --- TRANSACTIONS API ---
@@ -779,37 +810,6 @@ if (btnAddCategory) {
             }
         } catch (e) {
             alert('Erro de conexão ao adicionar categoria.');
-        }
-    });
-}
-
-const btnAddBank = document.getElementById('btn-add-bank');
-if (btnAddBank) {
-    btnAddBank.addEventListener('click', () => {
-        const newBank = prompt('Digite o nome do novo banco ou instituição:');
-        if (!newBank) return;
-        
-        const trimmedBank = newBank.trim();
-        if (trimmedBank === '') return;
-        
-        const bankSelect = document.getElementById('bank-name');
-        if (bankSelect) {
-            // Verificar se o banco já existe nas opções
-            let exists = false;
-            for (let opt of bankSelect.options) {
-                if (opt.value.toLowerCase() === trimmedBank.toLowerCase()) {
-                    exists = true;
-                    bankSelect.value = opt.value;
-                    break;
-                }
-            }
-            if (!exists) {
-                const opt = document.createElement('option');
-                opt.value = trimmedBank;
-                opt.textContent = trimmedBank;
-                bankSelect.appendChild(opt);
-                bankSelect.value = trimmedBank;
-            }
         }
     });
 }
