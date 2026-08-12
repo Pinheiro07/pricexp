@@ -37,6 +37,7 @@ if ($method === 'POST') {
     
     $stmt = $pdo->prepare("INSERT INTO credit_cards (user_id, name, credit_limit, closing_day, due_day) VALUES (?, ?, ?, ?, ?)");
     $stmt->execute([$workspace_id, $name, $credit_limit, $closing_day, $due_day]);
+    logUserActivity($pdo, $user_id, 'CRIAR_CARTAO', "Cadastro do cartão {$name}", $credit_limit);
     
     echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
     exit;
@@ -46,6 +47,7 @@ if ($method === 'DELETE') {
     $id = $_GET['id'] ?? 0;
     $stmt = $pdo->prepare("DELETE FROM credit_cards WHERE id = ? AND user_id = ?");
     $stmt->execute([$id, $workspace_id]);
+    logUserActivity($pdo, $user_id, 'EXCLUIR_CARTAO', "Exclusão do cartão #{$id}");
     
     echo json_encode(['success' => true]);
     exit;

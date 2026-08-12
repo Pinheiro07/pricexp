@@ -61,8 +61,10 @@ if ($method === 'POST') {
             
             $stmt->execute([$workspace_id, $user_id, $type, $category, $currentDesc, $amount, $currentDateStr, $card_id, $bank_name]);
         }
+        logUserActivity($pdo, $user_id, 'CRIAR_LANCAMENTO', "Lançamento repetido ({$installments}x) de {$type}: {$description}", $amount, ['category' => $category, 'bank' => $bank_name]);
     } else {
         $stmt->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $card_id, $bank_name]);
+        logUserActivity($pdo, $user_id, 'CRIAR_LANCAMENTO', "Lançamento de {$type}: {$description}", $amount, ['category' => $category, 'bank' => $bank_name]);
     }
     
     echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
@@ -85,6 +87,7 @@ if ($method === 'PUT') {
 
     $stmt = $pdo->prepare("UPDATE transactions SET type=?, category=?, description=?, amount=?, date=?, card_id=?, bank_name=? WHERE id=? AND user_id=?");
     $stmt->execute([$type, $category, $description, $amount, $date, $card_id, $bank_name, $id, $workspace_id]);
+    logUserActivity($pdo, $user_id, 'EDITAR_LANCAMENTO', "Edição do lançamento #{$id}: {$description}", $amount, ['category' => $category, 'bank' => $bank_name]);
 
     echo json_encode(['success' => true]);
     exit;
@@ -94,6 +97,7 @@ if ($method === 'DELETE') {
     $id = $_GET['id'] ?? 0;
     $stmt = $pdo->prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?");
     $stmt->execute([$id, $workspace_id]);
+    logUserActivity($pdo, $user_id, 'EXCLUIR_LANCAMENTO', "Exclusão do lançamento #{$id}");
     
     echo json_encode(['success' => true]);
     exit;

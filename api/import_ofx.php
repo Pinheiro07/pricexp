@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($rawInput)) {
             $stmt->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $bank_name]);
             $count++;
         }
+        logUserActivity($pdo, $user_id, 'IMPORTAR_EXTRATO', "Importação de extrato bancário ({$count} lançamentos)");
         echo json_encode(['success' => true, 'imported_count' => $count]);
         exit;
     }

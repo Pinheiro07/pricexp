@@ -97,6 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update') {
             $_SESSION['last_name'] = $last_name;
             $_SESSION['profile_picture'] = $profile_picture;
             
+            logUserActivity($pdo, $user_id, 'ALTERAR_PERFIL', "Atualização de perfil / dados cadastrais");
+
             echo json_encode(['success' => true]);
         } else {
             echo json_encode(['success' => false, 'error' => 'Falha ao atualizar o perfil.']);

@@ -241,6 +241,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setcookie('remember_token', $token, time() + 30 * 86400, '/', '', true, true);
             }
 
+            logUserActivity($pdo, $user['id'], 'LOGIN', "Autenticação realizada com sucesso no sistema");
+
             echo json_encode([
                 'success' => true, 
                 'first_name' => $user['first_name'],
