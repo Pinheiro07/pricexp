@@ -151,6 +151,7 @@ if ($method === 'POST') {
             </div>";
 
             sendEmail($partner_email, $subject, $messageHtml);
+            logUserActivity($pdo, $user_id, 'CONECTAR_CONTA_CONJUNTA', "Convite de conta conjunta enviado por e-mail para {$partner_email}");
 
             echo json_encode([
                 'success' => true, 
@@ -168,6 +169,7 @@ if ($method === 'POST') {
         // Conectar: O usuário informado passa a ter o $workspaceOwnerId como shared_owner_id
         $stmtUp = $pdo->prepare("UPDATE users SET shared_owner_id = ? WHERE id = ?");
         $stmtUp->execute([$workspaceOwnerId, $targetUser['id']]);
+        logUserActivity($pdo, $user_id, 'CONECTAR_CONTA_CONJUNTA', "Conta conjunta conectada com {$partner_email}");
 
         echo json_encode(['success' => true, 'message' => 'Conta conjunta conectada com sucesso!']);
         exit;
@@ -188,6 +190,8 @@ if ($method === 'POST') {
             $stmtUp = $pdo->prepare("UPDATE users SET shared_owner_id = NULL WHERE shared_owner_id = ?");
             $stmtUp->execute([$user_id]);
         }
+
+        logUserActivity($pdo, $user_id, 'DESCONECTAR_CONTA_CONJUNTA', "Conta conjunta desconectada");
 
         echo json_encode(['success' => true, 'message' => 'Conta conjunta desconectada.']);
         exit;

@@ -53,6 +53,7 @@ if ($method === 'POST') {
     try {
         $stmt = $pdo->prepare("INSERT INTO custom_categories (user_id, name, type) VALUES (?, ?, ?)");
         $stmt->execute([$workspace_id, $name, $type]);
+        logUserActivity($pdo, $user_id, 'CRIAR_CATEGORIA', "Criação de categoria personalizada: {$name} ({$type})");
         echo json_encode(['success' => true, 'name' => $name]);
     } catch (\PDOException $e) {
         if ($e->getCode() == 23000) {
