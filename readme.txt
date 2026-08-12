@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:12]
+- Inclusão da Aba Conta Conjunta na Barra Inferior Mobile (`v=122`):
+  * Adicionado o botão dedicado 'Conjunta 👫' com ícone de usuários na barra fixa de navegação inferior por toque (`#mobile-bottom-nav`), permitindo acesso direto em smartphones (*Dashboard, Lançamentos, Cartões, Conjunta e Minha Conta*).
+  * Adicionado o botão de atalho 'Conta Conjunta' no cabeçalho da aba Minha Conta.
+  * Versão atualizada (`v=122`) enviada ao GitHub.
+
 [12/08/2026 - 15:03]
 - Padronização Completa dos Títulos dos Cabeçalhos das Abas (`v=121`):
   * Padronização da estrutura HTML e CSS da classe `.top-header` em todas as 5 abas (*Visão Geral, Lançamentos, Cartões, Minha Conta e Conta Conjunta*).
