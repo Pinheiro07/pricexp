@@ -2,6 +2,15 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 12:50]
+- Implementação do Tutorial Guiado Interativo (Primeiro Acesso & Sob Demanda):
+  * Adicionado overlay com efeito de desfoque (`backdrop-filter: blur(4px)`) e destaque spotlight com borda verde pulsante (`.tour-target-highlight`) nos elementos guiados.
+  * Tutorial completo em 10 passos cobrindo todas as telas: Visão Geral, Filtros, Gráficos, Lançamentos, Importação OFX/CSV, Cartões de Crédito, Conta Conjunta e Minha Conta.
+  * Troca automática entre as abas durante o avanço dos passos do tutorial.
+  * Controle de execução única via `localStorage` (`pricexp_tour_completed`).
+  * Adicionado o botão '❓ Ver Tutorial' no menu lateral para re-executar o guia sempre que desejado.
+  * Versão atualizada (`v=110`) enviada ao GitHub.
+
 [12/08/2026 - 12:17]
 - Redesign do card Zona de Perigo na aba Minha Conta:
   * Aplicação de `padding: 2.25rem` e espaçamento entre o título, parágrafo descritivo e botão de exclusão.
