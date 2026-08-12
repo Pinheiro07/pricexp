@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 14:54]
+- Atualização Forçada de Cache para Estilos CSS no Celular (`v=117`):
+  * Atualizada a versão do arquivo `style.css` de `v=11` para `v=117` no `<head>` do `index.html`.
+  * Adicionado `position: relative !important` e `width: 100% !important` na classe `.mobile-header-bar` para garantir que navegadores de smartphones limpem o cache antigo e liberem a rolagem fluida da barra.
+  * Versão atualizada (`v=117`) enviada ao GitHub.
+
 [12/08/2026 - 14:51]
 - Remoção de Fixação do Cabeçalho Mobile ao Rolar a Tela:
   * Alteração da classe `.mobile-header-bar` no CSS de `position: fixed` para `position: relative` com `width: 100%`.
