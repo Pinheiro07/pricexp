@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 15:52]
+- Sincronização do Favicon Oficial do Usuário (`favicon.png` & `favicon.ico`):
+  * Compilado o arquivo `favicon.ico` a partir da imagem oficial fornecida pelo usuário em `favicon.png`.
+  * Apontadas todas as tags `<link rel="icon">` de `index.html` exclusivamente para a nova imagem `favicon.png` com o injetor dinâmico `Date.now()`.
+  * Versão enviada ao GitHub.
+
 [12/08/2026 - 15:50]
 - Injeção Dinâmica de Favicon de Alto Contraste com Timestamp (`Date.now()`):
   * Recriação das imagens `favicon.png` e `favicon.ico` com fundo sólido arredondado de alto contraste (`#0b0f19`), destacando o emblema em abas claras ou escuras.
