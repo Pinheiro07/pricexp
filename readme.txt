@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 14:58]
+- Remoção do Botão do Cabeçalho Mobile e Definição de Fluxo Estático (`v=120`):
+  * Removido o botão de ajuda `#btn-start-tour-mobile` do cabeçalho superior do celular (mantendo o botão de tutorial apenas em Minha Conta e na Barra Lateral).
+  * Alterada a classe `.mobile-header-bar` para `position: static !important`, garantindo fluxo de documento 100% normal (a barra fica no topo do container e rola para longe sem flutuar nem sobrepor nada).
+  * Versão atualizada (`v=120`) enviada ao GitHub.
+
 [12/08/2026 - 14:54]
 - Atualização Forçada de Cache para Estilos CSS no Celular (`v=117`):
   * Atualizada a versão do arquivo `style.css` de `v=11` para `v=117` no `<head>` do `index.html`.
