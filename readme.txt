@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[12/08/2026 - 13:02]
+- Ajuste e Inteligência de Posicionamento do Card do Tutorial (Sem Sobreposição):
+  * Recálculo dinâmico de posição `positionTooltipNextToTarget()` com algoritmo de 4 direções (Abaixo, Acima, Direita, Esquerda) garantindo que a caixa explicativa nunca fique em cima do conteúdo destacado.
+  * Ajuste fino dos seletores de foco (ex: destacando apenas o card superior de gráficos `.charts-grid > div:first-child` e os botões/formulários específicos), evitando caixas de destaque excessivamente grandes.
+  * Alinhamento de rolagem `block: 'start'` para proporcionar espaço vertical adequado abaixo dos elementos.
+  * Versão atualizada (`v=111`) enviada ao GitHub.
+
 [12/08/2026 - 12:50]
 - Implementação do Tutorial Guiado Interativo (Primeiro Acesso & Sob Demanda):
   * Adicionado overlay com efeito de desfoque (`backdrop-filter: blur(4px)`) e destaque spotlight com borda verde pulsante (`.tour-target-highlight`) nos elementos guiados.
