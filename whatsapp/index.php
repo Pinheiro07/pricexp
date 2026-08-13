@@ -59,15 +59,12 @@ $action = $_GET['action'] ?? '';
 if ($action === 'recreate') {
     evo_request($api_url . '/instance/delete/' . $instance, 'DELETE');
     sleep(1);
-    evo_request($api_url . '/instance/create', 'POST', [
+    $create_resp = evo_request($api_url . '/instance/create', 'POST', [
         'instanceName' => $instance,
         'qrcode' => true,
         'integration' => 'WHATSAPP-BAILEYS'
     ]);
-    sleep(1);
-    evo_request($api_url . '/instance/restart/' . $instance, 'POST');
-    sleep(1);
-    evo_request($api_url . '/instance/connect/' . $instance, 'GET');
+    $_SESSION['last_create_debug'] = json_encode($create_resp);
     header('Location: index.php');
     exit;
 }
@@ -231,6 +228,7 @@ if (!$is_open) {
         <div style="margin-top: 1rem; font-size: 0.72rem; color: #6b7280; text-align: left; background: #000; padding: 0.75rem; border-radius: 8px; font-family: monospace;">
             <strong>Diagnostics:</strong> Active: <?= $api_url ?><br>
             <strong>Status:</strong> <?= htmlspecialchars($status) ?><br>
+            <strong>Create Debug:</strong> <?= htmlspecialchars($_SESSION['last_create_debug'] ?? 'N/A') ?><br>
             <strong>QR Resp:</strong> <?= htmlspecialchars($qr_debug ?? 'N/A') ?><br>
             <strong>Pairing Resp:</strong> <?= htmlspecialchars($pair_debug ?? 'N/A') ?><br>
             <?php foreach ($debug_log as $log): ?>
