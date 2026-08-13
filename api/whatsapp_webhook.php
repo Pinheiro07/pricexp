@@ -162,8 +162,12 @@ function parseType($text) {
 // --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO ---
 function parseDescription($text) {
     $clean = preg_replace('/^(patrick[,\s]*|oi\s+patrick[,\s]*|olá\s+patrick[,\s]*)/i', '', $text);
-    $clean = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*\s*(mil|k)?|reais|real|gastei|gastamos|paguei|pagamos|comprei|compramos|recebi|recebemos|ganhei|ganhamos|depositei|no|na|do|da|de|em|para|com|pelo|pela)/i', ' ', $clean);
-    $clean = preg_replace('/(nubank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|sicredi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)/i', ' ', $clean);
+    // Remove verbos e valores com limite de palavra
+    $clean = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*\s*(mil|k)?|\b(reais|real|gastei|gastamos|paguei|pagamos|comprei|compramos|recebi|recebemos|ganhei|ganhamos|depositei)\b)/i', ' ', $clean);
+    // Remove preposições isoladas (ex: "em", "no", "de") sem cortar palavras como cin-em-a
+    $clean = preg_replace('/\b(no|na|do|da|de|em|para|com|pelo|pela|por)\b/i', ' ', $clean);
+    // Remove bancos e métodos isolados
+    $clean = preg_replace('/\b(nubank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|sicredi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $clean);
     $clean = trim(preg_replace('/\s+/', ' ', $clean));
     
     if (empty($clean) || strlen($clean) < 2) {
@@ -171,6 +175,7 @@ function parseDescription($text) {
         if (preg_match('/(ifood|restaurante|pizza|lanche|comida)/i', $text)) return 'iFood';
         if (preg_match('/(gasolina|combustivel|combustível)/i', $text)) return 'Gasolina';
         if (preg_match('/(uber|99|taxi)/i', $text)) return 'Uber';
+        if (preg_match('/(cinema|movie)/i', $text)) return 'Cinema';
         if (preg_match('/(farmacia|farmácia|remedio|remédio)/i', $text)) return 'Farmácia';
         if (preg_match('/(salario|salário|holerite)/i', $text)) return 'Salário';
         if (preg_match('/(site|venda|cliente)/i', $text)) return 'Venda no Site';
