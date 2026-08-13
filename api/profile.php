@@ -148,7 +148,7 @@ $stmt = $pdo->prepare("SELECT id, first_name, last_name, email, profile_picture,
 $stmt->execute([$user_id]);
 $userData = $stmt->fetch();
 if ($userData) {
-    $userData['whatsapp_connect_link'] = 'https://wa.me/552833441530?text=' . urlencode('Ativar conta XP-' . $userData['id']);
+    $userData['whatsapp_connect_link'] = 'https://wa.me/552833441530?text=' . urlencode('Olá, gostaria de ativar a conta PriceXP, meu ID é ' . $userData['id']);
 }
 echo json_encode($userData);
 ?>

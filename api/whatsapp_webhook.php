@@ -185,10 +185,12 @@ if (!$user && !empty($rawLid)) {
     }
 }
 
-// 3. TERCEIRO PASSO: Se o usuário ainda NÃO está vinculado, verifica se enviou o ID da conta (Ex: "1", "1535", "XP-1535", "Ativar conta XP-1")
+// 3. TERCEIRO PASSO: Se o usuário ainda NÃO está vinculado, verifica se enviou o ID da conta (Ex: "Olá, gostaria de ativar a conta PriceXP, meu ID é 6", "1535", "6")
 if (!$user) {
     $targetId = null;
-    if (preg_match('/(?:ativar|vincular|conectar|xp)?\s*#?\s*(\d+)/i', trim($lowerText), $mVinc)) {
+    if (preg_match('/(?:id|xp)\s*(?:é|:)?\s*#?\s*(\d+)/i', $lowerText, $mVinc)) {
+        $targetId = (int)$mVinc[1];
+    } elseif (preg_match('/(?:ativar|vincular|conectar).*?(\d+)/i', $lowerText, $mVinc)) {
         $targetId = (int)$mVinc[1];
     } elseif (ctype_digit(trim($rawText))) {
         $targetId = (int)trim($rawText);

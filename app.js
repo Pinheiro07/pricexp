@@ -1634,7 +1634,7 @@ function populateProfileForm(userData) {
 
     const btnOpenWa = document.getElementById('btn-open-whatsapp');
     if (btnOpenWa && userData.id) {
-        btnOpenWa.href = `https://wa.me/552833441530?text=` + encodeURIComponent(`Ativar conta XP-${userData.id}`);
+        btnOpenWa.href = `https://wa.me/552833441530?text=` + encodeURIComponent(`Olá, gostaria de ativar a conta PriceXP, meu ID é ${userData.id}`);
     }
     
     if (userData.profile_picture && userData.profile_picture !== 'default.png') {
