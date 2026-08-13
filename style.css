@@ -1487,5 +1487,59 @@ body.light-theme .credit-card-item .card-value-success {
         overflow-y: auto !important;
         border-radius: 1.25rem !important;
     }
+
+    /* Form groups with row layout stack vertically on mobile */
+    .form-group.row,
+    .form-row {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    .form-group.row .col,
+    .form-row .col {
+        width: 100% !important;
+    }
+
+    /* WhatsApp Integration Card Mobile Polish */
+    #whatsapp-integration-card {
+        padding: 1.25rem 1rem !important;
+        margin: 1rem 0 !important;
+        border-radius: 1rem !important;
+    }
+
+    #whatsapp-integration-card h4 {
+        font-size: 1rem !important;
+    }
+
+    #whatsapp-integration-card p {
+        font-size: 0.8rem !important;
+    }
+
+    /* Top Header Mobile Polish */
+    .top-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem !important;
+    }
+
+    .top-header button,
+    .top-header a {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* Cards & Layout Padding Mobile Polish */
+    .card.form-container,
+    .card.list-container {
+        padding: 1.25rem 1rem !important;
+    }
+
+    /* Shared Account Mobile Cards */
+    #shared-unconnected-card,
+    #shared-connected-card,
+    #shared-partner-activity-card {
+        padding: 1.25rem 1rem !important;
+    }
 }
 
