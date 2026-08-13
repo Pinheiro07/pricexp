@@ -443,9 +443,11 @@ if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerTex
     $lastTx = $stmtLast->fetch();
 
     if ($lastTx) {
-        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
-        $stmtInsEdit = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name) VALUES (?, ?, 'edit_mode', ?, ?, ?)");
-        $stmtInsEdit->execute([$user_id, $cleanPhone, $lastTx['amount'], $lastTx['description'], $lastTx['bank_name']]);
+        try {
+            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+            $stmtInsEdit = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'edit_mode', ?, ?, ?, 'Outra')");
+            $stmtInsEdit->execute([$user_id, $cleanPhone, $lastTx['amount'], $lastTx['description'], $lastTx['bank_name']]);
+        } catch (Exception $e) {}
 
         $fmtVal = number_format((float)$lastTx['amount'], 2, ',', '.');
         $replyMsg = "✏️ *PriceXP — Editar Lançamento*\n\n"
