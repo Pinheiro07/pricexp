@@ -120,18 +120,33 @@ $workspace_id = getWorkspaceUserId($pdo, $user_id);
 $userName     = !empty($user['first_name']) ? $user['first_name'] : 'Usuário';
 $lowerText    = mb_strtolower($rawText, 'UTF-8');
 
-// --- HELPER DE PARSER INTELIGENTE DE VALORES ---
+// --- HELPER DE PARSER INTELIGENTE DE VALORES (COM STRIP DE CNPJ E HORAS) ---
 function parseAmount($text) {
-    // Remove marcas de banco como "C6" ou "C6 Bank" para não confundir o "6" com R$ 6,00
-    $cleanText = preg_replace('/\b(c6\s*bank|c6)\b/i', ' ', $text);
+    // 1. Limpa CNPJs, horas e datas para não confundir 22.405.698 ou 20:15 com R$ 22,00 ou R$ 20,00
+    $cleanText = preg_replace('/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/', ' ', $text); // CNPJ
+    $cleanText = preg_replace('/\b\d{1,2}:\d{2}(?::\d{2})?\b/', ' ', $cleanText); // Horário (ex: 20:15:32)
+    $cleanText = preg_replace('/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/', ' ', $cleanText); // Data
+    $cleanText = preg_replace('/\b(c6\s*bank|c6)\b/i', ' ', $cleanText);
+
+    // 2. Procura explicitamente por valores no formato R$ XX,XX ou R$ XX.XX
+    if (preg_match('/r\$\s*(\d+(?:[\.,]\d{1,2})?)/i', $cleanText, $m)) {
+        return (float)str_replace(',', '.', $m[1]);
+    }
+
+    // 3. Procura por TOTAL R$ XX,XX ou VALOR XX,XX
+    if (preg_match('/(?:total|valor|pago)\s*(?:r\$\s*)?(\d+(?:[\.,]\d{1,2})?)/i', $cleanText, $m)) {
+        return (float)str_replace(',', '.', $m[1]);
+    }
 
     if (preg_match('/(\d+(?:[\.,]\d+)?)\s*(mil|k)\b/i', $cleanText, $m)) {
         $val = (float)str_replace(',', '.', $m[1]);
         return $val * 1000;
     }
-    if (preg_match('/(?:r\$\s*|valor\s*|de\s*)?(\b\d+(?:[\.,]\d{1,2})?\b)(?:\s*reais|\s*real)?/i', $cleanText, $m)) {
+
+    if (preg_match('/(?:\b\d+(?:[\.,]\d{1,2})?\b)(?:\s*reais|\s*real)/i', $cleanText, $m)) {
         return (float)str_replace(',', '.', $m[1]);
     }
+
     return 0.0;
 }
 
@@ -147,7 +162,6 @@ function parseBank($text, $workspace_id = null, $pdo = null) {
             $userBanks = $stmtUserBanks->fetchAll(PDO::FETCH_COLUMN);
 
             foreach ($userBanks as $ub) {
-                // Remove qualquer parêntese legado do nome do banco
                 $cleanUb = trim(preg_replace('/\(.*?\)/', '', $ub));
                 if (!empty($cleanUb) && strtolower($cleanUb) !== 'geral' && strtolower($cleanUb) !== 'dinheiro') {
                     $userBankMap[mb_strtolower($cleanUb, 'UTF-8')] = $cleanUb;
@@ -193,10 +207,14 @@ function parsePaymentMethod($text) {
 
 // --- HELPER DE IDENTIFICAÇÃO DE TIPO ---
 function parseType($text) {
-    if (preg_match('/(receb|ganh|salari|salário|pix receb|entrada|receita|deposit|depósito|venda|caiu|renda|reembolso|lucro)/i', $text)) {
+    // Se for um recibo / comprovante de compra (CNPJ, Via Cliente, Autorizada, Mercado) -> É sempre DESPESA!
+    if (preg_match('/(via\s*-\s*cliente|cnpj|cupom fiscal|autorizada|autenticação|supermercado|loja|compra pix)/i', $text)) {
+        return 'despesa';
+    }
+    if (preg_match('/(receb|ganh|salari|salário|pix receb|entrada|receita|deposit|depósito|venda no site|caiu|renda|reembolso|lucro)/i', $text)) {
         return 'receita';
     }
-    if (preg_match('/(gast|pagu|compr|saiu|débito|debito|cobrad|custou|despesa)/i', $text)) {
+    if (preg_match('/(gast|pagu|compr|saiu|débito|debito|cobrad|custou|despesa|venda|compra)/i', $text)) {
         return 'despesa';
     }
     return null;
