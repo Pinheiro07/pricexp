@@ -2114,58 +2114,65 @@ const TOUR_STEPS = [
     },
     {
         title: 'Resumo Financeiro & Saldo 💳',
-        badge: 'Passo 1 de 9',
+        badge: 'Passo 1 de 10',
         body: 'Acompanhe em tempo real o total das suas <b>Receitas</b>, <b>Despesas / Investimentos</b> acumulados e o seu <b>Saldo Atual</b>.',
         target: '.summary-cards',
         tab: 'dashboard'
     },
     {
         title: 'Filtros Inteligentes 🔍',
-        badge: 'Passo 2 de 9',
+        badge: 'Passo 2 de 10',
         body: 'Filtre suas finanças por instituição financeira (Geral, Nubank, Itaú, etc.) e altere a visualização entre Mensal, Anual ou Todos os Tempos.',
         target: '.dashboard-filter',
         tab: 'dashboard'
     },
     {
         title: 'Gráficos de Desempenho 📊',
-        badge: 'Passo 3 de 9',
+        badge: 'Passo 3 de 10',
         body: 'Visualize a distribuição de despesas por categoria, a relação de Receita x Despesa mensal e a evolução do seu patrimônio.',
         target: '.charts-grid > div:first-child',
         tab: 'dashboard'
     },
     {
         title: 'Lançamentos & Transações 📝',
-        badge: 'Passo 4 de 9',
+        badge: 'Passo 4 de 10',
         body: 'Cadastre suas receitas e saídas facilmente. Você pode definir categorias, bancos, repetições (fixas ou parceladas) e formas de pagamento.',
         target: '#transaction-form',
         tab: 'lancamentos'
     },
     {
         title: 'Importar Extrato Bancário 📥',
-        badge: 'Passo 5 de 9',
+        badge: 'Passo 5 de 10',
         body: 'Economize tempo! Importe seus extratos bancários em arquivo <b>OFX ou CSV</b> para lançar movimentações automaticamente.',
         target: '#tab-lancamentos .top-header button',
         tab: 'lancamentos'
     },
     {
         title: 'Gestão de Cartões de Crédito 💳',
-        badge: 'Passo 6 de 9',
+        badge: 'Passo 6 de 10',
         body: 'Controle os limites, dias de fechamento e vencimento dos seus cartões de crédito e acompanhe o valor das suas faturas atuais.',
         target: '#card-form',
         tab: 'cartoes'
     },
     {
         title: 'Conta Conjunta (Espaço Compartilhado) 👫',
-        badge: 'Passo 7 de 9',
+        badge: 'Passo 7 de 10',
         body: 'Conecte seu ambiente financeiro com seu parceiro(a)! Vocês compartilharão lançamentos, cartões e saldo mantendo senhas individuais.',
         target: '#tab-shared .card:first-child',
         tab: 'shared'
     },
     {
         title: 'Minha Conta & Segurança 👤',
-        badge: 'Passo 8 de 9',
+        badge: 'Passo 8 de 10',
         body: 'Personalize sua foto de perfil, altere seu nome, e-mail ou senha com total proteção e criptografia.',
         target: '#profile-form',
+        tab: 'config'
+    },
+    {
+        title: 'Assistente Patrick no WhatsApp 🤖📱',
+        badge: 'Passo 9 de 10 — Novidade',
+        body: 'Cadastre seu número e faça lançamentos por <b>Áudio de Voz</b> (ex: <i>"Gastei 50 no mercado no Nubank"</i>), envie <b>Fotos de Comprovantes</b> para leitura por OCR e peça <b>Relatórios Semanal, Mensal ou Anual</b> por mensagem!',
+        target: '#profile-whatsapp',
         tab: 'config'
     },
     {
@@ -2187,58 +2194,65 @@ const MOBILE_TOUR_STEPS = [
     },
     {
         title: 'Navegação por Toque 📲',
-        badge: 'Passo 1 de 9',
+        badge: 'Passo 1 de 10',
         body: 'Use a barra fixa no rodapé para alternar instantaneamente entre a <b>Dashboard</b>, <b>Lançamentos</b>, <b>Cartões</b> e <b>Minha Conta</b>.',
         target: '#mobile-bottom-nav',
         tab: 'dashboard'
     },
     {
         title: 'Resumo & Saldo Atual 💳',
-        badge: 'Passo 2 de 9',
+        badge: 'Passo 2 de 10',
         body: 'Acompanhe suas Receitas, Saídas e o Saldo Atual em tempo real diretamente nos cards superiores.',
         target: '.summary-cards',
         tab: 'dashboard'
     },
     {
         title: 'Filtros Rápidos 🔍',
-        badge: 'Passo 3 de 9',
+        badge: 'Passo 3 de 10',
         body: 'Filtre suas movimentações por banco ou altere a exibição entre os meses do ano no menu do topo.',
         target: '.dashboard-filter',
         tab: 'dashboard'
     },
     {
         title: 'Lançar Receita ou Saída 📝',
-        badge: 'Passo 4 de 9',
+        badge: 'Passo 4 de 10',
         body: 'Toque no botão de <b>Lançamentos</b> no rodapé para registrar novos gastos, entradas ou valores parcelados.',
         target: '#transaction-form',
         tab: 'lancamentos'
     },
     {
         title: 'Importar Extrato Bancário 📥',
-        badge: 'Passo 5 de 9',
+        badge: 'Passo 5 de 10',
         body: 'Importe extratos em arquivo <b>OFX ou CSV</b> do seu banco diretamente pelo celular.',
         target: '#tab-lancamentos .top-header button',
         tab: 'lancamentos'
     },
     {
         title: 'Gerenciar Cartões 💳',
-        badge: 'Passo 6 de 9',
+        badge: 'Passo 6 de 10',
         body: 'Cadastre cartões de crédito, limite e acompanhe o valor da fatura atual em tempo real.',
         target: '#card-form',
         tab: 'cartoes'
     },
     {
         title: 'Conta Conjunta 👫',
-        badge: 'Passo 7 de 9',
+        badge: 'Passo 7 de 10',
         body: 'Conecte com seu parceiro(a) para compartilharem o saldo e gastos em tempo real.',
         target: '#tab-shared .card:first-child',
         tab: 'shared'
     },
     {
         title: 'Minha Conta & Segurança 👤',
-        badge: 'Passo 8 de 9',
+        badge: 'Passo 8 de 10',
         body: 'Atualize sua foto de perfil, dados pessoais e senha a qualquer momento.',
         target: '#profile-form',
+        tab: 'config'
+    },
+    {
+        title: 'Assistente Patrick no WhatsApp 🤖📱',
+        badge: 'Passo 9 de 10 — Novidade',
+        body: 'Cadastre seu número e faça lançamentos por <b>Áudio de Voz</b> (ex: <i>"Gastei 50 no mercado no Nubank"</i>), envie <b>Fotos de Comprovantes</b> para leitura por OCR e peça <b>Relatórios Semanal, Mensal ou Anual</b> por mensagem!',
+        target: '#profile-whatsapp',
         tab: 'config'
     },
     {
