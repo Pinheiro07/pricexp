@@ -292,17 +292,36 @@ function inferCategoryStrict($description, $text, $type) {
 }
 
 // ------------------------------------------------------------------
-// --- COMANDO DE RESUMO FINANCEIRO DO MÊS DO PATRICK ---
+// --- COMANDO DE RELATÓRIO FINANCEIRO MULTI-PERÍODO (SEMANAL, MENSAL, ANUAL) ---
 // ------------------------------------------------------------------
-if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|extrato|balanço|balanco|relatório|relatorio)/i', $lowerText)) {
-    $firstDay  = date('Y-m-01');
-    $lastDay   = date('Y-m-t');
-    $monthYear = date('m/Y');
+if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|extrato|balanço|balanco|relatório|relatorio|semanal|semana|mensal|mês|mes|anual|ano)/i', $lowerText)) {
+    
+    $periodTitle = "MENSAL";
+    $periodLabel = "Mês (" . date('m/Y') . ")";
 
+    if (preg_match('/(semanal|semana)/i', $lowerText)) {
+        $periodTitle = "SEMANAL";
+        $firstDay = date('Y-m-d', strtotime('monday this week'));
+        $lastDay  = date('Y-m-d', strtotime('sunday this week'));
+        $periodLabel = "Semana (" . date('d/m', strtotime($firstDay)) . " até " . date('d/m', strtotime($lastDay)) . ")";
+    } elseif (preg_match('/(anual|ano)/i', $lowerText)) {
+        $periodTitle = "ANUAL";
+        $firstDay = date('Y-01-01');
+        $lastDay  = date('Y-12-31');
+        $periodLabel = "Ano (" . date('Y') . ")";
+    } else {
+        $periodTitle = "MENSAL";
+        $firstDay = date('Y-m-01');
+        $lastDay  = date('Y-m-t');
+        $periodLabel = "Mês (" . date('m/Y') . ")";
+    }
+
+    // Total de Receitas
     $stmtRec = $pdo->prepare("SELECT SUM(amount) FROM transactions WHERE user_id = ? AND type = 'receita' AND date >= ? AND date <= ?");
     $stmtRec->execute([$workspace_id, $firstDay, $lastDay]);
     $totalRec = (float)($stmtRec->fetchColumn() ?? 0);
 
+    // Total de Despesas
     $stmtDesp = $pdo->prepare("SELECT SUM(amount) FROM transactions WHERE user_id = ? AND type = 'despesa' AND date >= ? AND date <= ?");
     $stmtDesp->execute([$workspace_id, $firstDay, $lastDay]);
     $totalDesp = (float)($stmtDesp->fetchColumn() ?? 0);
@@ -310,6 +329,7 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
     $saldo = $totalRec - $totalDesp;
     $saldoEmoji = ($saldo >= 0) ? '🟢 +' : '🔴 -';
 
+    // Top 3 Categorias de Maior Gasto no Período
     $stmtTop = $pdo->prepare("SELECT category, SUM(amount) AS total FROM transactions WHERE user_id = ? AND type = 'despesa' AND date >= ? AND date <= ? GROUP BY category ORDER BY total DESC LIMIT 3");
     $stmtTop->execute([$workspace_id, $firstDay, $lastDay]);
     $topCategories = $stmtTop->fetchAll();
@@ -322,7 +342,19 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
             $topText .= "{$e} *{$cat['category']}:* R$ " . number_format($cat['total'], 2, ',', '.') . "\n";
         }
     } else {
-        $topText = "_Nenhuma despesa registrada este mês._\n";
+        $topText = "_Nenhuma despesa registrada neste período._\n";
+    }
+
+    // Top 2 Bancos com mais movimentação no período
+    $stmtBanks = $pdo->prepare("SELECT bank_name, SUM(amount) AS total FROM transactions WHERE user_id = ? AND date >= ? AND date <= ? AND bank_name IS NOT NULL AND bank_name != '' AND bank_name != 'Geral' GROUP BY bank_name ORDER BY total DESC LIMIT 2");
+    $stmtBanks->execute([$workspace_id, $firstDay, $lastDay]);
+    $topBanks = $stmtBanks->fetchAll();
+
+    $bankText = "";
+    if ($topBanks) {
+        foreach ($topBanks as $b) {
+            $bankText .= "🔹 *{$b['bank_name']}:* R$ " . number_format($b['total'], 2, ',', '.') . "\n";
+        }
     }
 
     $fmtRec  = number_format($totalRec, 2, ',', '.');
@@ -330,14 +362,16 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
     $fmtSal  = number_format(abs($saldo), 2, ',', '.');
 
     $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
-              . "📊 *RESUMO FINANCEIRO DO MÊS ({$monthYear})*\n\n"
-              . "👤 *Usuário:* {$userName}\n\n"
+              . "📊 *RELATÓRIO FINANCEIRO {$periodTitle}*\n\n"
+              . "👤 *Usuário:* {$userName}\n"
+              . "📅 *Período:* {$periodLabel}\n\n"
               . "🟢 *Total de Entradas:* R$ {$fmtRec}\n"
               . "🔴 *Total de Saídas:* R$ {$fmtDesp}\n"
-              . "💰 *Saldo do Mês:* {$saldoEmoji}R$ {$fmtSal}\n\n"
-              . "🔥 *Maiores Gastos no Mês:*\n"
+              . "💰 *Saldo:* {$saldoEmoji}R$ {$fmtSal}\n\n"
+              . "🔥 *Maiores Gastos do Período:*\n"
               . $topText . "\n"
-              . "🚀 _Acesse o site PriceXP para o relatório completo!_";
+              . ($bankText ? "🏦 *Bancos Mais Usados:*\n" . $bankText . "\n" : "")
+              . "🚀 _Acesse o painel PriceXP para o relatório completo!_";
 
     echo json_encode(['success' => true, 'reply' => $replyMsg]);
     exit;
