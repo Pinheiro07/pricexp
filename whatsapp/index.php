@@ -77,11 +77,13 @@ $instances = evo_request($api_url . '/instance/fetchInstances');
 $instances_debug = json_encode($instances);
 $status = 'desconectado';
 $is_open = false;
+$inst_id = null;
 
 if (is_array($instances) && !empty($instances)) {
     foreach ($instances as $inst) {
         if (($inst['name'] ?? '') === $instance) {
             $status = $inst['connectionStatus'] ?? 'close';
+            $inst_id = $inst['id'] ?? null;
             if ($status === 'open') $is_open = true;
         }
     }
@@ -90,18 +92,10 @@ if (is_array($instances) && !empty($instances)) {
 // Acorda a instância se estiver em estado 'close'
 $restart_debug = null;
 if ($status === 'close') {
-    $restart_resp = evo_request($api_url . '/instance/restart/' . $instance, 'POST');
+    $target = $inst_id ? $inst_id : $instance;
+    $restart_resp = evo_request($api_url . '/instance/restart/' . $target, 'POST');
     $restart_debug = json_encode($restart_resp);
     sleep(1);
-    // Re-checa status após restart
-    $instances_check = evo_request($api_url . '/instance/fetchInstances');
-    if (is_array($instances_check)) {
-        foreach ($instances_check as $inst) {
-            if (($inst['name'] ?? '') === $instance) {
-                $status = $inst['connectionStatus'] ?? 'close';
-            }
-        }
-    }
 }
 
 // Se não houver instância, cria automaticamente
@@ -117,10 +111,10 @@ if (empty($instances) || (is_array($instances) && count($instances) === 0)) {
 $qr_data = null;
 $pairing_code = null;
 $qr_debug = null;
-$connect_post_debug = null;
+$qr_id_debug = null;
 
 if (!$is_open) {
-    // 1. Tenta GET connect
+    // 1. Tenta GET connect por Nome
     $qr_resp = evo_request($api_url . '/instance/connect/' . $instance, 'GET');
     $qr_debug = json_encode($qr_resp);
     
@@ -130,14 +124,14 @@ if (!$is_open) {
         $qr_data = $qr_resp['qrcode']['base64'];
     }
     
-    // 2. Se GET falhou, tenta POST connect (algumas builds exigem POST)
-    if (empty($qr_data)) {
-        $qr_resp_post = evo_request($api_url . '/instance/connect/' . $instance, 'POST');
-        $connect_post_debug = json_encode($qr_resp_post);
-        if (!empty($qr_resp_post['base64'])) {
-            $qr_data = $qr_resp_post['base64'];
-        } elseif (!empty($qr_resp_post['qrcode']['base64'])) {
-            $qr_data = $qr_resp_post['qrcode']['base64'];
+    // 2. Tenta GET connect por ID único se por Nome devolveu count 0
+    if (empty($qr_data) && $inst_id) {
+        $qr_resp_id = evo_request($api_url . '/instance/connect/' . $inst_id, 'GET');
+        $qr_id_debug = json_encode($qr_resp_id);
+        if (!empty($qr_resp_id['base64'])) {
+            $qr_data = $qr_resp_id['base64'];
+        } elseif (!empty($qr_resp_id['qrcode']['base64'])) {
+            $qr_data = $qr_resp_id['qrcode']['base64'];
         }
     }
 }
@@ -238,10 +232,10 @@ if (!$is_open) {
 
         <div style="margin-top: 1rem; font-size: 0.72rem; color: #6b7280; text-align: left; background: #000; padding: 0.75rem; border-radius: 8px; font-family: monospace;">
             <strong>Diagnostics:</strong> Active: <?= $api_url ?><br>
-            <strong>Instances List:</strong> <?= htmlspecialchars($instances_debug ?? 'N/A') ?><br>
+            <strong>Instance ID:</strong> <?= htmlspecialchars($inst_id ?? 'N/A') ?><br>
             <strong>Status:</strong> <?= htmlspecialchars($status) ?><br>
-            <strong>Restart Resp:</strong> <?= htmlspecialchars($restart_debug ?? 'N/A') ?><br>
-            <strong>GET Connect:</strong> <?= htmlspecialchars($qr_debug ?? 'N/A') ?><br>
+            <strong>GET Connect (Nome):</strong> <?= htmlspecialchars($qr_debug ?? 'N/A') ?><br>
+            <strong>GET Connect (ID):</strong> <?= htmlspecialchars($qr_id_debug ?? 'N/A') ?><br>
             <?php foreach ($debug_log as $log): ?>
                 - <?= htmlspecialchars($log) ?><br>
             <?php endforeach; ?>
