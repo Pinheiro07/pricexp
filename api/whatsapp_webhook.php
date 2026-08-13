@@ -251,9 +251,9 @@ function parseType($text) {
 
 // --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE ---
 function parseDescription($text, $type) {
-    $lower = mb_strtolower($text, 'UTF-8');
+    $lower = mb_strtolower(trim($text), 'UTF-8');
 
-    // 1. Dicionário de palavras-chave explícitas (ex: comida, mercado, gasolina, aluguel)
+    // 1. Dicionário de palavras-chave explícitas (ex: comida, mercado, gasolina, aluguel, google, youtube, etc.)
     $expenseKeywords = [
         'mercado' => 'Mercado', 'supermercado' => 'Mercado', 'feira' => 'Feira', 'açougue' => 'Açougue', 'padaria' => 'Padaria',
         'ifood' => 'iFood', 'restaurante' => 'Restaurante', 'almoço' => 'Almoço', 'almoco' => 'Almoço', 'jantar' => 'Jantar',
@@ -262,7 +262,8 @@ function parseDescription($text, $type) {
         'cinema' => 'Cinema', 'movie' => 'Cinema', 'netflix' => 'Netflix', 'spotify' => 'Spotify', 'jogos' => 'Jogos', 'bar' => 'Bar / Lazer',
         'farmacia' => 'Farmácia', 'farmácia' => 'Farmácia', 'remedio' => 'Farmácia', 'remédio' => 'Farmácia', 'medico' => 'Consulta Médica', 'médico' => 'Consulta Médica',
         'aluguel' => 'Aluguel', 'condominio' => 'Condomínio', 'condomínio' => 'Condomínio', 'luz' => 'Conta de Luz', 'energia' => 'Conta de Luz', 'água' => 'Conta de Água', 'agua' => 'Conta de Água', 'internet' => 'Internet', 'telefone' => 'Telefone',
-        'escola' => 'Escola', 'faculdade' => 'Faculdade', 'curso' => 'Curso', 'livro' => 'Livro / Estudo'
+        'escola' => 'Escola', 'faculdade' => 'Faculdade', 'curso' => 'Curso', 'livro' => 'Livro / Estudo',
+        'google' => 'Google', 'youtube' => 'YouTube', 'amazon' => 'Amazon', 'shopee' => 'Shopee', 'shein' => 'Shein', 'steam' => 'Steam', 'apple' => 'Apple'
     ];
 
     $incomeKeywords = [
@@ -282,13 +283,24 @@ function parseDescription($text, $type) {
     if (preg_match('/(?:comprei|gastei|paguei|custou)\s+([a-zà-ú0-9\s]{2,30})/i', $text, $mComp)) {
         $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real)\b/i', ' ', $mComp[1]);
         $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
-        if (mb_strlen($extracted, 'UTF-8') >= 3) {
+        if (mb_strlen($extracted, 'UTF-8') >= 2) {
             return ucfirst($extracted);
         }
     }
 
     if (preg_match('/(?:pix|receb\w+|veio|pagamento)\s+(?:do|da|de)\s+([a-zà-ú]{3,15})/i', $lower, $mPerson)) {
         return 'Pix de ' . ucfirst($mPerson[1]);
+    }
+
+    // 3. FALLBACK UNIVERSAL INTELIGENTE: Aceita qualquer nome de serviço, loja ou item enviado (ex: google, youtube, steam, etc.)
+    $cleanText = trim($text);
+    if (mb_strlen($cleanText, 'UTF-8') >= 2 && !preg_match('/^\d+(?:[\.,]\d+)?$/', $cleanText) && !in_array(strtolower($cleanText), ['pix', 'débito', 'debito', 'crédito', 'credito', 'dinheiro', 'sim', 'nao', 'não', '1', '2'])) {
+        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $cleanText);
+        $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
+        if (mb_strlen($extracted, 'UTF-8') >= 2) {
+            return ucfirst($extracted);
+        }
+        return ucfirst($cleanText);
     }
 
     return null;
