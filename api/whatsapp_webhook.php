@@ -87,33 +87,31 @@ if (empty($senderPhone) || empty($rawText)) {
     exit;
 }
 
-// Identifica usuário
+// Identifica usuário pelo número do WhatsApp
 $stmtUser = $pdo->prepare("SELECT id, first_name, email, shared_owner_id, whatsapp FROM users WHERE whatsapp IS NOT NULL AND TRIM(whatsapp) != ''");
 $stmtUser->execute();
 $allUsers = $stmtUser->fetchAll();
 
 $user = null;
-if (count($allUsers) === 1) {
-    $user = $allUsers[0];
-} else {
-    foreach ($allUsers as $u) {
-        $uPhone = preg_replace('/\D/', '', $u['whatsapp']);
-        if (empty($uPhone)) continue;
-        if (strpos($cleanPhone, $uPhone) !== false || strpos($uPhone, substr($cleanPhone, -8)) !== false) {
-            $user = $u;
-            break;
-        }
+$cleanPhoneLast8 = (strlen($cleanPhone) >= 8) ? substr($cleanPhone, -8) : $cleanPhone;
+
+foreach ($allUsers as $u) {
+    $uPhone = preg_replace('/\D/', '', $u['whatsapp']);
+    if (empty($uPhone)) continue;
+    
+    $uPhoneLast8 = (strlen($uPhone) >= 8) ? substr($uPhone, -8) : $uPhone;
+
+    if ($uPhone === $cleanPhone || 
+        strpos($cleanPhone, $uPhone) !== false || 
+        strpos($uPhone, $cleanPhone) !== false || 
+        $uPhoneLast8 === $cleanPhoneLast8) {
+        $user = $u;
+        break;
     }
 }
 
 if (!$user) {
-    $stmtFallback = $pdo->prepare("SELECT id, first_name, email, shared_owner_id FROM users WHERE whatsapp IS NOT NULL AND TRIM(whatsapp) != '' ORDER BY id ASC LIMIT 1");
-    $stmtFallback->execute();
-    $user = $stmtFallback->fetch();
-}
-
-if (!$user) {
-    $replyMsg = "*PriceXP — Assistente Financeiro*\n\nOlá! Para utilizar o assistente por WhatsApp, você precisa cadastrar o seu número de telefone em *Minha Conta* no painel PriceXP.";
+    $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\nOlá! O número de WhatsApp *" . $senderPhone . "* ainda não está cadastrado em nenhuma conta do PriceXP.\n\nPara vincular e ver seus lançamentos em tempo real na sua dashboard, acesse o painel PriceXP em *Minha Conta* e salve o seu número de WhatsApp!";
     echo json_encode(['success' => false, 'reply' => $replyMsg]);
     exit;
 }
