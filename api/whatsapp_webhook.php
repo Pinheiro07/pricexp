@@ -1,4 +1,6 @@
 <?php
+error_reporting(0);
+ini_set('display_errors', '0');
 require 'config.php';
 header('Content-Type: application/json');
 
@@ -145,7 +147,7 @@ function parseAmount($text) {
     }
 
     // 4. 50 reais ou 50 real
-    if (preg_match('/(?:\b\d+(?:[\.,]\d{1,2})?\b)(?:\s*reais|\s*real)/i', $cleanText, $m)) {
+    if (preg_match('/(\d+(?:[\.,]\d{1,2})?)\s*(?:reais|real)/i', $cleanText, $m)) {
         return (float)str_replace(',', '.', $m[1]);
     }
 
