@@ -15,7 +15,7 @@ if ($method === 'GET') {
         FROM transactions t 
         LEFT JOIN users u ON t.created_by_user_id = u.id 
         WHERE t.user_id = ? 
-        ORDER BY t.date DESC, t.id DESC
+        ORDER BY t.id DESC
     ");
     $stmt->execute([$workspace_id]);
     $transactions = $stmt->fetchAll();

@@ -941,7 +941,10 @@ function renderTransactions() {
         return;
     }
     
-    transactions.forEach(tx => {
+    // Garante ordenação estrita por Ordem de Lançamento (novo ID primeiro)
+    const sortedTxs = [...transactions].sort((a, b) => parseInt(b.id) - parseInt(a.id));
+    
+    sortedTxs.forEach(tx => {
         const isReceita = tx.type === 'receita';
         const colorClass = isReceita ? 'text-success' : 'text-danger';
         const sign = isReceita ? '+' : '-';
@@ -1199,7 +1202,9 @@ function openDetailsModal(type) {
     const isReceita = type === 'receita';
     detailsModalTitle.innerText = isReceita ? `Receitas (${periodText})` : `Despesas e Inv. (${periodText})`;
     
-    const items = dashboardFilteredTransactions.filter(t => t.type === type);
+    const items = dashboardFilteredTransactions
+        .filter(t => t.type === type)
+        .sort((a, b) => parseInt(b.id) - parseInt(a.id));
     detailsModalBody.innerHTML = '';
     
     if (items.length === 0) {

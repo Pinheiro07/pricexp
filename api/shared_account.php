@@ -56,7 +56,7 @@ if ($method === 'GET') {
             SELECT id, type, category, description, amount, date, bank_name 
             FROM transactions 
             WHERE user_id = ? AND created_by_user_id = ?
-            ORDER BY date DESC, id DESC 
+            ORDER BY id DESC 
             LIMIT 20
         ");
         $stmtT->execute([$workspaceOwnerId, $partnerId]);
