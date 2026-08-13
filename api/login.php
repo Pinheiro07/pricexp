@@ -313,12 +313,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // 4) VERIFICAÇÃO DE SESSÃO ATIVA
 if ($action === 'check') {
     if (isset($_SESSION['user_id'])) {
-        $stmtU = $pdo->prepare("SELECT first_name, last_name, email, profile_picture, whatsapp FROM users WHERE id = ?");
+        $stmtU = $pdo->prepare("SELECT id, first_name, last_name, email, profile_picture, whatsapp FROM users WHERE id = ?");
         $stmtU->execute([$_SESSION['user_id']]);
         $currUser = $stmtU->fetch();
 
         echo json_encode([
             'logged_in' => true, 
+            'id' => (int)($_SESSION['user_id']),
             'email' => $currUser['email'] ?? $_SESSION['email'],
             'first_name' => $currUser['first_name'] ?? $_SESSION['first_name'] ?? 'Usuário',
             'last_name' => $currUser['last_name'] ?? $_SESSION['last_name'] ?? '',

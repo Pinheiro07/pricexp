@@ -366,6 +366,11 @@ function showApp(userData) {
     if (userLastnameDisplay) {
         userLastnameDisplay.textContent = userData.last_name || '';
     }
+
+    const userSidebarIdEl = document.getElementById('user-sidebar-id-display');
+    if (userSidebarIdEl && userData.id) {
+        userSidebarIdEl.textContent = `(ID: #${userData.id})`;
+    }
     
     dashboardWelcome.innerHTML = `Bem-vindo de volta, ${userData.first_name || ''}! 👋`;
     
