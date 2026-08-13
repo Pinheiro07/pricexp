@@ -115,11 +115,9 @@ $workspace_id = getWorkspaceUserId($pdo, $user_id);
 $userName     = !empty($user['first_name']) ? $user['first_name'] : 'Usuário';
 
 // PARSER INTELIGENTE DE MENSAGENS FINANCEIRAS (Áudio/Texto)
-$lowerText = strtolower($rawText);
-
 // 1. Tipo (Receita vs Despesa)
 $type = 'despesa';
-if (preg_match('/(recebi|ganhei|salario|salário|pix recebido|entrada|receita|deposito|depósito)/i', $lowerText)) {
+if (preg_match('/(receb|ganh|salari|salário|pix|entrada|receita|deposit|depósito|venda|caiu|renda|reembolso|lucro|faturamento)/i', $lowerText)) {
     $type = 'receita';
 }
 
@@ -151,17 +149,18 @@ if (preg_match('/(nubank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco d
 // 4. Extração de Categoria & Descrição Inteligente
 // Remove saudações ao Patrick
 $cleanDesc = preg_replace('/^(patrick[,\s]*|oi\s+patrick[,\s]*|olá\s+patrick[,\s]*)/i', '', $rawText);
-// Remove palavras de controle, valores e bancos
-$cleanDesc = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*|reais|real|gastei|paguei|comprei|recebi|depositei|no|na|do|da|de|em|para|banco|nubank|itau|itaú|bradesco|santander|inter|c6|caixa|sicoob|sicredi)/i', ' ', $cleanDesc);
+// Remove verbos, palavras de controle, valores e bancos
+$cleanDesc = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*|reais|real|gastei|gastamos|paguei|pagamos|comprei|compramos|recebi|recebemos|ganhei|ganhamos|depositei|depositamos|no|na|do|da|de|em|para|com|banco|cartão|cartao|nubank|itau|itaú|bradesco|santander|inter|c6|caixa|sicoob|sicredi)/i', ' ', $cleanDesc);
 $cleanDesc = trim(preg_replace('/\s+/', ' ', $cleanDesc));
 
 // Inteligência para nomes limpos de descrição
 if (empty($cleanDesc) || strlen($cleanDesc) < 2) {
     if (preg_match('/(mercado|supermercado)/i', $lowerText)) $cleanDesc = 'Mercado';
     elseif (preg_match('/(gasolina|combustivel|combustível)/i', $lowerText)) $cleanDesc = 'Gasolina';
-    elseif (preg_match('/(almoço|almoco|jantar|lanche|comida|restaurante|ifood)/i', $lowerText)) $cleanDesc = 'Alimentação';
+    elseif (preg_match('/(almoço|almoco|jantar|lanche|comida|restaurante|ifood)/i', $lowerText)) $cleanDesc = 'Ifood / Alimentação';
     elseif (preg_match('/(farmacia|farmácia|remedio|remédio)/i', $lowerText)) $cleanDesc = 'Farmácia';
     elseif (preg_match('/(uber|99|taxi)/i', $lowerText)) $cleanDesc = 'Uber / Transporte';
+    elseif (preg_match('/(site|venda|cliente)/i', $lowerText)) $cleanDesc = 'Venda Site';
     else $cleanDesc = ($type === 'despesa') ? 'Despesa via WhatsApp' : 'Receita via WhatsApp';
 }
 $description = ucfirst($cleanDesc);
