@@ -487,9 +487,12 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
     $fmtDesp = number_format($totalDesp, 2, ',', '.');
     $fmtSal  = number_format(abs($saldo), 2, ',', '.');
 
+    $isJointAccount = !empty($user['shared_owner_id']);
+    $userLabel = $userName . ($isJointAccount ? ' (Conta Conjunta 👥)' : '');
+
     $replyMsg = "📊 *PriceXP — Assistente Financeiro*\n\n"
               . "*RELATÓRIO FINANCEIRO " . $periodTitle . "*\n\n"
-              . "• Usuário: {$userName}\n"
+              . "• Usuário: {$userLabel}\n"
               . "• Período: {$periodLabel}\n\n"
               . "🟢 Entradas: R$ {$fmtRec}\n"
               . "🔴 Saídas: R$ {$fmtDesp}\n"
