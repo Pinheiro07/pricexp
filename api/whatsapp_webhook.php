@@ -135,26 +135,13 @@ if (!$user) {
             strpos($uPhone, $cleanPhone) !== false || 
             $uPhoneLast8 === $cleanPhoneLast8) {
             $user = $u;
-            if (!empty($rawLid) && empty($u['whatsapp_lid'])) {
+            if (!empty($rawLid)) {
                 try {
                     $pdo->prepare("UPDATE users SET whatsapp_lid = ? WHERE id = ?")->execute([$rawLid, $u['id']]);
                 } catch (Exception $e) {}
             }
             break;
         }
-    }
-}
-
-// 3. Auto-vincula LID ao usuário cadastrado mais recente se ainda não tiver LID
-if (!$user && !empty($rawLid)) {
-    $stmtRecentUser = $pdo->prepare("SELECT id, first_name, email, shared_owner_id, whatsapp FROM users WHERE whatsapp IS NOT NULL AND TRIM(whatsapp) != '' ORDER BY id DESC LIMIT 1");
-    $stmtRecentUser->execute();
-    $recent = $stmtRecentUser->fetch();
-    if ($recent) {
-        $user = $recent;
-        try {
-            $pdo->prepare("UPDATE users SET whatsapp_lid = ? WHERE id = ?")->execute([$rawLid, $recent['id']]);
-        } catch (Exception $e) {}
     }
 }
 
