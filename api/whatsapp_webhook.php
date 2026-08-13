@@ -37,7 +37,9 @@ if (!empty($data['phone'])) {
     $senderPhone = $data['entry'][0]['changes'][0]['value']['messages'][0]['from'];
 }
 
-if (!empty($data['text'])) {
+if (!empty($data['body'])) {
+    $rawText = is_array($data['body']) ? ($data['body']['text'] ?? '') : $data['body'];
+} elseif (!empty($data['text'])) {
     $rawText = is_array($data['text']) ? ($data['text']['message'] ?? '') : $data['text'];
 } elseif (!empty($data['message'])) {
     $rawText = is_array($data['message']) ? ($data['message']['conversation'] ?? $data['message']['text'] ?? '') : $data['message'];
@@ -66,7 +68,7 @@ $stmtUser->execute(["%{$cleanPhone}%", "%{$shortPhone}%", "%" . substr($shortPho
 $user = $stmtUser->fetch();
 
 if (!$user) {
-    $replyMsg = "⚠️ *PriceXP:* Seu número de WhatsApp (`{$cleanPhone}`) não foi encontrado no sistema.\n\nAcesse o site *PriceXP*, vá em *Minha Conta* e cadastre o seu número de WhatsApp para habilitar lançamentos automáticos por mensagem ou áudio!";
+    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\nOlá! Eu sou o Patrick, seu assistente financeiro do PriceXP! 💼\n\nAinda não encontrei o seu número (`{$cleanPhone}`) vinculado a uma conta no site.\n\n👉 *Como ativar:*\nAcesse o site *PriceXP*, vá na aba *Minha Conta* e salve o seu número de WhatsApp! Depois disso você já poderá mandar mensagens e áudios pra mim para cadastrar seus gastos e ganhos automaticamente!";
     echo json_encode([
         'success' => false,
         'reply' => $replyMsg,
@@ -96,7 +98,7 @@ if (preg_match('/(?:r\$\s*|valor\s*|de\s*)?(\d+(?:[\.,]\d{1,2})?)/i', $lowerText
 }
 
 if ($amount <= 0) {
-    $replyMsg = "⚠️ *PriceXP:* Não consegui identificar o valor do lançamento na sua mensagem.\n\n*Exemplo:* _'Gastei 50 no mercado no Nubank'_ ou _'Recebi 3500 de salário no Itaú'_.";
+    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\nOlá {$userName}! Para cadastrar uma despesa ou receita, me envie um texto ou áudio dizendo o valor e onde foi!\n\n💡 *Exemplo:* _'Gastei 50 no mercado no Nubank'_ ou _'Recebi 3500 de salário no Itaú'_.";
     echo json_encode([
         'success' => false,
         'reply' => $replyMsg,
@@ -149,7 +151,8 @@ logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO', "Lançamento via WhatsApp
 $formattedAmount = number_format($amount, 2, ',', '.');
 $emojiType = ($type === 'receita') ? '🟢 Receita' : '🔴 Despesa';
 
-$replyMsg = "✅ *PriceXP - Lançamento Registrado!*\n\n"
+$replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
+          . "✅ *Lançamento Registrado com Sucesso!*\n\n"
           . "👤 *Usuário:* {$userName}\n"
           . "📊 *Tipo:* {$emojiType}\n"
           . "💰 *Valor:* R$ {$formattedAmount}\n"
@@ -157,7 +160,7 @@ $replyMsg = "✅ *PriceXP - Lançamento Registrado!*\n\n"
           . "📁 *Categoria:* {$category}\n"
           . "🏦 *Banco:* {$bank_name}\n"
           . "📅 *Data:* " . date('d/m/Y') . "\n\n"
-          . "🚀 _Verifique no aplicativo PriceXP_";
+          . "🚀 _Já atualizado no seu painel PriceXP!_";
 
 echo json_encode([
     'success' => true,
