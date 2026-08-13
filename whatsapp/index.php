@@ -87,8 +87,20 @@ if (is_array($instances) && !empty($instances)) {
 }
 
 // Acorda a instância se estiver em estado 'close'
-if ($status === 'close' && empty($action)) {
-    evo_request($api_url . '/instance/restart/' . $instance, 'POST');
+$restart_debug = null;
+if ($status === 'close') {
+    $restart_resp = evo_request($api_url . '/instance/restart/' . $instance, 'POST');
+    $restart_debug = json_encode($restart_resp);
+    sleep(1);
+    // Re-checa status após restart
+    $instances_check = evo_request($api_url . '/instance/fetchInstances');
+    if (is_array($instances_check)) {
+        foreach ($instances_check as $inst) {
+            if (($inst['name'] ?? '') === $instance) {
+                $status = $inst['connectionStatus'] ?? 'close';
+            }
+        }
+    }
 }
 
 // Se não houver instância, cria automaticamente
@@ -226,8 +238,8 @@ if (!$is_open) {
         <div style="margin-top: 1rem; font-size: 0.72rem; color: #6b7280; text-align: left; background: #000; padding: 0.75rem; border-radius: 8px; font-family: monospace;">
             <strong>Diagnostics:</strong> Active: <?= $api_url ?><br>
             <strong>Status:</strong> <?= htmlspecialchars($status) ?><br>
+            <strong>Restart Resp:</strong> <?= htmlspecialchars($restart_debug ?? 'N/A') ?><br>
             <strong>GET Connect:</strong> <?= htmlspecialchars($qr_debug ?? 'N/A') ?><br>
-            <strong>POST Connect:</strong> <?= htmlspecialchars($connect_post_debug ?? 'N/A') ?><br>
             <?php foreach ($debug_log as $log): ?>
                 - <?= htmlspecialchars($log) ?><br>
             <?php endforeach; ?>
