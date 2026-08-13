@@ -74,6 +74,7 @@ if ($action === 'recreate') {
 
 // Consulta instâncias
 $instances = evo_request($api_url . '/instance/fetchInstances');
+$instances_debug = json_encode($instances);
 $status = 'desconectado';
 $is_open = false;
 
@@ -237,6 +238,7 @@ if (!$is_open) {
 
         <div style="margin-top: 1rem; font-size: 0.72rem; color: #6b7280; text-align: left; background: #000; padding: 0.75rem; border-radius: 8px; font-family: monospace;">
             <strong>Diagnostics:</strong> Active: <?= $api_url ?><br>
+            <strong>Instances List:</strong> <?= htmlspecialchars($instances_debug ?? 'N/A') ?><br>
             <strong>Status:</strong> <?= htmlspecialchars($status) ?><br>
             <strong>Restart Resp:</strong> <?= htmlspecialchars($restart_debug ?? 'N/A') ?><br>
             <strong>GET Connect:</strong> <?= htmlspecialchars($qr_debug ?? 'N/A') ?><br>
