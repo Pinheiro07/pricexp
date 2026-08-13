@@ -120,21 +120,46 @@ function parseAmount($text) {
     return 0.0;
 }
 
-// --- HELPER DE EXTRAÇÃO DE BANCO DE QUALQUER INSTITUIÇÃO (COM FONÉTICA DE ÁUDIO) ---
-function parseBank($text) {
-    $banks = [
+// --- HELPER DE EXTRAÇÃO DE BANCO (DINÂMICO DO BANCO DE DADOS + FONÉTICA DE ÁUDIO) ---
+function parseBank($text, $workspace_id = null, $pdo = null) {
+    $lower = mb_strtolower($text, 'UTF-8');
+
+    // 1. Busca dinamicamente todos os bancos que o usuário já utilizou na sua conta PriceXP!
+    $userBankMap = [];
+    if ($pdo && $workspace_id) {
+        try {
+            $stmtUserBanks = $pdo->prepare("SELECT DISTINCT bank_name FROM transactions WHERE user_id = ? AND bank_name IS NOT NULL AND bank_name != ''");
+            $stmtUserBanks->execute([$workspace_id]);
+            $userBanks = $stmtUserBanks->fetchAll(PDO::FETCH_COLUMN);
+
+            foreach ($userBanks as $ub) {
+                $cleanUb = trim(preg_replace('/\(.*?\)/', '', $ub));
+                if (!empty($cleanUb) && strtolower($cleanUb) !== 'geral' && strtolower($cleanUb) !== 'dinheiro') {
+                    $userBankMap[mb_strtolower($cleanUb, 'UTF-8')] = $cleanUb;
+                }
+            }
+        } catch (Exception $e) {}
+    }
+
+    // 2. Lista de bancos populares do Brasil + variações de fonética de áudio
+    $defaultBanks = [
         'nubank' => 'Nubank', 'nu bank' => 'Nubank', 'nu' => 'Nubank',
         'itau' => 'Itaú', 'itaú' => 'Itaú', 'bradesco' => 'Bradesco', 
-        'santander' => 'Santander', 'inter' => 'Banco Inter', 'c6' => 'C6 Bank', 'caixa' => 'Caixa', 
+        'santander' => 'Santander', 'inter' => 'Banco Inter', 'banco inter' => 'Banco Inter',
+        'c6' => 'C6 Bank', 'c6 bank' => 'C6 Bank', 'caixa' => 'Caixa', 
         'bb' => 'Banco do Brasil', 'banco do brasil' => 'Banco do Brasil', 
         'sicoob' => 'Sicoob', 'secob' => 'Sicoob', 
         'sicredi' => 'Sicredi', 'secredi' => 'Sicredi', 'sicrede' => 'Sicredi', 'si credi' => 'Sicredi', 'se credi' => 'Sicredi', 'secret' => 'Sicredi',
         'pagbank' => 'PagBank', 'pag bank' => 'PagBank', 'picpay' => 'PicPay', 'pic pay' => 'PicPay', 
         'mercado pago' => 'Mercado Pago', 'mercado livre' => 'Mercado Pago',
-        'btg' => 'BTG Pactual', 'will' => 'Will Bank', 'neon' => 'Neon'
+        'btg' => 'BTG Pactual', 'btg pactual' => 'BTG Pactual', 'will' => 'Will Bank', 'will bank' => 'Will Bank', 'neon' => 'Neon',
+        'nomad' => 'Nomad', 'wise' => 'Wise', 'banrisul' => 'Banrisul', 'bmg' => 'BMG', 'safra' => 'Banco Safra', 'agibank' => 'Agibank', 'daycoval' => 'Daycoval'
     ];
-    foreach ($banks as $key => $val) {
-        if (preg_match('/\b' . preg_quote($key, '/') . '\b/i', $text)) {
+
+    $allBanks = array_merge($defaultBanks, $userBankMap);
+
+    foreach ($allBanks as $key => $val) {
+        if (preg_match('/\b' . preg_quote($key, '/') . '\b/i', $lower)) {
             return $val;
         }
     }
@@ -307,7 +332,7 @@ $pending = $stmtPending->fetch();
 // Coleta tudo o que vier na mensagem atual
 $newType   = parseType($lowerText);
 $newAmount = parseAmount($lowerText);
-$newBank   = parseBank($lowerText);
+$newBank   = parseBank($lowerText, $workspace_id, $pdo);
 $newMethod = parsePaymentMethod($lowerText);
 $newDesc   = parseDescription($rawText, $newType ?: 'despesa');
 
