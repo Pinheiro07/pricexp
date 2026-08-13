@@ -110,7 +110,7 @@ if (!$user) {
 }
 
 if (!$user) {
-    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\nOlá! Eu sou o Patrick, assistente do PriceXP! 💼\n\nCadastre seu número de WhatsApp no site *PriceXP* em *Minha Conta* para começarmos!";
+    $replyMsg = "*PriceXP — Assistente Financeiro*\n\nOlá! Para utilizar o assistente por WhatsApp, você precisa cadastrar o seu número de telefone em *Minha Conta* no painel PriceXP.";
     echo json_encode(['success' => false, 'reply' => $replyMsg]);
     exit;
 }
@@ -122,18 +122,15 @@ $lowerText    = mb_strtolower($rawText, 'UTF-8');
 
 // --- HELPER DE PARSER INTELIGENTE DE VALORES (COM STRIP DE CNPJ E HORAS) ---
 function parseAmount($text) {
-    // 1. Limpa CNPJs, horas e datas para não confundir 22.405.698 ou 20:15 com R$ 22,00 ou R$ 20,00
-    $cleanText = preg_replace('/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/', ' ', $text); // CNPJ
-    $cleanText = preg_replace('/\b\d{1,2}:\d{2}(?::\d{2})?\b/', ' ', $cleanText); // Horário (ex: 20:15:32)
-    $cleanText = preg_replace('/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/', ' ', $cleanText); // Data
+    $cleanText = preg_replace('/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/', ' ', $text);
+    $cleanText = preg_replace('/\b\d{1,2}:\d{2}(?::\d{2})?\b/', ' ', $cleanText);
+    $cleanText = preg_replace('/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/', ' ', $cleanText);
     $cleanText = preg_replace('/\b(c6\s*bank|c6)\b/i', ' ', $cleanText);
 
-    // 2. Procura explicitamente por valores no formato R$ XX,XX ou R$ XX.XX
     if (preg_match('/r\$\s*(\d+(?:[\.,]\d{1,2})?)/i', $cleanText, $m)) {
         return (float)str_replace(',', '.', $m[1]);
     }
 
-    // 3. Procura por TOTAL R$ XX,XX ou VALOR XX,XX
     if (preg_match('/(?:total|valor|pago)\s*(?:r\$\s*)?(\d+(?:[\.,]\d{1,2})?)/i', $cleanText, $m)) {
         return (float)str_replace(',', '.', $m[1]);
     }
@@ -207,7 +204,6 @@ function parsePaymentMethod($text) {
 
 // --- HELPER DE IDENTIFICAÇÃO DE TIPO ---
 function parseType($text) {
-    // Se for um recibo / comprovante de compra (CNPJ, Via Cliente, Autorizada, Mercado) -> É sempre DESPESA!
     if (preg_match('/(via\s*-\s*cliente|cnpj|cupom fiscal|autorizada|autenticação|supermercado|loja|compra pix)/i', $text)) {
         return 'despesa';
     }
@@ -220,14 +216,12 @@ function parseType($text) {
     return null;
 }
 
-// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE (ESTRUTURA DA FRASE + DICIONÁRIO & NOMES) ---
+// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE ---
 function parseDescription($text, $type) {
     $lower = mb_strtolower($text, 'UTF-8');
 
-    // 1. Captura direta da estrutura natural: "gastei X [em/no/na/de/com] [DESCRIÇÃO]"
     if (preg_match('/(?:gastei|paguei|comprei|saiu|custou|recebi|ganhei)\s+(?:r\$\s*)?\d+(?:[\.,]\d+)?\s*(?:reais|real|mil|k)?\s+(?:no|na|do|da|de|em|com|para)\s+([a-zà-ú0-9\s]{2,35})/i', $text, $mStruct)) {
         $extracted = $mStruct[1];
-        // Limpa bancos, contas e termos de pagamento
         $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $extracted);
         $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
         if (mb_strlen($extracted, 'UTF-8') >= 3 && !preg_match('/^(banco|banco c|conta|cartao|cartão)$/i', $extracted)) {
@@ -235,7 +229,6 @@ function parseDescription($text, $type) {
         }
     }
 
-    // 2. Dicionário de Palavras-Chave Conhecidas de Lugares/Serviços
     $expenseKeywords = [
         'mercado' => 'Mercado', 'supermercado' => 'Mercado', 'feira' => 'Feira', 'açougue' => 'Açougue', 'padaria' => 'Padaria',
         'ifood' => 'iFood', 'restaurante' => 'Restaurante', 'almoço' => 'Almoço', 'almoco' => 'Almoço', 'jantar' => 'Jantar',
@@ -264,7 +257,6 @@ function parseDescription($text, $type) {
         return 'Pix de ' . ucfirst($mPerson[1]);
     }
 
-    // Se NÃO identificou nenhum lugar/motivo real, retorna NULL para o Patrick perguntar!
     return null;
 }
 
@@ -292,7 +284,7 @@ function inferCategoryStrict($description, $text, $type) {
 }
 
 // ------------------------------------------------------------------
-// --- COMANDO DE RELATÓRIO FINANCEIRO MULTI-PERÍODO (SEMANAL, MENSAL, ANUAL) ---
+// --- COMANDO DE RELATÓRIO FINANCEIRO CORPORATIVO (SEMANAL, MENSAL, ANUAL) ---
 // ------------------------------------------------------------------
 if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|extrato|balanço|balanco|relatório|relatorio|semanal|semana|mensal|mês|mes|anual|ano)/i', $lowerText)) {
     
@@ -303,7 +295,7 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
         $periodTitle = "SEMANAL";
         $firstDay = date('Y-m-d', strtotime('monday this week'));
         $lastDay  = date('Y-m-d', strtotime('sunday this week'));
-        $periodLabel = "Semana (" . date('d/m', strtotime($firstDay)) . " até " . date('d/m', strtotime($lastDay)) . ")";
+        $periodLabel = "Semana (" . date('d/m', strtotime($firstDay)) . " a " . date('d/m', strtotime($lastDay)) . ")";
     } elseif (preg_match('/(anual|ano)/i', $lowerText)) {
         $periodTitle = "ANUAL";
         $firstDay = date('Y-01-01');
@@ -316,36 +308,31 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
         $periodLabel = "Mês (" . date('m/Y') . ")";
     }
 
-    // Total de Receitas
     $stmtRec = $pdo->prepare("SELECT SUM(amount) FROM transactions WHERE user_id = ? AND type = 'receita' AND date >= ? AND date <= ?");
     $stmtRec->execute([$workspace_id, $firstDay, $lastDay]);
     $totalRec = (float)($stmtRec->fetchColumn() ?? 0);
 
-    // Total de Despesas
     $stmtDesp = $pdo->prepare("SELECT SUM(amount) FROM transactions WHERE user_id = ? AND type = 'despesa' AND date >= ? AND date <= ?");
     $stmtDesp->execute([$workspace_id, $firstDay, $lastDay]);
     $totalDesp = (float)($stmtDesp->fetchColumn() ?? 0);
 
     $saldo = $totalRec - $totalDesp;
-    $saldoEmoji = ($saldo >= 0) ? '🟢 +' : '🔴 -';
+    $saldoSign = ($saldo >= 0) ? '+' : '-';
 
-    // Top 3 Categorias de Maior Gasto no Período
     $stmtTop = $pdo->prepare("SELECT category, SUM(amount) AS total FROM transactions WHERE user_id = ? AND type = 'despesa' AND date >= ? AND date <= ? GROUP BY category ORDER BY total DESC LIMIT 3");
     $stmtTop->execute([$workspace_id, $firstDay, $lastDay]);
     $topCategories = $stmtTop->fetchAll();
 
     $topText = "";
     if ($topCategories) {
-        $emojis = ['1️⃣', '2️⃣', '3️⃣'];
         foreach ($topCategories as $idx => $cat) {
-            $e = $emojis[$idx] ?? '🔹';
-            $topText .= "{$e} *{$cat['category']}:* R$ " . number_format($cat['total'], 2, ',', '.') . "\n";
+            $n = $idx + 1;
+            $topText .= "{$n}. {$cat['category']}: R$ " . number_format($cat['total'], 2, ',', '.') . "\n";
         }
     } else {
-        $topText = "_Nenhuma despesa registrada neste período._\n";
+        $topText = "Sem despesas registradas no período.\n";
     }
 
-    // Top 2 Bancos com mais movimentação no período
     $stmtBanks = $pdo->prepare("SELECT bank_name, SUM(amount) AS total FROM transactions WHERE user_id = ? AND date >= ? AND date <= ? AND bank_name IS NOT NULL AND bank_name != '' AND bank_name != 'Geral' GROUP BY bank_name ORDER BY total DESC LIMIT 2");
     $stmtBanks->execute([$workspace_id, $firstDay, $lastDay]);
     $topBanks = $stmtBanks->fetchAll();
@@ -353,7 +340,7 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
     $bankText = "";
     if ($topBanks) {
         foreach ($topBanks as $b) {
-            $bankText .= "🔹 *{$b['bank_name']}:* R$ " . number_format($b['total'], 2, ',', '.') . "\n";
+            $bankText .= "• {$b['bank_name']}: R$ " . number_format($b['total'], 2, ',', '.') . "\n";
         }
     }
 
@@ -361,30 +348,29 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
     $fmtDesp = number_format($totalDesp, 2, ',', '.');
     $fmtSal  = number_format(abs($saldo), 2, ',', '.');
 
-    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
-              . "📊 *RELATÓRIO FINANCEIRO {$periodTitle}*\n\n"
-              . "👤 *Usuário:* {$userName}\n"
-              . "📅 *Período:* {$periodLabel}\n\n"
-              . "🟢 *Total de Entradas:* R$ {$fmtRec}\n"
-              . "🔴 *Total de Saídas:* R$ {$fmtDesp}\n"
-              . "💰 *Saldo:* {$saldoEmoji}R$ {$fmtSal}\n\n"
-              . "🔥 *Maiores Gastos do Período:*\n"
+    $replyMsg = "*PriceXP — Assistente Financeiro*\n\n"
+              . "*RELATÓRIO FINANCEIRO " . $periodTitle . "*\n\n"
+              . "• Usuário: {$userName}\n"
+              . "• Período: {$periodLabel}\n\n"
+              . "• Entradas: R$ {$fmtRec}\n"
+              . "• Saídas: R$ {$fmtDesp}\n"
+              . "• Saldo Líquido: R$ {$saldoSign}{$fmtSal}\n\n"
+              . "*Principais Categorias de Despesa:*\n"
               . $topText . "\n"
-              . ($bankText ? "🏦 *Bancos Mais Usados:*\n" . $bankText . "\n" : "")
-              . "🚀 _Acesse o painel PriceXP para o relatório completo!_";
+              . ($bankText ? "*Bancos Utilizados:*\n" . $bankText . "\n" : "")
+              . "_Lançamentos sincronizados com o painel PriceXP._";
 
     echo json_encode(['success' => true, 'reply' => $replyMsg]);
     exit;
 }
 
 // ------------------------------------------------------------------
-// --- BUSCA SESSÃO PENDENTE DO USUÁRIO (Últimos 15 minutos) ---
+// --- BUSCA SESSÃO PENDENTE DO USUÁRIO ---
 // ------------------------------------------------------------------
 $stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND created_at >= NOW() - INTERVAL 15 MINUTE ORDER BY id DESC LIMIT 1");
 $stmtPending->execute([$user_id]);
 $pending = $stmtPending->fetch();
 
-// Coleta tudo o que vier na mensagem atual
 $newType   = parseType($lowerText);
 $newAmount = parseAmount($lowerText);
 $newBank   = parseBank($lowerText, $workspace_id, $pdo);
@@ -392,10 +378,8 @@ $newMethod = parsePaymentMethod($lowerText);
 $newDesc   = parseDescription($rawText, $newType ?: 'despesa');
 
 if ($pending) {
-    // --- CONVERSA INCREMENTAL / CORREÇÃO ---
     $type = $newType ?: ($pending['type'] ?: 'despesa');
     
-    // Só substitui o valor do rascunho se a nova mensagem trouxer explicitamente contexto financeiro
     $hasMoneyContext = preg_match('/(r\$|reais|real|\bvalor\b|na verdade|corrigindo)/i', $lowerText);
     if ((float)$pending['amount'] > 0) {
         $amount = ($newAmount > 0 && $hasMoneyContext) ? $newAmount : (float)$pending['amount'];
@@ -413,7 +397,6 @@ if ($pending) {
     }
     $pendingId = $pending['id'];
 } else {
-    // --- NOVO LANÇAMENTO ---
     $type           = $newType ?: 'despesa';
     $amount         = $newAmount;
     $bank_name      = $newBank;
@@ -422,18 +405,15 @@ if ($pending) {
     $pendingId      = null;
 }
 
-// --- VERIFICAÇÃO DE DADOS FALTANTES ---
 $missing = [];
 if ($amount <= 0) $missing[] = 'valor';
 if (empty($description)) $missing[] = 'descricao';
 if (empty($bank_name) && $payment_method !== 'Dinheiro') $missing[] = 'banco';
 
-// FORMA DE PAGAMENTO É OBRIGATÓRIA APENAS PARA SAÍDAS (DESPESAS)!
 if ($type === 'despesa' && empty($payment_method)) {
     $missing[] = 'forma_pagamento';
 }
 
-// Se AINDA FALTAM dados obrigatórios, atualiza a sessão e faz a PERGUNTA CONVERSACIONAL ÚNICA
 if (!empty($missing)) {
     try {
         if ($pendingId) {
@@ -446,7 +426,7 @@ if (!empty($missing)) {
     } catch (Exception $ex) {}
 
     $formattedAmount = ($amount > 0) ? "R$ " . number_format($amount, 2, ',', '.') : "";
-    $tipoTxt = ($type === 'receita') ? 'receita 🟢' : 'despesa 🔴';
+    $tipoLabel = ($type === 'receita') ? 'Receita' : 'Despesa';
 
     $questions = [];
     if (in_array('valor', $missing)) {
@@ -456,32 +436,29 @@ if (!empty($missing)) {
         $questions[] = ($type === 'receita') ? "de onde veio essa receita" : "com o que você gastou";
     }
     if (in_array('banco', $missing) && in_array('forma_pagamento', $missing)) {
-        $questions[] = "qual conta/banco usou e se foi no PIX, débito ou crédito";
+        $questions[] = "qual conta/banco utilizou e a forma de pagamento (PIX, débito ou crédito)";
     } elseif (in_array('banco', $missing)) {
-        $questions[] = ($type === 'receita') ? "em qual banco/conta caiu" : "qual banco ou conta usou";
+        $questions[] = ($type === 'receita') ? "em qual banco/conta caiu" : "qual banco ou conta utilizou";
     } elseif (in_array('forma_pagamento', $missing)) {
-        $questions[] = "foi no PIX, débito ou crédito";
+        $questions[] = "qual foi a forma de pagamento (PIX, débito ou crédito)";
     }
 
     $askText = implode(", ", $questions);
-    $introText = $formattedAmount ? "Anotado {$formattedAmount} de {$tipoTxt}! 💰\n\nSó me fala: " : "Só me conta: ";
+    $introText = $formattedAmount ? "Anotado o lançamento de {$formattedAmount} ({$tipoLabel}).\n\nPor favor, informe: " : "Por favor, informe: ";
 
-    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n" . $introText . ucfirst($askText) . "?";
+    $replyMsg = "*PriceXP — Assistente Financeiro*\n\n" . $introText . $askText . "?";
     
     echo json_encode(['success' => true, 'reply' => $replyMsg]);
     exit;
 }
 
 // ------------------------------------------------------------------
-// --- REGISTRO DO LANÇAMENTO COMPLETO NO PRICEXP ---
+// --- REGISTRO DO LANÇAMENTO COMPLETO ---
 // ------------------------------------------------------------------
 $category = inferCategoryStrict($description, $rawText, $type);
 $date = date('Y-m-d');
-
-// Garania de Banco LIMPO (sem sufixos como (PIX) ou (Débito) que poluem o filtro do app!)
 $finalBank = $bank_name ?: 'Geral';
 
-// Tenta vincular ao Cartão de Crédito do Usuário no banco se a forma for crédito
 $card_id = null;
 if ($type === 'despesa' && $payment_method === 'Crédito') {
     try {
@@ -503,7 +480,7 @@ try {
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
-        'reply' => "🟢 *Patrick — Assistente PriceXP*\n\n⚠️ Tive um contratempo ao gravar no banco: " . $e->getMessage()
+        'reply' => "*PriceXP — Assistente Financeiro*\n\nOcorreu um erro ao registrar a transação: " . $e->getMessage()
     ]);
     exit;
 }
@@ -511,19 +488,17 @@ try {
 logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO', "Lançamento via WhatsApp #{$insertedId}: {$type} - {$description} (R$ {$amount})", $amount, ['bank' => $finalBank, 'phone' => $cleanPhone]);
 
 $formattedAmount = number_format($amount, 2, ',', '.');
-$emojiType = ($type === 'receita') ? '🟢 Receita' : '🔴 Despesa';
+$tipoLabel = ($type === 'receita') ? 'Receita' : 'Despesa';
 
-$replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
-          . "✅ *Lançamento Registrado com Sucesso!*\n\n"
-          . "👤 *Usuário:* {$userName}\n"
-          . "📊 *Tipo:* {$emojiType}\n"
-          . "💰 *Valor:* R$ {$formattedAmount}\n"
-          . "📝 *Descrição:* {$description}\n"
-          . "📁 *Categoria:* {$category}\n"
-          . "🏦 *Banco:* {$finalBank}\n"
-          . ($type === 'despesa' ? "💳 *Forma:* " . ($payment_method ?: 'Outra') . "\n" : "")
-          . "📅 *Data:* " . date('d/m/Y') . "\n\n"
-          . "🚀 _Já disponível no seu painel PriceXP!_";
+$replyMsg = "*PriceXP — Confirmação de Lançamento*\n\n"
+          . "• Tipo: {$tipoLabel}\n"
+          . "• Valor: R$ {$formattedAmount}\n"
+          . "• Descrição: {$description}\n"
+          . "• Categoria: {$category}\n"
+          . "• Banco: {$finalBank}\n"
+          . ($type === 'despesa' ? "• Forma de Pagamento: " . ($payment_method ?: 'Outra') . "\n" : "")
+          . "• Data: " . date('d/m/Y') . "\n\n"
+          . "_Lançamento registrado com sucesso no seu painel PriceXP._";
 
 echo json_encode([
     'success' => true,
