@@ -122,11 +122,14 @@ $lowerText    = mb_strtolower($rawText, 'UTF-8');
 
 // --- HELPER DE PARSER INTELIGENTE DE VALORES ---
 function parseAmount($text) {
-    if (preg_match('/(\d+(?:[\.,]\d+)?)\s*(mil|k)/i', $text, $m)) {
+    // Remove marcas de banco como "C6" ou "C6 Bank" para não confundir o "6" com R$ 6,00
+    $cleanText = preg_replace('/\b(c6\s*bank|c6)\b/i', ' ', $text);
+
+    if (preg_match('/(\d+(?:[\.,]\d+)?)\s*(mil|k)\b/i', $cleanText, $m)) {
         $val = (float)str_replace(',', '.', $m[1]);
         return $val * 1000;
     }
-    if (preg_match('/(?:r\$\s*|valor\s*|de\s*)?(\d+(?:[\.,]\d{1,2})?)/i', $text, $m)) {
+    if (preg_match('/(?:r\$\s*|valor\s*|de\s*)?(\b\d+(?:[\.,]\d{1,2})?\b)(?:\s*reais|\s*real)?/i', $cleanText, $m)) {
         return (float)str_replace(',', '.', $m[1]);
     }
     return 0.0;
@@ -347,8 +350,16 @@ $newDesc   = parseDescription($rawText, $newType ?: 'despesa');
 
 if ($pending) {
     // --- CONVERSA INCREMENTAL / CORREÇÃO ---
-    $type           = $newType ?: ($pending['type'] ?: 'despesa');
-    $amount         = ($newAmount > 0) ? $newAmount : (float)$pending['amount'];
+    $type = $newType ?: ($pending['type'] ?: 'despesa');
+    
+    // Só substitui o valor do rascunho se a nova mensagem trouxer explicitamente contexto financeiro
+    $hasMoneyContext = preg_match('/(r\$|reais|real|\bvalor\b|na verdade|corrigindo)/i', $lowerText);
+    if ((float)$pending['amount'] > 0) {
+        $amount = ($newAmount > 0 && $hasMoneyContext) ? $newAmount : (float)$pending['amount'];
+    } else {
+        $amount = ($newAmount > 0) ? $newAmount : 0.0;
+    }
+
     $bank_name      = $newBank ?: $pending['bank_name'];
     $payment_method = $newMethod ?: $pending['payment_method'];
 
