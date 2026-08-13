@@ -115,6 +115,8 @@ $workspace_id = getWorkspaceUserId($pdo, $user_id);
 $userName     = !empty($user['first_name']) ? $user['first_name'] : 'Usuário';
 
 // PARSER INTELIGENTE DE MENSAGENS FINANCEIRAS (Áudio/Texto)
+$lowerText = mb_strtolower($rawText, 'UTF-8');
+
 // 1. Tipo (Receita vs Despesa)
 $type = 'despesa';
 if (preg_match('/(receb|ganh|salari|salário|pix|entrada|receita|deposit|depósito|venda|caiu|renda|reembolso|lucro|faturamento)/i', $lowerText)) {
