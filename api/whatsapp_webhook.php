@@ -365,10 +365,10 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
 }
 
 // ------------------------------------------------------------------
-// --- COMANDO DE EXCLUSÃO DE LANÇAMENTO VIA WHATSAPP ---
+// --- COMANDO DE EXCLUSÃO DE LANÇAMENTO VIA WHATSAPP (BOTÃO 2 OU PALAVRA) ---
 // ------------------------------------------------------------------
-if (preg_match('/^(excluir|deletar|apagar|cancelar)(\s+último|\s+ultimo|\s+lançamento|\s+lancamento|\s+gasto)?$/i', trim($lowerText)) || 
-    preg_match('/(excluir último|apagar último|deletar último|cancelar último|apagar o último|excluir o último|deletar o último|cancelar o último)/i', $lowerText)) {
+if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+último|\s+ultimo|\s+lançamento|\s+lancamento|\s+gasto)?$/i', trim($lowerText)) || 
+    preg_match('/(excluir último|apagar último|deletar último|cancelar último|apagar o último|excluir o último|deletar o último|cancelar o último|delete_last_tx)/i', $lowerText)) {
     
     $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 1");
     $stmtLast->execute([$workspace_id]);
@@ -401,8 +401,30 @@ if (preg_match('/^(excluir|deletar|apagar|cancelar)(\s+último|\s+ultimo|\s+lan�
 }
 
 // ------------------------------------------------------------------
-// --- COMANDO DE EDIÇÃO / CORREÇÃO DE LANÇAMENTO VIA WHATSAPP ---
+// --- COMANDO DE EDIÇÃO / CORREÇÃO DE LANÇAMENTO VIA WHATSAPP (BOTÃO 1 OU PALAVRA) ---
 // ------------------------------------------------------------------
+if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerText) === 'edit_last_tx' || trim($lowerText) === 'editar' || trim($lowerText) === 'editar lançamento') {
+    $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 1");
+    $stmtLast->execute([$workspace_id]);
+    $lastTx = $stmtLast->fetch();
+
+    if ($lastTx) {
+        $fmtVal = number_format((float)$lastTx['amount'], 2, ',', '.');
+        $replyMsg = "✏️ *PriceXP — Editar Lançamento*\n\n"
+                  . "Lançamento atual: *{$lastTx['description']}* de *R$ {$fmtVal}* (" . ($lastTx['bank_name'] ?: 'Geral') . ").\n\n"
+                  . "Digite como deseja alterar:\n"
+                  . "• Ex: *\"80 no Itaú\"*\n"
+                  . "• Ex: *\"Farmácia 45,90 no Nubank\"*\n"
+                  . "• Ex: *\"Foi 150 na gasolina\"*\n\n"
+                  . "O Patrick atualizará o lançamento instantaneamente!";
+    } else {
+        $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nNenhum lançamento recente foi encontrado para ser alterado.";
+    }
+
+    echo json_encode(['success' => true, 'reply' => $replyMsg]);
+    exit;
+}
+
 if (preg_match('/^(corrigir|editar|alterar|na verdade|corrigindo|mudar para|muda para)/i', trim($lowerText)) || 
     preg_match('/(na verdade foi|na verdade era|corrigindo valor|corrigir valor)/i', $lowerText)) {
     
