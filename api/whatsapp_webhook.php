@@ -100,11 +100,7 @@ try {
 } catch (Exception $e) {}
 
 try {
-    $pdo->exec("UPDATE users SET whatsapp = '552833441530' WHERE id = 1 AND (whatsapp IS NULL OR TRIM(whatsapp) = '')");
-} catch (Exception $e) {}
-
-try {
-    $pdo->exec("UPDATE users SET whatsapp_lid = NULL WHERE whatsapp_lid IS NOT NULL");
+    $pdo->exec("UPDATE users SET whatsapp = '552833441530', whatsapp_lid = '11184128426122' WHERE id = 1");
 } catch (Exception $e) {}
 
 // Identifica usuário pelo número do WhatsApp ou LID (Linked Device ID da Meta)
