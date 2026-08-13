@@ -167,6 +167,9 @@ if (empty($cleanDesc) || strlen($cleanDesc) < 2) {
 }
 $description = ucfirst($cleanDesc);
 
+// 5. Categoria inicial padrão (Garante que NUNCA fique nula)
+$category = ($type === 'receita') ? 'Outras Receitas' : 'Outras Despesas';
+
 // Mapeamento automático de categorias por palavras-chave
 if (preg_match('/(mercado|supermercado|feira|açougue|padaria|comida|ifood)/i', $lowerText)) {
     $category = 'Casa';
@@ -176,16 +179,24 @@ if (preg_match('/(mercado|supermercado|feira|açougue|padaria|comida|ifood)/i', 
     $category = 'Saúde';
 } elseif (preg_match('/(cinema|show|festa|bar|restaurante|viagem|jogos|lazer)/i', $lowerText)) {
     $category = 'Lazer';
-} elseif (preg_match('/(salario|salário|férias|ferias|bonus|bônus|plr|renda extra)/i', $lowerText)) {
+} elseif (preg_match('/(salario|salário|férias|ferias|bonus|bônus|plr|renda extra|site|venda)/i', $lowerText)) {
     $category = 'Salário Líquido';
 }
 
 $date = date('Y-m-d');
 
-// Grava o lançamento diretamente na tabela transactions do banco financas_db
-$stmtIns = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-$stmtIns->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $bank_name]);
-$insertedId = $pdo->lastInsertId();
+// Grava o lançamento diretamente na tabela transactions do banco financas_db com segurança total
+try {
+    $stmtIns = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmtIns->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $bank_name]);
+    $insertedId = $pdo->lastInsertId();
+} catch (Exception $e) {
+    echo json_encode([
+        'success' => false,
+        'reply' => "🟢 *Patrick — Assistente PriceXP*\n\n⚠️ Ops! Tive um contratempo ao gravar no banco: " . $e->getMessage()
+    ]);
+    exit;
+}
 
 // Grava log de auditoria
 logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO', "Lançamento via WhatsApp #{$insertedId}: {$type} - {$description} (R$ {$amount})", $amount, ['bank' => $bank_name, 'phone' => $cleanPhone]);
