@@ -107,14 +107,14 @@ if (empty($instances) || (is_array($instances) && count($instances) === 0)) {
     ]);
 }
 
-// Busca QR Code
+// Busca QR Code e Código de Pareamento
 $qr_data = null;
 $pairing_code = null;
 $qr_debug = null;
-$qr_id_debug = null;
+$pair_debug = null;
 
 if (!$is_open) {
-    // 1. Tenta GET connect por Nome
+    // 1. Tenta GET connect QR Code
     $qr_resp = evo_request($api_url . '/instance/connect/' . $instance, 'GET');
     $qr_debug = json_encode($qr_resp);
     
@@ -124,15 +124,13 @@ if (!$is_open) {
         $qr_data = $qr_resp['qrcode']['base64'];
     }
     
-    // 2. Tenta GET connect por ID único se por Nome devolveu count 0
-    if (empty($qr_data) && $inst_id) {
-        $qr_resp_id = evo_request($api_url . '/instance/connect/' . $inst_id, 'GET');
-        $qr_id_debug = json_encode($qr_resp_id);
-        if (!empty($qr_resp_id['base64'])) {
-            $qr_data = $qr_resp_id['base64'];
-        } elseif (!empty($qr_resp_id['qrcode']['base64'])) {
-            $qr_data = $qr_resp_id['qrcode']['base64'];
-        }
+    // 2. Tenta GET connect Código de Pareamento de 8 dígitos
+    $pair_resp = evo_request($api_url . '/instance/connect/' . $instance . '?number=552833441530', 'GET');
+    $pair_debug = json_encode($pair_resp);
+    if (!empty($pair_resp['code'])) {
+        $pairing_code = $pair_resp['code'];
+    } elseif (!empty($pair_resp['pairingCode'])) {
+        $pairing_code = $pair_resp['pairingCode'];
     }
 }
 ?>
@@ -232,10 +230,9 @@ if (!$is_open) {
 
         <div style="margin-top: 1rem; font-size: 0.72rem; color: #6b7280; text-align: left; background: #000; padding: 0.75rem; border-radius: 8px; font-family: monospace;">
             <strong>Diagnostics:</strong> Active: <?= $api_url ?><br>
-            <strong>Instance ID:</strong> <?= htmlspecialchars($inst_id ?? 'N/A') ?><br>
             <strong>Status:</strong> <?= htmlspecialchars($status) ?><br>
-            <strong>GET Connect (Nome):</strong> <?= htmlspecialchars($qr_debug ?? 'N/A') ?><br>
-            <strong>GET Connect (ID):</strong> <?= htmlspecialchars($qr_id_debug ?? 'N/A') ?><br>
+            <strong>QR Resp:</strong> <?= htmlspecialchars($qr_debug ?? 'N/A') ?><br>
+            <strong>Pairing Resp:</strong> <?= htmlspecialchars($pair_debug ?? 'N/A') ?><br>
             <?php foreach ($debug_log as $log): ?>
                 - <?= htmlspecialchars($log) ?><br>
             <?php endforeach; ?>
