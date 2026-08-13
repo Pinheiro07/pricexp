@@ -365,6 +365,90 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
 }
 
 // ------------------------------------------------------------------
+// --- COMANDO DE EXCLUSÃO DE LANÇAMENTO VIA WHATSAPP ---
+// ------------------------------------------------------------------
+if (preg_match('/^(excluir|deletar|apagar|cancelar)(\s+último|\s+ultimo|\s+lançamento|\s+lancamento|\s+gasto)?$/i', trim($lowerText)) || 
+    preg_match('/(excluir último|apagar último|deletar último|cancelar último|apagar o último|excluir o último|deletar o último|cancelar o último)/i', $lowerText)) {
+    
+    $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 1");
+    $stmtLast->execute([$workspace_id]);
+    $lastTx = $stmtLast->fetch();
+
+    if ($lastTx) {
+        $stmtDel = $pdo->prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?");
+        $stmtDel->execute([$lastTx['id'], $workspace_id]);
+
+        logUserActivity($pdo, $user_id, 'WHATSAPP_EXCLUSAO', "Exclusão via WhatsApp #{$lastTx['id']}: {$lastTx['description']} (R$ {$lastTx['amount']})", $lastTx['amount'], ['phone' => $cleanPhone]);
+
+        $fmtVal = number_format((float)$lastTx['amount'], 2, ',', '.');
+        $tipoIcon = ($lastTx['type'] === 'receita') ? '🟢 Receita' : '🔴 Despesa';
+        $fmtDate = date('d/m/Y', strtotime($lastTx['date']));
+
+        $replyMsg = "🗑️ *PriceXP — Lançamento Excluído*\n\n"
+                  . "O seu último lançamento foi removido com sucesso:\n\n"
+                  . "• Tipo: {$tipoIcon}\n"
+                  . "• Descrição: {$lastTx['description']}\n"
+                  . "• Valor: R$ {$fmtVal}\n"
+                  . "• Banco: " . ($lastTx['bank_name'] ?: 'Geral') . "\n"
+                  . "• Data: {$fmtDate}\n\n"
+                  . "🚀 _Seu saldo e gráficos foram atualizados no painel PriceXP._";
+    } else {
+        $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nNenhum lançamento recente foi encontrado para ser excluído.";
+    }
+
+    echo json_encode(['success' => true, 'reply' => $replyMsg]);
+    exit;
+}
+
+// ------------------------------------------------------------------
+// --- COMANDO DE EDIÇÃO / CORREÇÃO DE LANÇAMENTO VIA WHATSAPP ---
+// ------------------------------------------------------------------
+if (preg_match('/^(corrigir|editar|alterar|na verdade|corrigindo|mudar para|muda para)/i', trim($lowerText)) || 
+    preg_match('/(na verdade foi|na verdade era|corrigindo valor|corrigir valor)/i', $lowerText)) {
+    
+    $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name, date FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 1");
+    $stmtLast->execute([$workspace_id]);
+    $lastTx = $stmtLast->fetch();
+
+    if ($lastTx) {
+        $updAmount = parseAmount($lowerText);
+        $updBank   = parseBank($lowerText, $workspace_id, $pdo);
+        $updType   = parseType($lowerText);
+        $updDesc   = parseDescription($rawText, $updType ?: $lastTx['type']);
+
+        $finalAmount = ($updAmount > 0) ? $updAmount : (float)$lastTx['amount'];
+        $finalBank   = $updBank ?: ($lastTx['bank_name'] ?: 'Geral');
+        $finalType   = $updType ?: $lastTx['type'];
+        $finalDesc   = (!empty($updDesc) && mb_strlen($updDesc) >= 3 && !in_array(strtolower($updDesc), ['corrigir', 'editar', 'alterar', 'na verdade', 'corrigindo'])) ? $updDesc : $lastTx['description'];
+        $finalCat    = inferCategoryStrict($finalDesc, $rawText, $finalType);
+
+        $stmtUpdTx = $pdo->prepare("UPDATE transactions SET type=?, category=?, description=?, amount=?, bank_name=? WHERE id=? AND user_id=?");
+        $stmtUpdTx->execute([$finalType, $finalCat, $finalDesc, $finalAmount, $finalBank, $lastTx['id'], $workspace_id]);
+
+        logUserActivity($pdo, $user_id, 'WHATSAPP_EDICAO', "Edição via WhatsApp #{$lastTx['id']}: {$finalDesc} (R$ {$finalAmount})", $finalAmount, ['phone' => $cleanPhone]);
+
+        $fmtVal = number_format($finalAmount, 2, ',', '.');
+        $tipoIcon = ($finalType === 'receita') ? '🟢 Receita' : '🔴 Despesa';
+        $fmtDate = date('d/m/Y', strtotime($lastTx['date']));
+
+        $replyMsg = "✏️ *PriceXP — Lançamento Atualizado*\n\n"
+                  . "O seu último lançamento foi alterado com sucesso:\n\n"
+                  . "• Tipo: {$tipoIcon}\n"
+                  . "• Descrição: {$finalDesc}\n"
+                  . "• Novo Valor: R$ {$fmtVal}\n"
+                  . "• Novo Banco: {$finalBank}\n"
+                  . "• Categoria: {$finalCat}\n"
+                  . "• Data: {$fmtDate}\n\n"
+                  . "🚀 _Seu saldo e relatórios foram atualizados automaticamente._";
+    } else {
+        $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nNenhum lançamento recente foi encontrado para ser alterado.";
+    }
+
+    echo json_encode(['success' => true, 'reply' => $replyMsg]);
+    exit;
+}
+
+// ------------------------------------------------------------------
 // --- BUSCA SESSÃO PENDENTE DO USUÁRIO ---
 // ------------------------------------------------------------------
 $stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND created_at >= NOW() - INTERVAL 15 MINUTE ORDER BY id DESC LIMIT 1");
@@ -498,7 +582,8 @@ $replyMsg = "✅ *PriceXP — Confirmação de Lançamento*\n\n"
           . "• Banco: {$finalBank}\n"
           . ($type === 'despesa' ? "• Forma de Pagamento: " . ($payment_method ?: 'Outra') . "\n" : "")
           . "• Data: " . date('d/m/Y') . "\n\n"
-          . "🚀 _Lançamento registrado com sucesso no seu painel PriceXP._";
+          . "🚀 _Lançamento registrado com sucesso no seu painel PriceXP._\n"
+          . "💡 _Dica: Digite *\"excluir\"* para apagar ou *\"na verdade foi 80 no Itaú\"* para corrigir._";
 
 echo json_encode([
     'success' => true,
