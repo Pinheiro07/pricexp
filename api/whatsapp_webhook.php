@@ -294,11 +294,11 @@ $stmtPending->execute([$user_id]);
 $pending = $stmtPending->fetch();
 
 // Coleta tudo o que vier na mensagem atual
-$newType = parseType($lowerText);
+$newType   = parseType($lowerText);
 $newAmount = parseAmount($lowerText);
-$newBank = parseBank($lowerText);
+$newBank   = parseBank($lowerText);
 $newMethod = parsePaymentMethod($lowerText);
-$newDesc = parseDescription($rawText, $newType ?: 'despesa');
+$newDesc   = parseDescription($rawText, $newType ?: 'despesa');
 
 if ($pending) {
     // --- CONVERSA INCREMENTAL / CORREÇÃO ---
@@ -306,8 +306,14 @@ if ($pending) {
     $amount         = ($newAmount > 0) ? $newAmount : (float)$pending['amount'];
     $bank_name      = $newBank ?: $pending['bank_name'];
     $payment_method = $newMethod ?: $pending['payment_method'];
-    $description    = $newDesc ?: $pending['description'];
-    $pendingId      = $pending['id'];
+
+    // Se a descrição já havia sido capturada no rascunho anterior (ex: Cinema), MANTÉM!
+    if (!empty($pending['description'])) {
+        $description = (!empty($newDesc) && mb_strlen($newDesc) >= 3 && !in_array(strtolower($newDesc), ['foi', 'sim', 'nao', 'não'])) ? $newDesc : $pending['description'];
+    } else {
+        $description = $newDesc;
+    }
+    $pendingId = $pending['id'];
 } else {
     // --- NOVO LANÇAMENTO ---
     $type           = $newType ?: 'despesa';
