@@ -474,8 +474,8 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
 if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+último|\s+ultimo|\s+lançamento|\s+lancamento|\s+gasto)?$/i', trim($lowerText)) || 
     preg_match('/(excluir último|apagar último|deletar último|cancelar último|apagar o último|excluir o último|deletar o último|cancelar o último|delete_last_tx)/i', $lowerText)) {
     
-    $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 1");
-    $stmtLast->execute([$workspace_id]);
+    $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? AND (created_by_user_id = ? OR created_by_user_id IS NULL OR created_by_user_id = 0) ORDER BY id DESC LIMIT 1");
+    $stmtLast->execute([$workspace_id, $user_id]);
     $lastTx = $stmtLast->fetch();
 
     if ($lastTx) {
@@ -508,8 +508,8 @@ if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+
 // --- COMANDO DE EDIÇÃO / CORREÇÃO DE LANÇAMENTO VIA WHATSAPP (BOTÃO 1 OU PALAVRA) ---
 // ------------------------------------------------------------------
 if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerText) === 'edit_last_tx' || trim($lowerText) === 'editar' || trim($lowerText) === 'editar lançamento') {
-    $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 1");
-    $stmtLast->execute([$workspace_id]);
+    $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name FROM transactions WHERE user_id = ? AND (created_by_user_id = ? OR created_by_user_id IS NULL OR created_by_user_id = 0) ORDER BY id DESC LIMIT 1");
+    $stmtLast->execute([$workspace_id, $user_id]);
     $lastTx = $stmtLast->fetch();
 
     if ($lastTx) {
@@ -555,8 +555,8 @@ if ($isEditModePending ||
     }
     
     if (empty($lastTx)) {
-        $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name, date FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 1");
-        $stmtLast->execute([$workspace_id]);
+        $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name, date FROM transactions WHERE user_id = ? AND (created_by_user_id = ? OR created_by_user_id IS NULL OR created_by_user_id = 0) ORDER BY id DESC LIMIT 1");
+        $stmtLast->execute([$workspace_id, $user_id]);
         $lastTx = $stmtLast->fetch();
     }
 
