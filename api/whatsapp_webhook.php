@@ -638,8 +638,10 @@ $replyMsg = "✅ *PriceXP — Confirmação de Lançamento*\n\n"
           . "• Banco: {$finalBank}\n"
           . ($type === 'despesa' ? "• Forma de Pagamento: " . ($payment_method ?: 'Outra') . "\n" : "")
           . "• Data: " . date('d/m/Y') . "\n\n"
-          . "🚀 _Lançamento registrado com sucesso no seu painel PriceXP._\n"
-          . "💡 _Dica: Digite *\"excluir\"* para apagar ou *\"na verdade foi 80 no Itaú\"* para corrigir._";
+          . "🚀 _Lançamento registrado com sucesso no seu painel PriceXP._\n\n"
+          . "🔘 *Opções Rápidas (Responda para acionar):*\n"
+          . "1️⃣ Responda *1* ou *\"Editar\"* ➔ Alterar valor, banco ou item\n"
+          . "2️⃣ Responda *2* ou *\"Excluir\"* ➔ Cancelar este lançamento";
 
 echo json_encode([
     'success' => true,
