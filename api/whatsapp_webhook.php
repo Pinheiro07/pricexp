@@ -146,8 +146,8 @@ function parseAmount($text) {
         return $val * 1000;
     }
 
-    // 4. 50 reais ou 50 real
-    if (preg_match('/(\d+(?:[\.,]\d{1,2})?)\s*(?:reais|real)/i', $cleanText, $m)) {
+    // 4. 50 reais ou 50 real ou 50 reias / riais (suporte a erro de digitação)
+    if (preg_match('/(\d+(?:[\.,]\d{1,2})?)\s*(?:r[eia]{2,4}s?|real)/i', $cleanText, $m)) {
         return (float)str_replace(',', '.', $m[1]);
     }
 
@@ -252,7 +252,7 @@ function parseType($text) {
 // --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE ---
 function parseDescription($text, $type) {
     $lower = mb_strtolower(trim($text), 'UTF-8');
-    $actionVerbs = ['gastei', 'paguei', 'comprei', 'saiu', 'custou', 'recebi', 'ganhei', 'foi', 'deu', 'caiu', 'anota', 'anotar', 'lançar', 'lancar', 'lança', 'lanca', 'despesa', 'receita', 'valor', 'reais', 'real', 'sim', 'nao', 'não', 'pix', 'débito', 'debito', 'crédito', 'credito', 'dinheiro', 'boleto'];
+    $actionVerbs = ['gastei', 'gaste', 'paguei', 'pague', 'comprei', 'comprai', 'custou', 'recebi', 'ganhei', 'foi', 'deu', 'caiu', 'anota', 'anotar', 'lançar', 'lancar', 'lança', 'lanca', 'despesa', 'receita', 'valor', 'reais', 'real', 'reias', 'riais', 'reaiss', 'sim', 'nao', 'não', 'pix', 'débito', 'debito', 'crédito', 'credito', 'dinheiro', 'boleto'];
 
     // 1. Dicionário de palavras-chave explícitas (ex: comida, mercado, gasolina, aluguel, google, youtube, etc.)
     $expenseKeywords = [
@@ -282,9 +282,9 @@ function parseDescription($text, $type) {
 
     // 2. Extrai de frases "comprei X" ou "gastei no X"
     if (preg_match('/(?:comprei|gastei|paguei|custou)\s+([a-zà-ú0-9\s]{2,30})/i', $text, $mComp)) {
-        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real)\b/i', ' ', $mComp[1]);
+        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real|reias|riais)\b/i', ' ', $mComp[1]);
         $extracted = trim(preg_replace('/[\s\d]+/', ' ', $extracted));
-        if (mb_strlen($extracted, 'UTF-8') >= 2 && !preg_match('/^\d+$/', $extracted) && !in_array(strtolower($extracted), $actionVerbs)) {
+        if (mb_strlen($extracted, 'UTF-8') >= 2 && !preg_match('/^\d+$/', $extracted) && !in_array(strtolower($extracted), $actionVerbs) && !preg_match('/^r[eia]{2,4}s?$/i', $extracted)) {
             return ucfirst($extracted);
         }
     }
@@ -297,9 +297,9 @@ function parseDescription($text, $type) {
     $cleanText = trim($text);
 
     if (mb_strlen($cleanText, 'UTF-8') >= 2 && !preg_match('/^\d+(?:[\.,]\d+)?$/', $cleanText) && !in_array(strtolower($cleanText), $actionVerbs)) {
-        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real|gastei|paguei|comprei|recebi|ganhei|custou|saiu|foi|deu|caiu|anota|anotar|lançar|lancar|lança|lanca|despesa|receita)\b/i', ' ', $cleanText);
+        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real|reias|riais|gastei|paguei|comprei|recebi|ganhei|custou|saiu|foi|deu|caiu|anota|anotar|lançar|lancar|lança|lanca|despesa|receita)\b/i', ' ', $cleanText);
         $extracted = trim(preg_replace('/[\s\d]+/', ' ', $extracted));
-        if (mb_strlen($extracted, 'UTF-8') >= 2 && !preg_match('/^\d+$/', $extracted) && !in_array(strtolower($extracted), $actionVerbs)) {
+        if (mb_strlen($extracted, 'UTF-8') >= 2 && !preg_match('/^\d+$/', $extracted) && !in_array(strtolower($extracted), $actionVerbs) && !preg_match('/^r[eia]{2,4}s?$/i', $extracted) && !preg_match('/^(gast|pagu|compr|receb|ganh)/i', $extracted)) {
             return ucfirst($extracted);
         }
     }
