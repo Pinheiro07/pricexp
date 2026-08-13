@@ -110,36 +110,37 @@ $stmtUser->execute();
 $allUsers = $stmtUser->fetchAll();
 
 $user = null;
-$cleanPhoneLast8 = (strlen($cleanPhone) >= 8) ? substr($cleanPhone, -8) : $cleanPhone;
 
-// 1. Busca por whatsapp_lid registrado
-if (!empty($rawLid)) {
-    foreach ($allUsers as $u) {
-        if (!empty($u['whatsapp_lid']) && strpos($u['whatsapp_lid'], $rawLid) !== false) {
-            $user = $u;
-            break;
+// 1. PRIMEIRO PASSO: Busca estritamente por número de telefone (DDD + número) cadastrado no site
+foreach ($allUsers as $u) {
+    $uPhone = preg_replace('/\D/', '', $u['whatsapp']);
+    if (empty($uPhone)) continue;
+    
+    $cleanDigits = preg_replace('/\D/', '', $senderPhone);
+    $uPhoneLast8 = (strlen($uPhone) >= 8) ? substr($uPhone, -8) : $uPhone;
+    $cleanLast8  = (strlen($cleanDigits) >= 8) ? substr($cleanDigits, -8) : $cleanDigits;
+
+    if ($uPhone === $cleanDigits || 
+        ($cleanDigits && strpos($uPhone, $cleanDigits) !== false) || 
+        ($cleanDigits && strpos($cleanDigits, $uPhone) !== false) || 
+        $uPhoneLast8 === $cleanLast8) {
+        $user = $u;
+        // Corrige e vincula o LID estritamente a ESTE usuário, limpando de outros usuários que possam ter pego o LID no teste
+        if (!empty($rawLid)) {
+            try {
+                $pdo->prepare("UPDATE users SET whatsapp_lid = NULL WHERE whatsapp_lid = ? AND id != ?")->execute([$rawLid, $u['id']]);
+                $pdo->prepare("UPDATE users SET whatsapp_lid = ? WHERE id = ?")->execute([$rawLid, $u['id']]);
+            } catch (Exception $e) {}
         }
+        break;
     }
 }
 
-// 2. Busca por número de telefone (DDD + número)
-if (!$user) {
+// 2. SEGUNDO PASSO: Se não encontrou pelo telefone real, busca pelo whatsapp_lid vinculado
+if (!$user && !empty($rawLid)) {
     foreach ($allUsers as $u) {
-        $uPhone = preg_replace('/\D/', '', $u['whatsapp']);
-        if (empty($uPhone)) continue;
-        
-        $uPhoneLast8 = (strlen($uPhone) >= 8) ? substr($uPhone, -8) : $uPhone;
-
-        if ($uPhone === $cleanPhone || 
-            strpos($cleanPhone, $uPhone) !== false || 
-            strpos($uPhone, $cleanPhone) !== false || 
-            $uPhoneLast8 === $cleanPhoneLast8) {
+        if (!empty($u['whatsapp_lid']) && $u['whatsapp_lid'] === $rawLid && !empty($u['whatsapp'])) {
             $user = $u;
-            if (!empty($rawLid)) {
-                try {
-                    $pdo->prepare("UPDATE users SET whatsapp_lid = ? WHERE id = ?")->execute([$rawLid, $u['id']]);
-                } catch (Exception $e) {}
-            }
             break;
         }
     }
