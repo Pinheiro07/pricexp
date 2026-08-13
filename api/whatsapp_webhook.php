@@ -252,6 +252,7 @@ function parseType($text) {
 // --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE ---
 function parseDescription($text, $type) {
     $lower = mb_strtolower(trim($text), 'UTF-8');
+    $actionVerbs = ['gastei', 'paguei', 'comprei', 'saiu', 'custou', 'recebi', 'ganhei', 'foi', 'deu', 'caiu', 'anota', 'anotar', 'lançar', 'lancar', 'lança', 'lanca', 'despesa', 'receita', 'valor', 'reais', 'real', 'sim', 'nao', 'não', 'pix', 'débito', 'debito', 'crédito', 'credito', 'dinheiro', 'boleto'];
 
     // 1. Dicionário de palavras-chave explícitas (ex: comida, mercado, gasolina, aluguel, google, youtube, etc.)
     $expenseKeywords = [
@@ -292,14 +293,13 @@ function parseDescription($text, $type) {
         return 'Pix de ' . ucfirst($mPerson[1]);
     }
 
-    // 3. FALLBACK UNIVERSAL INTELIGENTE: Exclui verbos de ação e palavras reservadas
+    // 3. FALLBACK UNIVERSAL INTELIGENTE: Exclui verbos de ação, números puros e palavras reservadas
     $cleanText = trim($text);
-    $actionVerbs = ['gastei', 'paguei', 'comprei', 'saiu', 'custou', 'recebi', 'ganhei', 'foi', 'deu', 'caiu', 'anota', 'anotar', 'lançar', 'lancar', 'lança', 'lanca', 'despesa', 'receita', 'valor', 'reais', 'real', 'sim', 'nao', 'não', 'pix', 'débito', 'debito', 'crédito', 'credito', 'dinheiro', 'boleto'];
 
     if (mb_strlen($cleanText, 'UTF-8') >= 2 && !preg_match('/^\d+(?:[\.,]\d+)?$/', $cleanText) && !in_array(strtolower($cleanText), $actionVerbs)) {
         $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real|gastei|paguei|comprei|recebi|ganhei|custou|saiu|foi|deu|caiu|anota|anotar|lançar|lancar|lança|lanca|despesa|receita)\b/i', ' ', $cleanText);
-        $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
-        if (mb_strlen($extracted, 'UTF-8') >= 2 && !in_array(strtolower($extracted), $actionVerbs)) {
+        $extracted = trim(preg_replace('/[\s\d]+/', ' ', $extracted));
+        if (mb_strlen($extracted, 'UTF-8') >= 2 && !preg_match('/^\d+$/', $extracted) && !in_array(strtolower($extracted), $actionVerbs)) {
             return ucfirst($extracted);
         }
     }
