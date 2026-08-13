@@ -660,13 +660,13 @@ if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerTex
 
     $lastTx = null;
     if ($targetTxId) {
-        $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name FROM transactions WHERE id = ? AND user_id = ? AND created_by_user_id = ?");
+        $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE id = ? AND user_id = ? AND created_by_user_id = ?");
         $stmtLast->execute([$targetTxId, $workspace_id, $user_id]);
         $lastTx = $stmtLast->fetch();
     }
 
     if (empty($lastTx)) {
-        $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name FROM transactions WHERE user_id = ? AND created_by_user_id = ? ORDER BY id DESC LIMIT 1");
+        $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE user_id = ? AND created_by_user_id = ? ORDER BY id DESC LIMIT 1");
         $stmtLast->execute([$workspace_id, $user_id]);
         $lastTx = $stmtLast->fetch();
     }
@@ -678,14 +678,21 @@ if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerTex
             $stmtInsEdit->execute([$user_id, $cleanPhone, $lastTx['amount'], 'tx_id:' . $lastTx['id'], $lastTx['bank_name']]);
         } catch (Exception $e) {}
 
-        $fmtVal = number_format((float)$lastTx['amount'], 2, ',', '.');
+        $fmtVal   = number_format((float)$lastTx['amount'], 2, ',', '.');
+        $catShow  = !empty($lastTx['category']) ? $lastTx['category'] : 'Geral';
+        $bankShow = !empty($lastTx['bank_name']) ? $lastTx['bank_name'] : 'Geral';
+
         $replyMsg = "✏️ *PriceXP — Editar Lançamento*\n\n"
-                  . "Lançamento atual: *{$lastTx['description']}* de *R$ {$fmtVal}* (" . ($lastTx['bank_name'] ?: 'Geral') . ").\n\n"
-                  . "Digite como deseja alterar:\n"
-                  . "• Ex: *\"80 no Itaú\"*\n"
-                  . "• Ex: *\"Farmácia 45,90 no Nubank\"*\n"
-                  . "• Ex: *\"Foi 150 na gasolina\"*\n\n"
-                  . "O Patrick atualizará o lançamento instantaneamente!";
+                  . "Lançamento atual #{$lastTx['id']}:\n"
+                  . "• *Descrição:* {$lastTx['description']}\n"
+                  . "• *Valor:* R$ {$fmtVal}\n"
+                  . "• *Banco/Conta:* {$bankShow}\n"
+                  . "• *Categoria:* {$catShow}\n\n"
+                  . "O que você gostaria de alterar? Envie tudo na mesma mensagem:\n\n"
+                  . "• Ex: *\"80 reais\"* (altera o valor)\n"
+                  . "• Ex: *\"Almoço no Restaurante\"* (altera descrição e categoria)\n"
+                  . "• Ex: *\"Farmácia 45,90 no Nubank em Saúde\"* (altera tudo)\n\n"
+                  . "💡 _Você pode informar uma nova Descrição, Categoria, Banco ou Valor e o Patrick atualizará tudo automaticamente!_";
     } else {
         $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nNenhum lançamento recente foi encontrado para ser alterado.";
     }
@@ -716,6 +723,7 @@ if ($isEditModePending || $isCorrectionKeyword) {
         }
     }
 
+    $lastTx = null;
     if ($targetTxId) {
         $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name, date FROM transactions WHERE id = ? AND user_id = ?");
         $stmtLast->execute([$targetTxId, $workspace_id]);
@@ -734,8 +742,41 @@ if ($isEditModePending || $isCorrectionKeyword) {
         $updType   = parseType($lowerText);
         $updDesc   = parseDescription($rawText, $updType ?: $lastTx['type']);
 
+        // Detecta se o usuário informou explicitamente uma Categoria
+        $updCat = null;
+        $customCats = [];
+        try {
+            $stmtCatCheck = $pdo->prepare("SELECT name FROM custom_categories WHERE user_id = ?");
+            $stmtCatCheck->execute([$workspace_id]);
+            $customCats = $stmtCatCheck->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        } catch (Exception $e) {}
+
+        $allCats = array_unique(array_merge([
+            'Alimentação', 'Mercado', 'Restaurante', 'Transporte', 'Combustível', 'Uber', 
+            'Moradia', 'Aluguel', 'Contas', 'Saúde', 'Farmácia', 'Lazer', 'Viagem', 'Educação', 
+            'Compras', 'Vestuário', 'Serviços', 'Assinaturas', 'Investimentos', 'Salário', 'Outras Despesas'
+        ], $customCats));
+
+        foreach ($allCats as $catName) {
+            if (mb_stripos($lowerText, mb_strtolower($catName, 'UTF-8')) !== false) {
+                $updCat = $catName;
+                break;
+            }
+        }
+
         $finalAmount = ($updAmount > 0) ? $updAmount : (float)$lastTx['amount'];
         $finalBank   = $updBank ?: ($lastTx['bank_name'] ?: 'Geral');
+        $finalType   = $updType ?: $lastTx['type'];
+
+        $finalDesc = (!empty($updDesc) && mb_strlen($updDesc) >= 2 && !in_array(strtolower($updDesc), ['corrigir', 'editar', 'alterar', 'na verdade', 'corrigindo', 'ops', 'era', 'mudar'])) ? $updDesc : $lastTx['description'];
+
+        if (!empty($updCat)) {
+            $finalCat = $updCat;
+        } elseif ($finalDesc !== $lastTx['description']) {
+            $finalCat = inferCategoryStrict($finalDesc, $rawText, $finalType);
+        } else {
+            $finalCat = !empty($lastTx['category']) ? $lastTx['category'] : inferCategoryStrict($finalDesc, $rawText, $finalType);
+        }x['bank_name'] ?: 'Geral');
         $finalType   = $updType ?: $lastTx['type'];
         $finalDesc   = (!empty($updDesc) && mb_strlen($updDesc) >= 2 && !in_array(strtolower($updDesc), ['corrigir', 'editar', 'alterar', 'na verdade', 'corrigindo', 'ops', 'era', 'mudar'])) ? $updDesc : $lastTx['description'];
         $finalCat    = inferCategoryStrict($finalDesc, $rawText, $finalType);
