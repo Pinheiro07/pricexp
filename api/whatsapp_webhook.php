@@ -98,9 +98,9 @@ $lowerText = mb_strtolower($rawText, 'UTF-8');
 
 // ------------------------------------------------------------------
 // --- COMANDO DE AUTO-VINCULAÇÃO E ATIVAÇÃO INSTANTÂNEA DE WHATSAPP ---
-// Ex: "Ativar conta XP-12", "Vincular conta XP-1", "Ativar XP-1"
+// Ex: "Ativar conta XP-12", "Olá! ... Ativar conta XP-1", "Vincular XP-1"
 // ------------------------------------------------------------------
-if (preg_match('/(?:ativar|vincular|conectar)\s*(?:conta)?\s*xp-?(\d+)/i', $lowerText, $mVinc)) {
+if (preg_match('/(?:ativar|vincular|conectar).*?xp-?(\d+)/i', $lowerText, $mVinc)) {
     $targetId = (int)$mVinc[1];
     $stmtT = $pdo->prepare("SELECT id, first_name, email FROM users WHERE id = ? LIMIT 1");
     $stmtT->execute([$targetId]);
