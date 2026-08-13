@@ -212,6 +212,61 @@ function inferCategory($description, $text, $type) {
 }
 
 // ------------------------------------------------------------------
+// --- COMANDO DE RESUMO FINANCEIRO DO MÊS DO PATRICK ---
+// ------------------------------------------------------------------
+if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|extrato|balanço|balanco|relatório|relatorio)/i', $lowerText)) {
+    $firstDay  = date('Y-m-01');
+    $lastDay   = date('Y-m-t');
+    $monthYear = date('m/Y');
+
+    // Total de Receitas do mês
+    $stmtRec = $pdo->prepare("SELECT SUM(amount) FROM transactions WHERE user_id = ? AND type = 'receita' AND date >= ? AND date <= ?");
+    $stmtRec->execute([$workspace_id, $firstDay, $lastDay]);
+    $totalRec = (float)($stmtRec->fetchColumn() ?? 0);
+
+    // Total de Despesas do mês
+    $stmtDesp = $pdo->prepare("SELECT SUM(amount) FROM transactions WHERE user_id = ? AND type = 'despesa' AND date >= ? AND date <= ?");
+    $stmtDesp->execute([$workspace_id, $firstDay, $lastDay]);
+    $totalDesp = (float)($stmtDesp->fetchColumn() ?? 0);
+
+    $saldo = $totalRec - $totalDesp;
+    $saldoEmoji = ($saldo >= 0) ? '🟢 +' : '🔴 -';
+
+    // Top 3 Categorias de Maior Gasto no Mês
+    $stmtTop = $pdo->prepare("SELECT category, SUM(amount) AS total FROM transactions WHERE user_id = ? AND type = 'despesa' AND date >= ? AND date <= ? GROUP BY category ORDER BY total DESC LIMIT 3");
+    $stmtTop->execute([$workspace_id, $firstDay, $lastDay]);
+    $topCategories = $stmtTop->fetchAll();
+
+    $topText = "";
+    if ($topCategories) {
+        $emojis = ['1️⃣', '2️⃣', '3️⃣'];
+        foreach ($topCategories as $idx => $cat) {
+            $e = $emojis[$idx] ?? '🔹';
+            $topText .= "{$e} *{$cat['category']}:* R$ " . number_format($cat['total'], 2, ',', '.') . "\n";
+        }
+    } else {
+        $topText = "_Nenhuma despesa registrada este mês._\n";
+    }
+
+    $fmtRec  = number_format($totalRec, 2, ',', '.');
+    $fmtDesp = number_format($totalDesp, 2, ',', '.');
+    $fmtSal  = number_format(abs($saldo), 2, ',', '.');
+
+    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
+              . "📊 *RESUMO FINANCEIRO DO MÊS ({$monthYear})*\n\n"
+              . "👤 *Usuário:* {$userName}\n\n"
+              . "🟢 *Total de Entradas:* R$ {$fmtRec}\n"
+              . "🔴 *Total de Saídas:* R$ {$fmtDesp}\n"
+              . "💰 *Saldo do Mês:* {$saldoEmoji}R$ {$fmtSal}\n\n"
+              . "🔥 *Maiores Gastos no Mês:*\n"
+              . $topText . "\n"
+              . "🚀 _Acesse o site PriceXP para o relatório completo!_";
+
+    echo json_encode(['success' => true, 'reply' => $replyMsg]);
+    exit;
+}
+
+// ------------------------------------------------------------------
 // --- BUSCA SESSÃO PENDENTE DO USUÁRIO (Últimos 15 minutos) ---
 // ------------------------------------------------------------------
 $stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND created_at >= NOW() - INTERVAL 15 MINUTE ORDER BY id DESC LIMIT 1");
