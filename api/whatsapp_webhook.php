@@ -120,13 +120,17 @@ function parseAmount($text) {
     return 0.0;
 }
 
-// --- HELPER DE EXTRAÇÃO DE BANCO DE QUALQUER INSTITUIÇÃO ---
+// --- HELPER DE EXTRAÇÃO DE BANCO DE QUALQUER INSTITUIÇÃO (COM FONÉTICA DE ÁUDIO) ---
 function parseBank($text) {
     $banks = [
-        'nubank' => 'Nubank', 'itau' => 'Itaú', 'itaú' => 'Itaú', 'bradesco' => 'Bradesco', 
+        'nubank' => 'Nubank', 'nu bank' => 'Nubank', 'nu' => 'Nubank',
+        'itau' => 'Itaú', 'itaú' => 'Itaú', 'bradesco' => 'Bradesco', 
         'santander' => 'Santander', 'inter' => 'Banco Inter', 'c6' => 'C6 Bank', 'caixa' => 'Caixa', 
-        'bb' => 'Banco do Brasil', 'banco do brasil' => 'Banco do Brasil', 'sicoob' => 'Sicoob', 
-        'sicredi' => 'Sicredi', 'pagbank' => 'PagBank', 'picpay' => 'PicPay', 'mercado pago' => 'Mercado Pago',
+        'bb' => 'Banco do Brasil', 'banco do brasil' => 'Banco do Brasil', 
+        'sicoob' => 'Sicoob', 'secob' => 'Sicoob', 
+        'sicredi' => 'Sicredi', 'secredi' => 'Sicredi', 'sicrede' => 'Sicredi', 'si credi' => 'Sicredi', 'se credi' => 'Sicredi', 'secret' => 'Sicredi',
+        'pagbank' => 'PagBank', 'pag bank' => 'PagBank', 'picpay' => 'PicPay', 'pic pay' => 'PicPay', 
+        'mercado pago' => 'Mercado Pago', 'mercado livre' => 'Mercado Pago',
         'btg' => 'BTG Pactual', 'will' => 'Will Bank', 'neon' => 'Neon'
     ];
     foreach ($banks as $key => $val) {
@@ -159,11 +163,22 @@ function parseType($text) {
     return null;
 }
 
-// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE (DICIONÁRIO PADRÃO & NOMES) ---
+// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE (ESTRUTURA DA FRASE + DICIONÁRIO & NOMES) ---
 function parseDescription($text, $type) {
     $lower = mb_strtolower($text, 'UTF-8');
 
-    // 1. Padrões Conhecidos de Despesas (Lugares, Serviços, Compras)
+    // 1. Captura direta da estrutura natural: "gastei X [em/no/na/de/com] [DESCRIÇÃO]"
+    if (preg_match('/(?:gastei|paguei|comprei|saiu|custou|recebi|ganhei)\s+(?:r\$\s*)?\d+(?:[\.,]\d+)?\s*(?:reais|real|mil|k)?\s+(?:no|na|do|da|de|em|com|para)\s+([a-zà-ú0-9\s]{2,35})/i', $text, $mStruct)) {
+        $extracted = $mStruct[1];
+        // Limpa banco ou forma de pagamento se vier grudado no final
+        $extracted = preg_replace('/\b(nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $extracted);
+        $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
+        if (mb_strlen($extracted, 'UTF-8') >= 2) {
+            return ucfirst($extracted);
+        }
+    }
+
+    // 2. Dicionário de Palavras-Chave Conhecidas
     $expenseKeywords = [
         'mercado' => 'Mercado', 'supermercado' => 'Mercado', 'feira' => 'Feira', 'açougue' => 'Açougue', 'padaria' => 'Padaria',
         'ifood' => 'iFood', 'restaurante' => 'Restaurante', 'almoço' => 'Almoço', 'almoco' => 'Almoço', 'jantar' => 'Jantar',
@@ -175,14 +190,12 @@ function parseDescription($text, $type) {
         'escola' => 'Escola', 'faculdade' => 'Faculdade', 'curso' => 'Curso', 'livro' => 'Livro / Estudo'
     ];
 
-    // 2. Padrões Conhecidos de Receitas (Fontes, Vendas, Nomes)
     $incomeKeywords = [
         'salario' => 'Salário', 'salário' => 'Salário', 'holerite' => 'Salário', 'férias' => 'Férias', 'ferias' => 'Férias', '13' => '13º Salário',
         'venda' => 'Venda', 'site' => 'Venda no Site', 'cliente' => 'Pagamento de Cliente', 'freelance' => 'Freelance', 'servico' => 'Serviço Prestado', 'serviço' => 'Serviço Prestado',
         'comissao' => 'Comissão', 'comissão' => 'Comissão', 'bonus' => 'Bônus', 'bônus' => 'Bônus', 'plr' => 'PLR', 'rendimento' => 'Rendimento', 'investimento' => 'Investimento'
     ];
 
-    // Checa palavras-chave conhecidas no dicionarizado
     $dict = ($type === 'receita') ? array_merge($incomeKeywords, $expenseKeywords) : array_merge($expenseKeywords, $incomeKeywords);
     foreach ($dict as $key => $label) {
         if (preg_match('/\b' . preg_quote($key, '/') . '\b/i', $lower)) {
@@ -190,20 +203,18 @@ function parseDescription($text, $type) {
         }
     }
 
-    // Detecta padrão de nome de pessoa em receitas / PIX (ex: "pix do Joao", "recebi do Carlos", "pix da Maria")
     if (preg_match('/(?:pix|receb\w+|veio|pagamento)\s+(?:do|da|de)\s+([a-zà-ú]{3,15})/i', $lower, $mPerson)) {
         return 'Pix de ' . ucfirst($mPerson[1]);
     }
 
-    // Se o texto não é um áudio vago (ex: é uma resposta direta com mais de 2 caracteres)
+    // 3. Limpeza Geral de preposições e verbos
     $clean = preg_replace('/^(patrick[,\s]*|oi\s+patrick[,\s]*|olá\s+patrick[,\s]*)/i', '', $text);
-    $clean = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*\s*(mil|k)?|\b(reais|real|gastei|gastamos|paguei|pagamos|comprei|compramos|recebi|recebemos|ganhei|ganhamos|depositei)\b)/i', ' ', $clean);
+    $clean = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*\s*(mil|k)?|\b(reais|real|gastei|gastamos|paguei|pagamos|comprei|compramos|recebi|recebemos|ganhei|ganhamos|depositei|foi|caiu|entrou|tava|estava|ficou)\b)/i', ' ', $clean);
     $clean = preg_replace('/\b(no|na|do|da|de|em|para|com|pelo|pela|por)\b/i', ' ', $clean);
-    $clean = preg_replace('/\b(nubank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|sicredi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $clean);
+    $clean = preg_replace('/\b(nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $clean);
     $clean = preg_replace('/[^\p{L}\p{N}\s]/u', '', $clean);
     $clean = trim(preg_replace('/\s+/', ' ', $clean));
 
-    // Se não há uma palavra clara de descrição, retorna NULL para o Patrick perguntar!
     if (empty($clean) || mb_strlen($clean, 'UTF-8') < 2) {
         return null;
     }
