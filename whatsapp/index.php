@@ -1,4 +1,5 @@
 <?php
+session_start();
 // Portal de Conexão WhatsApp PriceXP
 $api_key = 'pricexp_evo_api_key_2833441530';
 $instance = 'pricexp-bot';
