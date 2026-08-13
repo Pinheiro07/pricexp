@@ -35,6 +35,18 @@ try {
     @$pdo->exec("ALTER TABLE whatsapp_pending_sessions ADD COLUMN payment_method VARCHAR(50) DEFAULT ''");
 } catch (Exception $e) {}
 
+// Limpeza automática de bancos legados poluídos no banco de dados
+try {
+    $pdo->exec("UPDATE transactions SET bank_name = 'Nubank' WHERE bank_name LIKE 'Nubank (%'");
+    $pdo->exec("UPDATE transactions SET bank_name = 'Banco Inter' WHERE bank_name LIKE 'Banco Inter (%' OR bank_name LIKE 'Inter (%'");
+    $pdo->exec("UPDATE transactions SET bank_name = 'C6 Bank' WHERE bank_name LIKE 'C6 Bank (%' OR bank_name LIKE 'C6 (%'");
+    $pdo->exec("UPDATE transactions SET bank_name = 'Sicredi' WHERE bank_name LIKE 'Sicredi (%'");
+    $pdo->exec("UPDATE transactions SET bank_name = 'Itaú' WHERE bank_name LIKE 'Itaú (%'");
+    $pdo->exec("UPDATE transactions SET bank_name = 'Bradesco' WHERE bank_name LIKE 'Bradesco (%'");
+    $pdo->exec("UPDATE transactions SET bank_name = 'Santander' WHERE bank_name LIKE 'Santander (%'");
+    $pdo->exec("UPDATE transactions SET bank_name = 'Caixa' WHERE bank_name LIKE 'Caixa (%'");
+} catch (Exception $e) {}
+
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true) ?? $_POST;
 
@@ -108,7 +120,7 @@ $workspace_id = getWorkspaceUserId($pdo, $user_id);
 $userName     = !empty($user['first_name']) ? $user['first_name'] : 'Usuário';
 $lowerText    = mb_strtolower($rawText, 'UTF-8');
 
-// --- HELPER DE PARSER INTELIGENTE DE VALORES (Ex: 250 | 89,90 | 3 mil | 1.5k) ---
+// --- HELPER DE PARSER INTELIGENTE DE VALORES ---
 function parseAmount($text) {
     if (preg_match('/(\d+(?:[\.,]\d+)?)\s*(mil|k)/i', $text, $m)) {
         $val = (float)str_replace(',', '.', $m[1]);
@@ -120,11 +132,10 @@ function parseAmount($text) {
     return 0.0;
 }
 
-// --- HELPER DE EXTRAÇÃO DE BANCO (DINÂMICO DO BANCO DE DADOS + FONÉTICA DE ÁUDIO) ---
+// --- HELPER DE EXTRAÇÃO DE BANCO LIMPO ---
 function parseBank($text, $workspace_id = null, $pdo = null) {
     $lower = mb_strtolower($text, 'UTF-8');
 
-    // 1. Busca dinamicamente todos os bancos que o usuário já utilizou na sua conta PriceXP!
     $userBankMap = [];
     if ($pdo && $workspace_id) {
         try {
@@ -133,6 +144,7 @@ function parseBank($text, $workspace_id = null, $pdo = null) {
             $userBanks = $stmtUserBanks->fetchAll(PDO::FETCH_COLUMN);
 
             foreach ($userBanks as $ub) {
+                // Remove qualquer parêntese legado do nome do banco
                 $cleanUb = trim(preg_replace('/\(.*?\)/', '', $ub));
                 if (!empty($cleanUb) && strtolower($cleanUb) !== 'geral' && strtolower($cleanUb) !== 'dinheiro') {
                     $userBankMap[mb_strtolower($cleanUb, 'UTF-8')] = $cleanUb;
@@ -141,7 +153,6 @@ function parseBank($text, $workspace_id = null, $pdo = null) {
         } catch (Exception $e) {}
     }
 
-    // 2. Lista de bancos populares do Brasil + variações de fonética de áudio
     $defaultBanks = [
         'nubank' => 'Nubank', 'nu bank' => 'Nubank', 'nu' => 'Nubank',
         'itau' => 'Itaú', 'itaú' => 'Itaú', 'bradesco' => 'Bradesco', 
@@ -153,7 +164,7 @@ function parseBank($text, $workspace_id = null, $pdo = null) {
         'pagbank' => 'PagBank', 'pag bank' => 'PagBank', 'picpay' => 'PicPay', 'pic pay' => 'PicPay', 
         'mercado pago' => 'Mercado Pago', 'mercado livre' => 'Mercado Pago',
         'btg' => 'BTG Pactual', 'btg pactual' => 'BTG Pactual', 'will' => 'Will Bank', 'will bank' => 'Will Bank', 'neon' => 'Neon',
-        'nomad' => 'Nomad', 'wise' => 'Wise', 'banrisul' => 'Banrisul', 'bmg' => 'BMG', 'safra' => 'Banco Safra', 'agibank' => 'Agibank', 'daycoval' => 'Daycoval'
+        'caju' => 'Caju', 'carteira' => 'Outro / Carteira', 'outro' => 'Outro / Carteira'
     ];
 
     $allBanks = array_merge($defaultBanks, $userBankMap);
@@ -188,14 +199,13 @@ function parseType($text) {
     return null;
 }
 
-// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE (ESTRUTURA DA FRASE + DICIONÁRIO & NOMES) ---
+// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE ---
 function parseDescription($text, $type) {
     $lower = mb_strtolower($text, 'UTF-8');
 
     // 1. Captura direta da estrutura natural: "gastei X [em/no/na/de/com] [DESCRIÇÃO]"
     if (preg_match('/(?:gastei|paguei|comprei|saiu|custou|recebi|ganhei)\s+(?:r\$\s*)?\d+(?:[\.,]\d+)?\s*(?:reais|real|mil|k)?\s+(?:no|na|do|da|de|em|com|para)\s+([a-zà-ú0-9\s]{2,35})/i', $text, $mStruct)) {
         $extracted = $mStruct[1];
-        // Limpa banco ou forma de pagamento se vier grudado no final
         $extracted = preg_replace('/\b(nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $extracted);
         $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
         if (mb_strlen($extracted, 'UTF-8') >= 2) {
@@ -232,7 +242,7 @@ function parseDescription($text, $type) {
         return 'Pix de ' . ucfirst($mPerson[1]);
     }
 
-    // 3. Limpeza Geral de preposições e verbos
+    // 3. Limpeza Geral
     $clean = preg_replace('/^(patrick[,\s]*|oi\s+patrick[,\s]*|olá\s+patrick[,\s]*)/i', '', $text);
     $clean = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*\s*(mil|k)?|\b(reais|real|gastei|gastamos|paguei|pagamos|comprei|compramos|recebi|recebemos|ganhei|ganhamos|depositei|foi|caiu|entrou|tava|estava|ficou)\b)/i', ' ', $clean);
     $clean = preg_replace('/\b(no|na|do|da|de|em|para|com|pelo|pela|por)\b/i', ' ', $clean);
@@ -246,25 +256,27 @@ function parseDescription($text, $type) {
     return ucfirst($clean);
 }
 
-// --- HELPER DE INFERÊNCIA DE CATEGORIA ---
-function inferCategory($description, $text, $type) {
+// --- HELPER DE CATEGORIAS OFICIAIS DO PRICEXP ---
+function inferCategoryStrict($description, $text, $type) {
     $combined = mb_strtolower($description . ' ' . $text, 'UTF-8');
-    
-    if (preg_match('/(mercado|supermercado|feira|açougue|padaria)/i', $combined)) return 'Alimentação';
-    if (preg_match('/(ifood|restaurante|lanchonete|pizza|comida|mcdonald)/i', $combined)) return 'Alimentação';
-    if (preg_match('/(netflix|spotify|cinema|jogos|lazer|show|bar)/i', $combined)) return 'Lazer';
-    if (preg_match('/(gasolina|combustivel|combustível|uber|táxi|taxi|ônibus|onibus|pedagio)/i', $combined)) return 'Transporte';
-    if (preg_match('/(aluguel|condomínio|condominio|luz|água|agua|internet|telefone|energia|casa)/i', $combined)) return 'Casa';
-    if (preg_match('/(farmacia|farmácia|médico|medico|consulta|hospital|remedio)/i', $combined)) return 'Saúde';
-    if (preg_match('/(faculdade|escola|curso|livro)/i', $combined)) return 'Educação';
-    if (preg_match('/(investimento|rendimento|ação|ações|cdb|tesouro)/i', $combined)) return 'Investimentos';
-    
+
     if ($type === 'receita') {
-        if (preg_match('/(salario|salário|holerite|férias|ferias)/i', $combined)) return 'Salário Líquido';
-        if (preg_match('/(freelance|serviço|servico|venda|site|comissão|bonus)/i', $combined)) return 'Renda Extra Líquida';
+        if (preg_match('/(salario|salário|holerite)/i', $combined)) return 'Salário Líquido';
+        if (preg_match('/(13|décimo terceiro|decimo terceiro)/i', $combined)) return '13º Salário Líquido';
+        if (preg_match('/(férias|ferias)/i', $combined)) return 'Férias Líquida';
+        if (preg_match('/(bônus|bonus|comissão|comissao|plr|prêmio|premio)/i', $combined)) return 'Bônus + Comissões + PLR';
+        if (preg_match('/(freelance|serviço|servico|venda|site|bico|cliente)/i', $combined)) return 'Renda Extra Líquida';
         return 'Outras Receitas';
+    } else {
+        if (preg_match('/(mercado|supermercado|feira|açougue|padaria|aluguel|condomínio|condominio|luz|água|agua|internet|telefone|energia|móveis|moveis|faxina)/i', $combined)) return 'Casa';
+        if (preg_match('/(ifood|restaurante|lanchonete|pizza|comida|almoço|almoco|jantar|mcdonald)/i', $combined)) return 'Casa';
+        if (preg_match('/(farmacia|farmácia|médico|medico|consulta|hospital|remedio|remédio|dentista|exame)/i', $combined)) return 'Saúde';
+        if (preg_match('/(gasolina|combustivel|combustível|uber|99|táxi|taxi|ônibus|onibus|pedagio|estacionamento|mecanico|mecânico)/i', $combined)) return 'Transporte';
+        if (preg_match('/(passagem|viagem|mobilidade)/i', $combined)) return 'Locomoção';
+        if (preg_match('/(netflix|spotify|cinema|jogos|lazer|show|bar|festa|presente)/i', $combined)) return 'Lazer';
+        if (preg_match('/(investimento|rendimento|ação|ações|cdb|tesouro|reserva)/i', $combined)) return 'Investimentos';
+        return 'Outras Despesas';
     }
-    return 'Outras Despesas';
 }
 
 // ------------------------------------------------------------------
@@ -275,12 +287,10 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
     $lastDay   = date('Y-m-t');
     $monthYear = date('m/Y');
 
-    // Total de Receitas do mês
     $stmtRec = $pdo->prepare("SELECT SUM(amount) FROM transactions WHERE user_id = ? AND type = 'receita' AND date >= ? AND date <= ?");
     $stmtRec->execute([$workspace_id, $firstDay, $lastDay]);
     $totalRec = (float)($stmtRec->fetchColumn() ?? 0);
 
-    // Total de Despesas do mês
     $stmtDesp = $pdo->prepare("SELECT SUM(amount) FROM transactions WHERE user_id = ? AND type = 'despesa' AND date >= ? AND date <= ?");
     $stmtDesp->execute([$workspace_id, $firstDay, $lastDay]);
     $totalDesp = (float)($stmtDesp->fetchColumn() ?? 0);
@@ -288,7 +298,6 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
     $saldo = $totalRec - $totalDesp;
     $saldoEmoji = ($saldo >= 0) ? '🟢 +' : '🔴 -';
 
-    // Top 3 Categorias de Maior Gasto no Mês
     $stmtTop = $pdo->prepare("SELECT category, SUM(amount) AS total FROM transactions WHERE user_id = ? AND type = 'despesa' AND date >= ? AND date <= ? GROUP BY category ORDER BY total DESC LIMIT 3");
     $stmtTop->execute([$workspace_id, $firstDay, $lastDay]);
     $topCategories = $stmtTop->fetchAll();
@@ -343,7 +352,6 @@ if ($pending) {
     $bank_name      = $newBank ?: $pending['bank_name'];
     $payment_method = $newMethod ?: $pending['payment_method'];
 
-    // Se a descrição já havia sido capturada no rascunho anterior (ex: Cinema), MANTÉM!
     if (!empty($pending['description'])) {
         $description = (!empty($newDesc) && mb_strlen($newDesc) >= 3 && !in_array(strtolower($newDesc), ['foi', 'sim', 'nao', 'não'])) ? $newDesc : $pending['description'];
     } else {
@@ -365,7 +373,11 @@ $missing = [];
 if ($amount <= 0) $missing[] = 'valor';
 if (empty($description)) $missing[] = 'descricao';
 if (empty($bank_name) && $payment_method !== 'Dinheiro') $missing[] = 'banco';
-if (empty($payment_method)) $missing[] = 'forma_pagamento';
+
+// FORMA DE PAGAMENTO É OBRIGATÓRIA APENAS PARA SAÍDAS (DESPESAS)!
+if ($type === 'despesa' && empty($payment_method)) {
+    $missing[] = 'forma_pagamento';
+}
 
 // Se AINDA FALTAM dados obrigatórios, atualiza a sessão e faz a PERGUNTA CONVERSACIONAL ÚNICA
 if (!empty($missing)) {
@@ -382,7 +394,6 @@ if (!empty($missing)) {
     $formattedAmount = ($amount > 0) ? "R$ " . number_format($amount, 2, ',', '.') : "";
     $tipoTxt = ($type === 'receita') ? 'receita 🟢' : 'despesa 🔴';
 
-    // Monta UMA ÚNICA pergunta curta e natural
     $questions = [];
     if (in_array('valor', $missing)) {
         $questions[] = "qual foi o valor";
@@ -393,7 +404,7 @@ if (!empty($missing)) {
     if (in_array('banco', $missing) && in_array('forma_pagamento', $missing)) {
         $questions[] = "qual conta/banco usou e se foi no PIX, débito ou crédito";
     } elseif (in_array('banco', $missing)) {
-        $questions[] = "qual banco ou conta usou";
+        $questions[] = ($type === 'receita') ? "em qual banco/conta caiu" : "qual banco ou conta usou";
     } elseif (in_array('forma_pagamento', $missing)) {
         $questions[] = "foi no PIX, débito ou crédito";
     }
@@ -410,18 +421,25 @@ if (!empty($missing)) {
 // ------------------------------------------------------------------
 // --- REGISTRO DO LANÇAMENTO COMPLETO NO PRICEXP ---
 // ------------------------------------------------------------------
-$category = inferCategory($description, $rawText, $type);
+$category = inferCategoryStrict($description, $rawText, $type);
 $date = date('Y-m-d');
+
+// Garania de Banco LIMPO (sem sufixos como (PIX) ou (Débito) que poluem o filtro do app!)
 $finalBank = $bank_name ?: 'Geral';
-if ($payment_method && $payment_method !== 'Dinheiro' && strpos($finalBank, $payment_method) === false) {
-    $finalBank .= " ({$payment_method})";
-} elseif ($payment_method === 'Dinheiro') {
-    $finalBank = 'Dinheiro';
+
+// Tenta vincular ao Cartão de Crédito do Usuário no banco se a forma for crédito
+$card_id = null;
+if ($type === 'despesa' && $payment_method === 'Crédito') {
+    try {
+        $stmtCard = $pdo->prepare("SELECT id FROM credit_cards WHERE user_id = ? AND LOWER(name) LIKE ? LIMIT 1");
+        $stmtCard->execute([$workspace_id, '%' . strtolower($finalBank) . '%']);
+        $card_id = $stmtCard->fetchColumn() ?: null;
+    } catch (Exception $e) {}
 }
 
 try {
-    $stmtIns = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmtIns->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $finalBank]);
+    $stmtIns = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name, card_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmtIns->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $finalBank, $card_id]);
     $insertedId = $pdo->lastInsertId();
 
     if ($pendingId) {
@@ -449,7 +467,7 @@ $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
           . "📝 *Descrição:* {$description}\n"
           . "📁 *Categoria:* {$category}\n"
           . "🏦 *Banco:* {$finalBank}\n"
-          . "💳 *Forma:* " . ($payment_method ?: 'Outra') . "\n"
+          . ($type === 'despesa' ? "💳 *Forma:* " . ($payment_method ?: 'Outra') . "\n" : "")
           . "📅 *Data:* " . date('d/m/Y') . "\n\n"
           . "🚀 _Já disponível no seu painel PriceXP!_";
 
