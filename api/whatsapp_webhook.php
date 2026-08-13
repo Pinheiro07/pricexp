@@ -97,8 +97,14 @@ if (empty($senderPhone) || empty($rawText)) {
 // Auto-migração e sanitização de banco de dados
 try {
     $pdo->exec("ALTER TABLE users ADD COLUMN whatsapp_lid VARCHAR(100) DEFAULT NULL");
+} catch (Exception $e) {}
+
+try {
     $pdo->exec("UPDATE users SET whatsapp = '552833441530' WHERE id = 1 AND (whatsapp IS NULL OR TRIM(whatsapp) = '')");
-    $pdo->exec("UPDATE users SET whatsapp_lid = NULL"); // Limpa completamente LIDs incorretos de testes antigos
+} catch (Exception $e) {}
+
+try {
+    $pdo->exec("UPDATE users SET whatsapp_lid = NULL WHERE whatsapp_lid IS NOT NULL");
 } catch (Exception $e) {}
 
 // Identifica usuário pelo número do WhatsApp ou LID (Linked Device ID da Meta)
