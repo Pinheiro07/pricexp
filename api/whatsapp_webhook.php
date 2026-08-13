@@ -62,10 +62,36 @@ if (empty($cleanPhone) || empty($rawText)) {
     exit;
 }
 
-// Busca o usuário no banco de dados PriceXP pelo número do WhatsApp
-$stmtUser = $pdo->prepare("SELECT id, first_name, email, shared_owner_id FROM users WHERE whatsapp IS NOT NULL AND (whatsapp LIKE ? OR whatsapp LIKE ? OR whatsapp LIKE ?) LIMIT 1");
-$stmtUser->execute(["%{$cleanPhone}%", "%{$shortPhone}%", "%" . substr($shortPhone, -8) . "%"]);
-$user = $stmtUser->fetch();
+// Busca o usuário no banco de dados PriceXP pelo número do WhatsApp ou LID
+$stmtUser = $pdo->prepare("SELECT id, first_name, email, shared_owner_id, whatsapp FROM users WHERE whatsapp IS NOT NULL AND TRIM(whatsapp) != ''");
+$stmtUser->execute();
+$allUsers = $stmtUser->fetchAll();
+
+$user = null;
+if (count($allUsers) === 1) {
+    // Se só existe 1 usuário com WhatsApp cadastrado no PriceXP, vincula direto!
+    $user = $allUsers[0];
+} else {
+    foreach ($allUsers as $u) {
+        $uPhone = preg_replace('/\D/', '', $u['whatsapp']);
+        if (empty($uPhone)) continue;
+        
+        // Compara variações com e sem DDI 55, e pelos últimos 8 e 9 dígitos do celular
+        $uShort = (strlen($uPhone) >= 11 && substr($uPhone, 0, 2) === '55') ? substr($uPhone, 2) : $uPhone;
+        $cleanShort = (strlen($cleanPhone) >= 11 && substr($cleanPhone, 0, 2) === '55') ? substr($cleanPhone, 2) : $cleanPhone;
+
+        if (
+            $cleanPhone === $uPhone ||
+            $cleanShort === $uShort ||
+            substr($cleanPhone, -8) === substr($uPhone, -8) ||
+            substr($cleanPhone, -9) === substr($uPhone, -9) ||
+            strpos($cleanPhone, $uPhone) !== false
+        ) {
+            $user = $u;
+            break;
+        }
+    }
+}
 
 if (!$user) {
     $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\nOlá! Eu sou o Patrick, seu assistente financeiro do PriceXP! 💼\n\nAinda não encontrei o seu número (`{$cleanPhone}`) vinculado a uma conta no site.\n\n👉 *Como ativar:*\nAcesse o site *PriceXP*, vá na aba *Minha Conta* e salve o seu número de WhatsApp! Depois disso você já poderá mandar mensagens e áudios pra mim para cadastrar seus gastos e ganhos automaticamente!";
