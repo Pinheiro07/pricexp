@@ -478,7 +478,7 @@ if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerTex
     exit;
 }
 
-$stmtCheckEdit = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type = 'edit_mode' AND created_at >= NOW() - INTERVAL 15 MINUTE ORDER BY id DESC LIMIT 1");
+$stmtCheckEdit = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type = 'edit_mode' ORDER BY id DESC LIMIT 1");
 $stmtCheckEdit->execute([$user_id]);
 $isEditModePending = $stmtCheckEdit->fetch();
 
@@ -512,13 +512,13 @@ if ($isEditModePending ||
         $finalAmount = ($updAmount > 0) ? $updAmount : (float)$lastTx['amount'];
         $finalBank   = $updBank ?: ($lastTx['bank_name'] ?: 'Geral');
         $finalType   = $updType ?: $lastTx['type'];
-        $finalDesc   = (!empty($updDesc) && mb_strlen($updDesc) >= 3 && !in_array(strtolower($updDesc), ['corrigir', 'editar', 'alterar', 'na verdade', 'corrigindo'])) ? $updDesc : $lastTx['description'];
+        $finalDesc   = (!empty($updDesc) && mb_strlen($updDesc) >= 2 && !in_array(strtolower($updDesc), ['corrigir', 'editar', 'alterar', 'na verdade', 'corrigindo'])) ? $updDesc : $lastTx['description'];
         $finalCat    = inferCategoryStrict($finalDesc, $rawText, $finalType);
 
         $stmtUpdTx = $pdo->prepare("UPDATE transactions SET type=?, category=?, description=?, amount=?, bank_name=? WHERE id=? AND user_id=?");
         $stmtUpdTx->execute([$finalType, $finalCat, $finalDesc, $finalAmount, $finalBank, $lastTx['id'], $workspace_id]);
 
-        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ? AND type = 'edit_mode'")->execute([$user_id]);
+        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
 
         logUserActivity($pdo, $user_id, 'WHATSAPP_EDICAO', "Edição via WhatsApp #{$lastTx['id']}: {$finalDesc} (R$ {$finalAmount})", $finalAmount, ['phone' => $cleanPhone]);
 
@@ -546,7 +546,7 @@ if ($isEditModePending ||
 // ------------------------------------------------------------------
 // --- BUSCA SESSÃO PENDENTE DO USUÁRIO ---
 // ------------------------------------------------------------------
-$stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND created_at >= NOW() - INTERVAL 15 MINUTE ORDER BY id DESC LIMIT 1");
+$stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? ORDER BY id DESC LIMIT 1");
 $stmtPending->execute([$user_id]);
 $pending = $stmtPending->fetch();
 
