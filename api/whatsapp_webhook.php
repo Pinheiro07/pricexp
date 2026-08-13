@@ -642,6 +642,11 @@ if ($pending) {
 
 $missing = [];
 if ($amount <= 0) $missing[] = 'valor';
+
+if ($amount > 0 && empty($description) && (!empty($bank_name) || !empty($payment_method))) {
+    $description = 'Lançamento Geral';
+}
+
 if (empty($description)) $missing[] = 'descricao';
 if (empty($bank_name) && $payment_method !== 'Dinheiro') $missing[] = 'banco';
 
