@@ -78,8 +78,9 @@ if (!empty($data['body'])) {
 }
 
 $cleanPhone = preg_replace('/\D/', '', $senderPhone);
+$remoteJid  = $senderPhone;
 
-if (empty($cleanPhone) || empty($rawText)) {
+if (empty($senderPhone) || empty($rawText)) {
     echo json_encode(['success' => false, 'error' => 'Payload inválido']);
     exit;
 }
@@ -611,6 +612,7 @@ echo json_encode([
     'success' => true,
     'id' => $insertedId,
     'user' => $userName,
+    'remoteJid' => $remoteJid,
     'reply' => $replyMsg
 ]);
 exit;
