@@ -259,11 +259,16 @@ function parseType($text) {
 // --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE ---
 function parseDescription($text, $type) {
     $lower = mb_strtolower(trim($text), 'UTF-8');
-    $actionVerbs = ['gastei', 'gaste', 'paguei', 'pague', 'comprei', 'comprai', 'custou', 'recebi', 'ganhei', 'foi', 'deu', 'caiu', 'anota', 'anotar', 'lançar', 'lancar', 'lança', 'lanca', 'despesa', 'receita', 'valor', 'reais', 'real', 'reias', 'riais', 'reaiss', 'sim', 'nao', 'não', 'pix', 'débito', 'debito', 'crédito', 'credito', 'dinheiro', 'boleto'];
+    $actionVerbs = [
+        'gastei', 'gaste', 'paguei', 'pague', 'comprei', 'comprai', 'custou', 'recebi', 'ganhei', 'foi', 'deu', 'caiu', 
+        'anota', 'anotar', 'lançar', 'lancar', 'lança', 'lanca', 'despesa', 'receita', 'valor', 'reais', 'real', 'reias', 
+        'riais', 'reaiss', 'sim', 'nao', 'não', 'pix', 'débito', 'debito', 'crédito', 'credito', 'dinheiro', 'boleto',
+        'no', 'na', 'nos', 'nas', 'do', 'da', 'dos', 'das', 'de', 'em', 'com', 'para', 'pro', 'pra', 'pelo', 'pela', 'por'
+    ];
 
-    // 1. Dicionário de palavras-chave explícitas (ex: comida, mercado, gasolina, aluguel, google, youtube, etc.)
+    // 1. Dicionário de palavras-chave explícitas (ex: comida, mercado, compras, gasolina, aluguel, google, youtube, etc.)
     $expenseKeywords = [
-        'mercado' => 'Mercado', 'supermercado' => 'Mercado', 'feira' => 'Feira', 'açougue' => 'Açougue', 'padaria' => 'Padaria',
+        'compras' => 'Compras', 'compra' => 'Compras', 'mercado' => 'Mercado', 'supermercado' => 'Mercado', 'feira' => 'Feira', 'açougue' => 'Açougue', 'padaria' => 'Padaria',
         'ifood' => 'iFood', 'restaurante' => 'Restaurante', 'almoço' => 'Almoço', 'almoco' => 'Almoço', 'jantar' => 'Jantar',
         'lanche' => 'Lanche', 'pizza' => 'Pizza', 'comida' => 'Alimentação', 'mcdonald' => 'McDonalds', 'burger' => 'Burger King',
         'gasolina' => 'Gasolina', 'combustivel' => 'Gasolina', 'combustível' => 'Gasolina', 'uber' => 'Uber', '99' => 'Uber / 99', 'taxi' => 'Táxi', 'táxi' => 'Táxi',
@@ -288,7 +293,7 @@ function parseDescription($text, $type) {
     }
 
     // 2. Extrai de frases "comprei X" ou "gastei no X"
-    if (preg_match('/(?:comprei|gastei|paguei|custou)\s+([a-zà-ú0-9\s]{2,30})/i', $text, $mComp)) {
+    if (preg_match('/(?:comprei|gastei|paguei|custou)\s+(?:no|na|em|de|pro|pra|um|uma)?\s*([a-zà-ú0-9\s]{2,30})/i', $text, $mComp)) {
         $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real|reias|riais)\b/i', ' ', $mComp[1]);
         $extracted = trim(preg_replace('/[\s\d]+/', ' ', $extracted));
         if (mb_strlen($extracted, 'UTF-8') >= 2 && !preg_match('/^\d+$/', $extracted) && !in_array(strtolower($extracted), $actionVerbs) && !preg_match('/^r[eia]{2,4}s?$/i', $extracted)) {
@@ -300,14 +305,30 @@ function parseDescription($text, $type) {
         return 'Pix de ' . ucfirst($mPerson[1]);
     }
 
-    // 3. FALLBACK UNIVERSAL INTELIGENTE: Exclui verbos de ação, números puros e palavras reservadas
+    // 3. FALLBACK UNIVERSAL INTELIGENTE: Limpa bancos, meios de pagamento e verbos de ação
     $cleanText = trim($text);
 
-    if (mb_strlen($cleanText, 'UTF-8') >= 2 && !preg_match('/^\d+(?:[\.,]\d+)?$/', $cleanText) && !in_array(strtolower($cleanText), $actionVerbs)) {
+    if (mb_strlen($cleanText, 'UTF-8') >= 2 && !preg_match('/^\d+(?:[\.,]\d+)?$/', $cleanText)) {
         $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real|reias|riais|gastei|paguei|comprei|recebi|ganhei|custou|saiu|foi|deu|caiu|anota|anotar|lançar|lancar|lança|lanca|despesa|receita)\b/i', ' ', $cleanText);
-        $extracted = trim(preg_replace('/[\s\d]+/', ' ', $extracted));
-        if (mb_strlen($extracted, 'UTF-8') >= 2 && !preg_match('/^\d+$/', $extracted) && !in_array(strtolower($extracted), $actionVerbs) && !preg_match('/^r[eia]{2,4}s?$/i', $extracted) && !preg_match('/^(gast|pagu|compr|receb|ganh)/i', $extracted)) {
-            return ucfirst($extracted);
+        
+        // Remove conectores do início e fim (ex: ", no ", " no ", " na ")
+        $extracted = preg_replace('/[\,;\.]/', ' ', $extracted);
+        $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
+        
+        // Separa por espaço e remove conectores soltos ("no", "na", "de", etc.)
+        $words = explode(' ', $extracted);
+        $filteredWords = [];
+        foreach ($words as $w) {
+            $wClean = trim($w);
+            if (!empty($wClean) && !in_array(strtolower($wClean), $actionVerbs) && !preg_match('/^\d+$/', $wClean)) {
+                $filteredWords[] = $wClean;
+            }
+        }
+
+        $finalStr = trim(implode(' ', $filteredWords));
+
+        if (mb_strlen($finalStr, 'UTF-8') >= 2 && !in_array(strtolower($finalStr), $actionVerbs) && !preg_match('/^r[eia]{2,4}s?$/i', $finalStr) && !preg_match('/^(gast|pagu|compr|receb|ganh)/i', $finalStr)) {
+            return ucfirst($finalStr);
         }
     }
 
