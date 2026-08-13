@@ -698,13 +698,22 @@ $stmtCheckEdit = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE us
 $stmtCheckEdit->execute([$user_id]);
 $isEditModePending = $stmtCheckEdit->fetch();
 
-if ($isEditModePending || 
-    preg_match('/^(corrigir|editar|alterar|na verdade|corrigindo|mudar para|muda para)/i', trim($lowerText)) || 
-    preg_match('/(na verdade foi|na verdade era|corrigindo valor|corrigir valor)/i', $lowerText)) {
+$isCorrectionKeyword = preg_match('/(?:corrigir|editar|alterar|na verdade|corrigindo|mudar|muda|ops|era|ajustar|rectificar)/i', $lowerText);
+
+if ($isEditModePending || $isCorrectionKeyword) {
     
     $targetTxId = null;
     if ($isEditModePending && strpos($isEditModePending['description'], 'tx_id:') !== false) {
         $targetTxId = (int)str_replace('tx_id:', '', $isEditModePending['description']);
+    }
+
+    if (!$targetTxId) {
+        $stmtLastAnchor = $pdo->prepare("SELECT description FROM whatsapp_pending_sessions WHERE user_id = ? AND type = 'last_created_tx' ORDER BY id DESC LIMIT 1");
+        $stmtLastAnchor->execute([$user_id]);
+        $anchor = $stmtLastAnchor->fetch();
+        if ($anchor && strpos($anchor['description'], 'last_tx:') !== false) {
+            $targetTxId = (int)str_replace('last_tx:', '', $anchor['description']);
+        }
     }
 
     if ($targetTxId) {
@@ -728,7 +737,7 @@ if ($isEditModePending ||
         $finalAmount = ($updAmount > 0) ? $updAmount : (float)$lastTx['amount'];
         $finalBank   = $updBank ?: ($lastTx['bank_name'] ?: 'Geral');
         $finalType   = $updType ?: $lastTx['type'];
-        $finalDesc   = (!empty($updDesc) && mb_strlen($updDesc) >= 2 && !in_array(strtolower($updDesc), ['corrigir', 'editar', 'alterar', 'na verdade', 'corrigindo'])) ? $updDesc : $lastTx['description'];
+        $finalDesc   = (!empty($updDesc) && mb_strlen($updDesc) >= 2 && !in_array(strtolower($updDesc), ['corrigir', 'editar', 'alterar', 'na verdade', 'corrigindo', 'ops', 'era', 'mudar'])) ? $updDesc : $lastTx['description'];
         $finalCat    = inferCategoryStrict($finalDesc, $rawText, $finalType);
 
         $stmtUpdTx = $pdo->prepare("UPDATE transactions SET type=?, category=?, description=?, amount=?, bank_name=? WHERE id=? AND user_id=?");
@@ -760,9 +769,9 @@ if ($isEditModePending ||
 }
 
 // ------------------------------------------------------------------
-// --- BUSCA SESSÃO PENDENTE DO USUÁRIO ---
+// --- BUSCA SESSÃO PENDENTE DO USUÁRIO (RASCUNHOS APENAS) ---
 // ------------------------------------------------------------------
-$stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? ORDER BY id DESC LIMIT 1");
+$stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type NOT IN ('last_created_tx', 'edit_mode') ORDER BY id DESC LIMIT 1");
 $stmtPending->execute([$user_id]);
 $pending = $stmtPending->fetch();
 
