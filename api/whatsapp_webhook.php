@@ -282,8 +282,8 @@ function parseDescription($text, $type) {
     // 2. Extrai de frases "comprei X" ou "gastei no X"
     if (preg_match('/(?:comprei|gastei|paguei|custou)\s+([a-zà-ú0-9\s]{2,30})/i', $text, $mComp)) {
         $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real)\b/i', ' ', $mComp[1]);
-        $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
-        if (mb_strlen($extracted, 'UTF-8') >= 2) {
+        $extracted = trim(preg_replace('/[\s\d]+/', ' ', $extracted));
+        if (mb_strlen($extracted, 'UTF-8') >= 2 && !preg_match('/^\d+$/', $extracted) && !in_array(strtolower($extracted), $actionVerbs)) {
             return ucfirst($extracted);
         }
     }
