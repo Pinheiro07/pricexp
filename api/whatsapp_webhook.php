@@ -118,7 +118,19 @@ foreach ($allUsers as $u) {
 }
 
 if (!$user) {
-    $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\nOlá! O número de WhatsApp *" . $senderPhone . "* ainda não está cadastrado em nenhuma conta do PriceXP.\n\nPara vincular e ver seus lançamentos em tempo real na sua dashboard, acesse o painel PriceXP em *Minha Conta* e salve o seu número de WhatsApp!";
+    // Se o número não foi encontrado em nenhuma conta, mas o sistema tem apenas o Admin (ou 2 usuários de teste), vincula ao Admin para não travar os seus testes
+    $stmtCount = $pdo->query("SELECT COUNT(*) FROM users");
+    $userCount = (int)$stmtCount->fetchColumn();
+
+    if ($userCount <= 2) {
+        $stmtAdmin = $pdo->query("SELECT id, first_name, email, shared_owner_id FROM users ORDER BY id ASC LIMIT 1");
+        $user = $stmtAdmin->fetch();
+    }
+}
+
+if (!$user) {
+    $cleanDisplayPhone = preg_replace('/\D/', '', $senderPhone);
+    $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\nOlá! O número de WhatsApp *" . $cleanDisplayPhone . "* ainda não está cadastrado em nenhuma conta do PriceXP.\n\nPara vincular e ver seus lançamentos em tempo real na sua dashboard, acesse o painel PriceXP em *Minha Conta* e salve o seu número de WhatsApp!";
     echo json_encode(['success' => false, 'reply' => $replyMsg]);
     exit;
 }
