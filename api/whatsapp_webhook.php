@@ -130,13 +130,20 @@ function parseAmount($text) {
     $cleanText = preg_replace('/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/', ' ', $cleanText);
     $cleanText = preg_replace('/\b(c6\s*bank|c6)\b/i', ' ', $cleanText);
 
+    // Limpa números de endereço (Rua ..., Avenida ..., Loja ...)
+    $cleanText = preg_replace('/\b(?:rua|av|avenida|praça|praca|nº|no|loja|lj)\b.*?\b\d+\b/i', ' ', $cleanText);
+
+    // Limpa códigos de comprovante/recibo (NFC-e, COO, GNF, AUT, DOC, TERM, NSU, IE, CNPJ, etc.)
+    $cleanText = preg_replace('/\b(?:nfc-e|coo|gnf|aut|doc|term|nsu|aid|sitef|ie|cnpj|ie:)\s*[:=\-]?\s*\d+/i', ' ', $cleanText);
+    $cleanText = preg_replace('/\b\d{6,}\b/', ' ', $cleanText);
+
     // 1. R$ 50,00 ou R$50
     if (preg_match('/r\$\s*(\d+(?:[\.,]\d{1,2})?)/i', $cleanText, $m)) {
         return (float)str_replace(',', '.', $m[1]);
     }
 
-    // 2. total 50, valor 50, pago 50, foi 50
-    if (preg_match('/(?:total|valor|pago|foi|deu|caiu)\s*(?:r\$\s*)?(\d+(?:[\.,]\d{1,2})?)/i', $cleanText, $m)) {
+    // 2. total: 50, valor: 223.06, pago 50, foi 50 (suporta dois pontos : e traço -)
+    if (preg_match('/(?:total|valor|pago|foi|deu|caiu|subtotal)\s*[:=\-]?\s*(?:r\$\s*)?(\d+(?:[\.,]\d{1,2})?)/i', $cleanText, $m)) {
         return (float)str_replace(',', '.', $m[1]);
     }
 
