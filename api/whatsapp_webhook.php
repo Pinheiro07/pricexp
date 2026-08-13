@@ -348,17 +348,17 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
     $fmtDesp = number_format($totalDesp, 2, ',', '.');
     $fmtSal  = number_format(abs($saldo), 2, ',', '.');
 
-    $replyMsg = "*PriceXP — Assistente Financeiro*\n\n"
+    $replyMsg = "📊 *PriceXP — Assistente Financeiro*\n\n"
               . "*RELATÓRIO FINANCEIRO " . $periodTitle . "*\n\n"
               . "• Usuário: {$userName}\n"
               . "• Período: {$periodLabel}\n\n"
-              . "• Entradas: R$ {$fmtRec}\n"
-              . "• Saídas: R$ {$fmtDesp}\n"
-              . "• Saldo Líquido: R$ {$saldoSign}{$fmtSal}\n\n"
+              . "🟢 Entradas: R$ {$fmtRec}\n"
+              . "🔴 Saídas: R$ {$fmtDesp}\n"
+              . "💰 Saldo Líquido: R$ {$saldoSign}{$fmtSal}\n\n"
               . "*Principais Categorias de Despesa:*\n"
               . $topText . "\n"
-              . ($bankText ? "*Bancos Utilizados:*\n" . $bankText . "\n" : "")
-              . "_Lançamentos sincronizados com o painel PriceXP._";
+              . ($bankText ? "🏦 *Bancos Utilizados:*\n" . $bankText . "\n" : "")
+              . "🚀 _Lançamentos sincronizados com o painel PriceXP._";
 
     echo json_encode(['success' => true, 'reply' => $replyMsg]);
     exit;
@@ -426,7 +426,7 @@ if (!empty($missing)) {
     } catch (Exception $ex) {}
 
     $formattedAmount = ($amount > 0) ? "R$ " . number_format($amount, 2, ',', '.') : "";
-    $tipoLabel = ($type === 'receita') ? 'Receita' : 'Despesa';
+    $tipoLabel = ($type === 'receita') ? 'Receita 🟢' : 'Despesa 🔴';
 
     $questions = [];
     if (in_array('valor', $missing)) {
@@ -446,7 +446,7 @@ if (!empty($missing)) {
     $askText = implode(", ", $questions);
     $introText = $formattedAmount ? "Anotado o lançamento de {$formattedAmount} ({$tipoLabel}).\n\nPor favor, informe: " : "Por favor, informe: ";
 
-    $replyMsg = "*PriceXP — Assistente Financeiro*\n\n" . $introText . $askText . "?";
+    $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\n" . $introText . $askText . "?";
     
     echo json_encode(['success' => true, 'reply' => $replyMsg]);
     exit;
@@ -480,7 +480,7 @@ try {
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
-        'reply' => "*PriceXP — Assistente Financeiro*\n\nOcorreu um erro ao registrar a transação: " . $e->getMessage()
+        'reply' => "⚠️ *PriceXP — Assistente Financeiro*\n\nOcorreu um erro ao registrar a transação: " . $e->getMessage()
     ]);
     exit;
 }
@@ -488,9 +488,9 @@ try {
 logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO', "Lançamento via WhatsApp #{$insertedId}: {$type} - {$description} (R$ {$amount})", $amount, ['bank' => $finalBank, 'phone' => $cleanPhone]);
 
 $formattedAmount = number_format($amount, 2, ',', '.');
-$tipoLabel = ($type === 'receita') ? 'Receita' : 'Despesa';
+$tipoLabel = ($type === 'receita') ? 'Receita 🟢' : 'Despesa 🔴';
 
-$replyMsg = "*PriceXP — Confirmação de Lançamento*\n\n"
+$replyMsg = "✅ *PriceXP — Confirmação de Lançamento*\n\n"
           . "• Tipo: {$tipoLabel}\n"
           . "• Valor: R$ {$formattedAmount}\n"
           . "• Descrição: {$description}\n"
@@ -498,7 +498,7 @@ $replyMsg = "*PriceXP — Confirmação de Lançamento*\n\n"
           . "• Banco: {$finalBank}\n"
           . ($type === 'despesa' ? "• Forma de Pagamento: " . ($payment_method ?: 'Outra') . "\n" : "")
           . "• Data: " . date('d/m/Y') . "\n\n"
-          . "_Lançamento registrado com sucesso no seu painel PriceXP._";
+          . "🚀 _Lançamento registrado com sucesso no seu painel PriceXP._";
 
 echo json_encode([
     'success' => true,
