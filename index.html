@@ -539,26 +539,26 @@
                                     Abrir Assistente Financeiro no WhatsApp
                                 </a>
                             </div>
-                            </div>
                             
                             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0;">
                             
                             <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;"><i data-lucide="shield-check"></i> Segurança</h3>
                             <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1rem;">Preencha a senha atual apenas se for alterar o E-mail ou a Nova Senha.</p>
 
-                            <div class="form-group">
-                                <label>Senha Atual</label>
-                                <input type="password" id="profile-current-password" name="current_password" placeholder="Digite para autorizar mudanças sensíveis">
-                            </div>
-
-                            <div class="form-group">
-                                <label>Nova Senha</label>
-                                <input type="password" id="profile-new-password" name="password" placeholder="Deixe em branco para manter a atual">
+                            <div class="form-group row">
+                                <div class="col">
+                                    <label>Senha Atual</label>
+                                    <input type="password" id="profile-current-password" name="current_password" placeholder="Digite para autorizar mudanças sensíveis">
+                                </div>
+                                <div class="col">
+                                    <label>Nova Senha</label>
+                                    <input type="password" id="profile-new-password" name="password" placeholder="Deixe em branco para manter a atual">
+                                </div>
                             </div>
 
                             <div id="profile-msg" class="mt-2 text-center" style="display:none; font-size: 0.9rem;"></div>
                             
-                            <button type="submit" class="btn-primary" id="btn-save-profile" style="margin-top: 1rem;">Salvar Alterações</button>
+                            <button type="submit" class="btn-primary" id="btn-save-profile" style="margin-top: 1.25rem;">Salvar Alterações</button>
                         </form>
                     </div>
 
