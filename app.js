@@ -766,6 +766,12 @@ async function deleteTransaction(id) {
         if (res.ok) {
             await fetchTransactions();
             await fetchCards();
+            if (typeof fetchSharedAccountStatus === 'function') {
+                await fetchSharedAccountStatus();
+            }
+            if (typeof detailsModal !== 'undefined' && detailsModal && detailsModal.style.display !== 'none') {
+                detailsModal.style.display = 'none';
+            }
         }
     } catch (e) {
         console.error('Failed to delete tx');
@@ -1201,13 +1207,21 @@ function openDetailsModal(type) {
     } else {
         items.forEach(tx => {
             const item = document.createElement('div');
-            item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.05);';
+            item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.05); gap: 0.75rem;';
             item.innerHTML = `
-                <div>
-                    <span style="font-weight: 500; color: #fff; display: block;">${tx.description}</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">${tx.category} • ${formatDate(tx.date)}</span>
+                <div style="flex: 1; min-width: 0;">
+                    <span style="font-weight: 600; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${tx.description}</span>
+                    <span style="font-size: 0.78rem; color: var(--text-muted);">${tx.category} ${tx.bank_name ? '• ' + tx.bank_name : ''} • ${formatDate(tx.date)}</span>
                 </div>
-                <span style="font-weight: 600;" class="${isReceita ? 'text-success' : 'text-danger'}">${isReceita ? '+' : '-'} ${formatCurrency(tx.amount)}</span>
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0;">
+                    <span style="font-weight: 600; white-space: nowrap;" class="${isReceita ? 'text-success' : 'text-danger'}">${isReceita ? '+' : '-'} ${formatCurrency(tx.amount)}</span>
+                    <button title="Editar lançamento" onclick="if(detailsModal) detailsModal.style.display='none'; openEditTxModal(${tx.id})" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:4px; border-radius:4px; display:flex; align-items:center; transition:color 0.2s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='var(--text-muted)'">
+                        <i data-lucide="pencil" style="width:1rem; height:1rem;"></i>
+                    </button>
+                    <button title="Excluir lançamento" onclick="deleteTransaction(${tx.id})" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:4px; border-radius:4px; display:flex; align-items:center; transition:color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--text-muted)'">
+                        <i data-lucide="trash-2" style="width:1rem; height:1rem;"></i>
+                    </button>
+                </div>
             `;
             detailsModalBody.appendChild(item);
         });
@@ -2045,6 +2059,12 @@ async function fetchSharedAccountStatus() {
                                 </div>
                                 <div class="tx-actions">
                                     <span class="tx-amount ${colorClass}" style="font-weight:600;">${sign} ${formatCurrency(tx.amount)}</span>
+                                    <button class="tx-edit" title="Editar lançamento" onclick="openEditTxModal(${tx.id})" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:4px; border-radius:4px; display:flex; align-items:center; transition:color 0.2s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='var(--text-muted)'">
+                                        <i data-lucide="pencil" style="width:1rem; height:1rem;"></i>
+                                    </button>
+                                    <button class="tx-delete" title="Excluir lançamento" onclick="deleteTransaction(${tx.id})" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:4px; border-radius:4px; display:flex; align-items:center; transition:color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--text-muted)'">
+                                        <i data-lucide="trash-2" style="width:1rem; height:1rem;"></i>
+                                    </button>
                                 </div>
                             `;
                             activityList.appendChild(item);
