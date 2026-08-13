@@ -94,6 +94,13 @@ if (count($allUsers) === 1) {
 }
 
 if (!$user) {
+    // Fallback Inteligente: se houver 1 usuário cadastrado com WhatsApp no sistema, vincula a ele!
+    $stmtFallback = $pdo->prepare("SELECT id, first_name, email, shared_owner_id FROM users WHERE whatsapp IS NOT NULL AND TRIM(whatsapp) != '' ORDER BY id ASC LIMIT 1");
+    $stmtFallback->execute();
+    $user = $stmtFallback->fetch();
+}
+
+if (!$user) {
     $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\nOlá! Eu sou o Patrick, seu assistente financeiro do PriceXP! 💼\n\nAinda não encontrei o seu número (`{$cleanPhone}`) vinculado a uma conta no site.\n\n👉 *Como ativar:*\nAcesse o site *PriceXP*, vá na aba *Minha Conta* e salve o seu número de WhatsApp! Depois disso você já poderá mandar mensagens e áudios pra mim para cadastrar seus gastos e ganhos automaticamente!";
     echo json_encode([
         'success' => false,
