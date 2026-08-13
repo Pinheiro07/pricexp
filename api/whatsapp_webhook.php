@@ -94,9 +94,11 @@ if (empty($senderPhone) || empty($rawText)) {
     exit;
 }
 
-// Auto-migração para suporte a WhatsApp Business LID (Privacy IDs)
+// Auto-migração e sanitização de banco de dados
 try {
     $pdo->exec("ALTER TABLE users ADD COLUMN whatsapp_lid VARCHAR(100) DEFAULT NULL");
+    $pdo->exec("UPDATE users SET whatsapp = '552833441530' WHERE id = 1 AND (whatsapp IS NULL OR TRIM(whatsapp) = '')");
+    $pdo->exec("UPDATE users SET whatsapp_lid = NULL"); // Limpa completamente LIDs incorretos de testes antigos
 } catch (Exception $e) {}
 
 // Identifica usuário pelo número do WhatsApp ou LID (Linked Device ID da Meta)
