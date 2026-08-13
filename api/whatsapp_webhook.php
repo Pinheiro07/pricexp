@@ -94,26 +94,67 @@ if (empty($senderPhone) || empty($rawText)) {
     exit;
 }
 
-// Identifica usuário pelo número do WhatsApp
-$stmtUser = $pdo->prepare("SELECT id, first_name, email, shared_owner_id, whatsapp FROM users WHERE whatsapp IS NOT NULL AND TRIM(whatsapp) != ''");
+// Auto-migração para suporte a WhatsApp Business LID (Privacy IDs)
+try {
+    $pdo->exec("ALTER TABLE users ADD COLUMN whatsapp_lid VARCHAR(100) DEFAULT NULL");
+} catch (Exception $e) {}
+
+// Identifica usuário pelo número do WhatsApp ou LID (Linked Device ID da Meta)
+$rawLid = '';
+if (strpos($senderPhone, '@lid') !== false || strlen($cleanPhone) > 13) {
+    $rawLid = preg_replace('/\D/', '', $senderPhone);
+}
+
+$stmtUser = $pdo->prepare("SELECT id, first_name, email, shared_owner_id, whatsapp, whatsapp_lid FROM users WHERE (whatsapp IS NOT NULL AND TRIM(whatsapp) != '') OR (whatsapp_lid IS NOT NULL AND TRIM(whatsapp_lid) != '')");
 $stmtUser->execute();
 $allUsers = $stmtUser->fetchAll();
 
 $user = null;
 $cleanPhoneLast8 = (strlen($cleanPhone) >= 8) ? substr($cleanPhone, -8) : $cleanPhone;
 
-foreach ($allUsers as $u) {
-    $uPhone = preg_replace('/\D/', '', $u['whatsapp']);
-    if (empty($uPhone)) continue;
-    
-    $uPhoneLast8 = (strlen($uPhone) >= 8) ? substr($uPhone, -8) : $uPhone;
+// 1. Busca por whatsapp_lid registrado
+if (!empty($rawLid)) {
+    foreach ($allUsers as $u) {
+        if (!empty($u['whatsapp_lid']) && strpos($u['whatsapp_lid'], $rawLid) !== false) {
+            $user = $u;
+            break;
+        }
+    }
+}
 
-    if ($uPhone === $cleanPhone || 
-        strpos($cleanPhone, $uPhone) !== false || 
-        strpos($uPhone, $cleanPhone) !== false || 
-        $uPhoneLast8 === $cleanPhoneLast8) {
-        $user = $u;
-        break;
+// 2. Busca por número de telefone (DDD + número)
+if (!$user) {
+    foreach ($allUsers as $u) {
+        $uPhone = preg_replace('/\D/', '', $u['whatsapp']);
+        if (empty($uPhone)) continue;
+        
+        $uPhoneLast8 = (strlen($uPhone) >= 8) ? substr($uPhone, -8) : $uPhone;
+
+        if ($uPhone === $cleanPhone || 
+            strpos($cleanPhone, $uPhone) !== false || 
+            strpos($uPhone, $cleanPhone) !== false || 
+            $uPhoneLast8 === $cleanPhoneLast8) {
+            $user = $u;
+            if (!empty($rawLid) && empty($u['whatsapp_lid'])) {
+                try {
+                    $pdo->prepare("UPDATE users SET whatsapp_lid = ? WHERE id = ?")->execute([$rawLid, $u['id']]);
+                } catch (Exception $e) {}
+            }
+            break;
+        }
+    }
+}
+
+// 3. Auto-vincula LID ao usuário cadastrado mais recente se ainda não tiver LID
+if (!$user && !empty($rawLid)) {
+    $stmtRecentUser = $pdo->prepare("SELECT id, first_name, email, shared_owner_id, whatsapp FROM users WHERE whatsapp IS NOT NULL AND TRIM(whatsapp) != '' ORDER BY id DESC LIMIT 1");
+    $stmtRecentUser->execute();
+    $recent = $stmtRecentUser->fetch();
+    if ($recent) {
+        $user = $recent;
+        try {
+            $pdo->prepare("UPDATE users SET whatsapp_lid = ? WHERE id = ?")->execute([$rawLid, $recent['id']]);
+        } catch (Exception $e) {}
     }
 }
 
