@@ -292,15 +292,16 @@ function parseDescription($text, $type) {
         return 'Pix de ' . ucfirst($mPerson[1]);
     }
 
-    // 3. FALLBACK UNIVERSAL INTELIGENTE: Aceita qualquer nome de serviço, loja ou item enviado (ex: google, youtube, steam, etc.)
+    // 3. FALLBACK UNIVERSAL INTELIGENTE: Exclui verbos de ação e palavras reservadas
     $cleanText = trim($text);
-    if (mb_strlen($cleanText, 'UTF-8') >= 2 && !preg_match('/^\d+(?:[\.,]\d+)?$/', $cleanText) && !in_array(strtolower($cleanText), ['pix', 'débito', 'debito', 'crédito', 'credito', 'dinheiro', 'sim', 'nao', 'não', '1', '2'])) {
-        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $cleanText);
+    $actionVerbs = ['gastei', 'paguei', 'comprei', 'saiu', 'custou', 'recebi', 'ganhei', 'foi', 'deu', 'caiu', 'anota', 'anotar', 'lançar', 'lancar', 'lança', 'lanca', 'despesa', 'receita', 'valor', 'reais', 'real', 'sim', 'nao', 'não', 'pix', 'débito', 'debito', 'crédito', 'credito', 'dinheiro', 'boleto'];
+
+    if (mb_strlen($cleanText, 'UTF-8') >= 2 && !preg_match('/^\d+(?:[\.,]\d+)?$/', $cleanText) && !in_array(strtolower($cleanText), $actionVerbs)) {
+        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real|gastei|paguei|comprei|recebi|ganhei|custou|saiu|foi|deu|caiu|anota|anotar|lançar|lancar|lança|lanca|despesa|receita)\b/i', ' ', $cleanText);
         $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
-        if (mb_strlen($extracted, 'UTF-8') >= 2) {
+        if (mb_strlen($extracted, 'UTF-8') >= 2 && !in_array(strtolower($extracted), $actionVerbs)) {
             return ucfirst($extracted);
         }
-        return ucfirst($cleanText);
     }
 
     return null;
