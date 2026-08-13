@@ -18,18 +18,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
-// Garante que a tabela de rascunhos/conversas pendentes do Patrick exista no banco
+// Tabela de rascunhos / sessão incremental de conversa do Patrick
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS whatsapp_pending_sessions (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         phone VARCHAR(50) NOT NULL,
-        type ENUM('receita', 'despesa') NOT NULL,
-        amount DECIMAL(10, 2) NOT NULL,
-        bank_name VARCHAR(100) DEFAULT '',
-        description VARCHAR(255) DEFAULT '',
-        category VARCHAR(100) DEFAULT '',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        type ENUM('despesa', 'receita') DEFAULT NULL,
+        amount DECIMAL(10, 2) DEFAULT NULL,
+        description VARCHAR(255) DEFAULT NULL,
+        category VARCHAR(100) DEFAULT NULL,
+        bank_name VARCHAR(100) DEFAULT NULL,
+        payment_method VARCHAR(50) DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )");
 } catch (Exception $e) {}
 
@@ -64,17 +65,13 @@ if (!empty($data['body'])) {
 }
 
 $cleanPhone = preg_replace('/\D/', '', $senderPhone);
-$shortPhone = (strlen($cleanPhone) >= 12 && substr($cleanPhone, 0, 2) === '55') ? substr($cleanPhone, 2) : $cleanPhone;
 
 if (empty($cleanPhone) || empty($rawText)) {
-    echo json_encode([
-        'success' => false,
-        'error' => 'Nenhum número de telefone ou mensagem de texto recebida no payload.'
-    ]);
+    echo json_encode(['success' => false, 'error' => 'Payload inválido']);
     exit;
 }
 
-// Busca o usuário no banco de dados PriceXP pelo número do WhatsApp ou LID
+// Identifica usuário
 $stmtUser = $pdo->prepare("SELECT id, first_name, email, shared_owner_id, whatsapp FROM users WHERE whatsapp IS NOT NULL AND TRIM(whatsapp) != ''");
 $stmtUser->execute();
 $allUsers = $stmtUser->fetchAll();
@@ -86,17 +83,7 @@ if (count($allUsers) === 1) {
     foreach ($allUsers as $u) {
         $uPhone = preg_replace('/\D/', '', $u['whatsapp']);
         if (empty($uPhone)) continue;
-        
-        $uShort = (strlen($uPhone) >= 11 && substr($uPhone, 0, 2) === '55') ? substr($uPhone, 2) : $uPhone;
-        $cleanShort = (strlen($cleanPhone) >= 11 && substr($cleanPhone, 0, 2) === '55') ? substr($cleanPhone, 2) : $cleanPhone;
-
-        if (
-            $cleanPhone === $uPhone ||
-            $cleanShort === $uShort ||
-            substr($cleanPhone, -8) === substr($uPhone, -8) ||
-            substr($cleanPhone, -9) === substr($uPhone, -9) ||
-            strpos($cleanPhone, $uPhone) !== false
-        ) {
+        if (strpos($cleanPhone, $uPhone) !== false || strpos($uPhone, substr($cleanPhone, -8)) !== false) {
             $user = $u;
             break;
         }
@@ -110,12 +97,8 @@ if (!$user) {
 }
 
 if (!$user) {
-    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\nOlá! Eu sou o Patrick, seu assistente financeiro do PriceXP! 💼\n\nAinda não encontrei o seu número (`{$cleanPhone}`) vinculado a uma conta no site.\n\n👉 *Como ativar:*\nAcesse o site *PriceXP*, vá na aba *Minha Conta* e salve o seu número de WhatsApp!";
-    echo json_encode([
-        'success' => false,
-        'reply' => $replyMsg,
-        'phone' => $cleanPhone
-    ]);
+    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\nOlá! Eu sou o Patrick, assistente do PriceXP! 💼\n\nCadastre seu número de WhatsApp no site *PriceXP* em *Minha Conta* para começarmos!";
+    echo json_encode(['success' => false, 'reply' => $replyMsg]);
     exit;
 }
 
@@ -124,209 +107,205 @@ $workspace_id = getWorkspaceUserId($pdo, $user_id);
 $userName     = !empty($user['first_name']) ? $user['first_name'] : 'Usuário';
 $lowerText    = mb_strtolower($rawText, 'UTF-8');
 
-// --- VERIFICA SE HÁ RASCUNHO PENDENTE DO PATRICK (Últimos 10 minutos) ---
-$stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND created_at >= NOW() - INTERVAL 10 MINUTE ORDER BY id DESC LIMIT 1");
+// --- HELPER DE PARSER INTELIGENTE DE VALORES (Ex: 250 | 89,90 | 3 mil | 1.5k) ---
+function parseAmount($text) {
+    if (preg_match('/(\d+(?:[\.,]\d+)?)\s*(mil|k)/i', $text, $m)) {
+        $val = (float)str_replace(',', '.', $m[1]);
+        return $val * 1000;
+    }
+    if (preg_match('/(?:r\$\s*|valor\s*|de\s*)?(\d+(?:[\.,]\d{1,2})?)/i', $text, $m)) {
+        return (float)str_replace(',', '.', $m[1]);
+    }
+    return 0.0;
+}
+
+// --- HELPER DE EXTRAÇÃO DE BANCO DE QUALQUER INSTITUIÇÃO ---
+function parseBank($text) {
+    $banks = [
+        'nubank' => 'Nubank', 'itau' => 'Itaú', 'itaú' => 'Itaú', 'bradesco' => 'Bradesco', 
+        'santander' => 'Santander', 'inter' => 'Banco Inter', 'c6' => 'C6 Bank', 'caixa' => 'Caixa', 
+        'bb' => 'Banco do Brasil', 'banco do brasil' => 'Banco do Brasil', 'sicoob' => 'Sicoob', 
+        'sicredi' => 'Sicredi', 'pagbank' => 'PagBank', 'picpay' => 'PicPay', 'mercado pago' => 'Mercado Pago',
+        'btg' => 'BTG Pactual', 'will' => 'Will Bank', 'neon' => 'Neon'
+    ];
+    foreach ($banks as $key => $val) {
+        if (preg_match('/\b' . preg_quote($key, '/') . '\b/i', $text)) {
+            return $val;
+        }
+    }
+    return null;
+}
+
+// --- HELPER DE EXTRAÇÃO DE FORMA DE PAGAMENTO ---
+function parsePaymentMethod($text) {
+    if (preg_match('/\b(pix)\b/i', $text)) return 'PIX';
+    if (preg_match('/\b(débito|debito)\b/i', $text)) return 'Débito';
+    if (preg_match('/\b(crédito|credito|cartão|cartao)\b/i', $text)) return 'Crédito';
+    if (preg_match('/\b(dinheiro|especie|espécie)\b/i', $text)) return 'Dinheiro';
+    if (preg_match('/\b(transferência|transferencia|ted|doc)\b/i', $text)) return 'Transferência';
+    if (preg_match('/\b(boleto)\b/i', $text)) return 'Boleto';
+    return null;
+}
+
+// --- HELPER DE IDENTIFICAÇÃO DE TIPO ---
+function parseType($text) {
+    if (preg_match('/(receb|ganh|salari|salário|pix receb|entrada|receita|deposit|depósito|venda|caiu|renda|reembolso|lucro)/i', $text)) {
+        return 'receita';
+    }
+    if (preg_match('/(gast|pagu|compr|saiu|débito|debito|cobrad|custou|despesa)/i', $text)) {
+        return 'despesa';
+    }
+    return null;
+}
+
+// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO ---
+function parseDescription($text) {
+    $clean = preg_replace('/^(patrick[,\s]*|oi\s+patrick[,\s]*|olá\s+patrick[,\s]*)/i', '', $text);
+    $clean = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*\s*(mil|k)?|reais|real|gastei|gastamos|paguei|pagamos|comprei|compramos|recebi|recebemos|ganhei|ganhamos|depositei|no|na|do|da|de|em|para|com|pelo|pela)/i', ' ', $clean);
+    $clean = preg_replace('/(nubank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|sicredi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)/i', ' ', $clean);
+    $clean = trim(preg_replace('/\s+/', ' ', $clean));
+    
+    if (empty($clean) || strlen($clean) < 2) {
+        if (preg_match('/(mercado|supermercado)/i', $text)) return 'Mercado';
+        if (preg_match('/(ifood|restaurante|pizza|lanche|comida)/i', $text)) return 'iFood';
+        if (preg_match('/(gasolina|combustivel|combustível)/i', $text)) return 'Gasolina';
+        if (preg_match('/(uber|99|taxi)/i', $text)) return 'Uber';
+        if (preg_match('/(farmacia|farmácia|remedio|remédio)/i', $text)) return 'Farmácia';
+        if (preg_match('/(salario|salário|holerite)/i', $text)) return 'Salário';
+        if (preg_match('/(site|venda|cliente)/i', $text)) return 'Venda no Site';
+        return null;
+    }
+    return ucfirst($clean);
+}
+
+// --- HELPER DE INFERÊNCIA DE CATEGORIA ---
+function inferCategory($description, $text, $type) {
+    $combined = mb_strtolower($description . ' ' . $text, 'UTF-8');
+    
+    if (preg_match('/(mercado|supermercado|feira|açougue|padaria)/i', $combined)) return 'Alimentação';
+    if (preg_match('/(ifood|restaurante|lanchonete|pizza|comida|mcdonald)/i', $combined)) return 'Alimentação';
+    if (preg_match('/(netflix|spotify|cinema|jogos|lazer|show|bar)/i', $combined)) return 'Lazer';
+    if (preg_match('/(gasolina|combustivel|combustível|uber|táxi|taxi|ônibus|onibus|pedagio)/i', $combined)) return 'Transporte';
+    if (preg_match('/(aluguel|condomínio|condominio|luz|água|agua|internet|telefone|energia|casa)/i', $combined)) return 'Casa';
+    if (preg_match('/(farmacia|farmácia|médico|medico|consulta|hospital|remedio)/i', $combined)) return 'Saúde';
+    if (preg_match('/(faculdade|escola|curso|livro)/i', $combined)) return 'Educação';
+    if (preg_match('/(investimento|rendimento|ação|ações|cdb|tesouro)/i', $combined)) return 'Investimentos';
+    
+    if ($type === 'receita') {
+        if (preg_match('/(salario|salário|holerite|férias|ferias)/i', $combined)) return 'Salário Líquido';
+        if (preg_match('/(freelance|serviço|servico|venda|site|comissão|bonus)/i', $combined)) return 'Renda Extra Líquida';
+        return 'Outras Receitas';
+    }
+    return 'Outras Despesas';
+}
+
+// ------------------------------------------------------------------
+// --- BUSCA SESSÃO PENDENTE DO USUÁRIO (Últimos 15 minutos) ---
+// ------------------------------------------------------------------
+$stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND created_at >= NOW() - INTERVAL 15 MINUTE ORDER BY id DESC LIMIT 1");
 $stmtPending->execute([$user_id]);
 $pending = $stmtPending->fetch();
 
+// Coleta tudo o que vier na mensagem atual
+$newType = parseType($lowerText);
+$newAmount = parseAmount($lowerText);
+$newBank = parseBank($lowerText);
+$newMethod = parsePaymentMethod($lowerText);
+$newDesc = parseDescription($rawText);
+
 if ($pending) {
-    $type = $pending['type'];
-    $amount = (float)$pending['amount'];
-    $formattedAmount = number_format($amount, 2, ',', '.');
-    
-    // Tenta extrair banco da resposta
-    $bank_name = !empty($pending['bank_name']) ? $pending['bank_name'] : '';
-    if (empty($bank_name)) {
-        if (preg_match('/(nubank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|sicredi|pagbank|picpay)/i', $lowerText, $bMatches)) {
-            $bank_name = ucfirst(strtolower($bMatches[1]));
-            if (strtolower($bank_name) === 'itau') $bank_name = 'Itaú';
-            if (strtolower($bank_name) === 'bb') $bank_name = 'Banco do Brasil';
-        }
-    }
-    
-    // Tenta extrair descrição da resposta
-    $description = !empty($pending['description']) ? $pending['description'] : '';
-    if (empty($description)) {
-        $cleanDesc = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*|reais|real|caiu|foi|no|na|do|da|de|em|para|com|banco|cartão|cartao|nubank|itau|itaú|bradesco|santander|inter|c6|caixa|sicoob|sicredi)/i', ' ', $rawText);
-        $cleanDesc = trim(preg_replace('/\s+/', ' ', $cleanDesc));
-        if (!empty($cleanDesc) && strlen($cleanDesc) >= 2) {
-            $description = ucfirst($cleanDesc);
-        }
-    }
-
-    // Se AINDA FALTA O BANCO
-    if (empty($bank_name)) {
-        if (!empty($description)) {
-            $stmtUpd = $pdo->prepare("UPDATE whatsapp_pending_sessions SET description = ? WHERE id = ?");
-            $stmtUpd->execute([$description, $pending['id']]);
-        }
-        $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
-                  . "Perfeito! Registrei " . (!empty($description) ? "o motivo *'{$description}'*" : "o lançamento") . "! 📝\n\n"
-                  . "Agora só me conta o banco: **Em qual banco caiu/foi pago?** (Ex: Nubank, Sicredi, Itaú, C6...)";
-        echo json_encode(['success' => true, 'reply' => $replyMsg]);
-        exit;
-    }
-
-    // Se AINDA FALTA A DESCRIÇÃO
-    if (empty($description)) {
-        $stmtUpd = $pdo->prepare("UPDATE whatsapp_pending_sessions SET bank_name = ? WHERE id = ?");
-        $stmtUpd->execute([$bank_name, $pending['id']]);
-        
-        $tipoTxt = ($type === 'receita') ? 'recebimento' : 'gasto';
-        $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
-                  . "Show! Registrei que foi no **{$bank_name}**! 🏦\n\n"
-                  . "Agora só falta o motivo: **Qual foi a origem ou motivo desse {$tipoTxt} de R$ {$formattedAmount}?** (Ex: Venda no site, Mercado, Serviço...)";
-        echo json_encode(['success' => true, 'reply' => $replyMsg]);
-        exit;
-    }
-
-    // AMBOS OS DADOS FORAM PREENCHIDOS COM SUCESSO!
-    $category = ($type === 'receita') ? 'Outras Receitas' : 'Outras Despesas';
-    if ($type === 'receita') {
-        if (preg_match('/(site|venda|freelance|servico|serviço|comissao|comissão|bonus|bônus|plr|renda)/i', mb_strtolower($description, 'UTF-8') . ' ' . $lowerText)) {
-            $category = 'Renda Extra Líquida';
-        } elseif (preg_match('/(salario|salário|holerite|férias|ferias)/i', mb_strtolower($description, 'UTF-8') . ' ' . $lowerText)) {
-            $category = 'Salário Líquido';
-        }
-    } else {
-        if (preg_match('/(mercado|supermercado|feira|comida|ifood)/i', mb_strtolower($description, 'UTF-8') . ' ' . $lowerText)) {
-            $category = 'Casa';
-        } elseif (preg_match('/(gasolina|combustivel|uber)/i', mb_strtolower($description, 'UTF-8') . ' ' . $lowerText)) {
-            $category = 'Transporte';
-        }
-    }
-
-    $date = date('Y-m-d');
-    
-    // Grava lançamento final e remove o rascunho
-    $stmtIns = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmtIns->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $bank_name]);
-    $insertedId = $pdo->lastInsertId();
-
-    $stmtDel = $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE id = ?");
-    $stmtDel->execute([$pending['id']]);
-
-    $emojiType = ($type === 'receita') ? '🟢 Receita' : '🔴 Despesa';
-
-    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
-              . "✅ *Lançamento Completado e Registrado com Sucesso!*\n\n"
-              . "👤 *Usuário:* {$userName}\n"
-              . "📊 *Tipo:* {$emojiType}\n"
-              . "💰 *Valor:* R$ {$formattedAmount}\n"
-              . "📝 *Descrição:* {$description}\n"
-              . "📁 *Categoria:* {$category}\n"
-              . "🏦 *Banco:* {$bank_name}\n"
-              . "📅 *Data:* " . date('d/m/Y') . "\n\n"
-              . "🚀 _Já disponível no seu painel PriceXP!_";
-
-    echo json_encode(['success' => true, 'reply' => $replyMsg]);
-    exit;
-}
-
-// --- PARSER NORMAL DE NOVA MENSAGEM ---
-$type = 'despesa';
-if (preg_match('/(receb|ganh|salari|salário|pix|entrada|receita|deposit|depósito|venda|caiu|renda|reembolso|lucro|faturamento)/i', $lowerText)) {
-    $type = 'receita';
-}
-
-$amount = 0.0;
-if (preg_match('/(?:r\$\s*|valor\s*|de\s*)?(\d+(?:[\.,]\d{1,2})?)/i', $lowerText, $matches)) {
-    $rawVal = str_replace(',', '.', $matches[1]);
-    $amount = (float)$rawVal;
-}
-
-if ($amount <= 0) {
-    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\nOlá {$userName}! Me envie um valor e onde você gastou ou recebeu!\n\n💡 *Exemplo:* _'Gastei 50 no mercado no Nubank'_ ou _'Recebi 3500 de salário no Itaú'_.";
-    echo json_encode([
-        'success' => false,
-        'reply' => $replyMsg,
-        'phone' => $cleanPhone
-    ]);
-    exit;
-}
-
-// 3. Extração do Banco
-$bank_name = 'Geral';
-if (preg_match('/(nubank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|sicredi|pagbank|picpay)/i', $lowerText, $bMatches)) {
-    $bank_name = ucfirst(strtolower($bMatches[1]));
-    if (strtolower($bank_name) === 'itau') $bank_name = 'Itaú';
-    if (strtolower($bank_name) === 'bb') $bank_name = 'Banco do Brasil';
-}
-
-// 4. Extração de Descrição
-$cleanDesc = preg_replace('/^(patrick[,\s]*|oi\s+patrick[,\s]*|olá\s+patrick[,\s]*)/i', '', $rawText);
-$cleanDesc = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*|reais|real|gastei|gastamos|paguei|pagamos|comprei|compramos|recebi|recebemos|ganhei|ganhamos|depositei|depositamos|no|na|do|da|de|em|para|com|banco|cartão|cartao|nubank|itau|itaú|bradesco|santander|inter|c6|caixa|sicoob|sicredi)/i', ' ', $cleanDesc);
-$cleanDesc = trim(preg_replace('/\s+/', ' ', $cleanDesc));
-
-if (empty($cleanDesc) || strlen($cleanDesc) < 2) {
-    if (preg_match('/(mercado|supermercado)/i', $lowerText)) $cleanDesc = 'Mercado';
-    elseif (preg_match('/(gasolina|combustivel|combustível)/i', $lowerText)) $cleanDesc = 'Gasolina';
-    elseif (preg_match('/(almoço|almoco|jantar|lanche|comida|restaurante|ifood)/i', $lowerText)) $cleanDesc = 'Ifood / Alimentação';
-    elseif (preg_match('/(farmacia|farmácia|remedio|remédio)/i', $lowerText)) $cleanDesc = 'Farmácia';
-    elseif (preg_match('/(uber|99|taxi)/i', $lowerText)) $cleanDesc = 'Uber / Transporte';
-    elseif (preg_match('/(site|venda|cliente)/i', $lowerText)) $cleanDesc = 'Venda Site';
-    else $cleanDesc = ($type === 'despesa') ? 'Despesa via WhatsApp' : 'Receita via WhatsApp';
-}
-$description = ucfirst($cleanDesc);
-
-// Mapeamento Inteligente de Categorias
-$category = ($type === 'receita') ? 'Outras Receitas' : 'Outras Despesas';
-if ($type === 'receita') {
-    if (preg_match('/(site|venda|freelance|servico|serviço|comissao|comissão|bonus|bônus|plr|renda)/i', $lowerText)) {
-        $category = 'Renda Extra Líquida';
-    } elseif (preg_match('/(salario|salário|holerite|férias|ferias)/i', $lowerText)) {
-        $category = 'Salário Líquido';
-    }
+    // --- CONVERSA INCREMENTAL / CORREÇÃO ---
+    $type           = $newType ?: ($pending['type'] ?: 'despesa');
+    $amount         = ($newAmount > 0) ? $newAmount : (float)$pending['amount'];
+    $bank_name      = $newBank ?: $pending['bank_name'];
+    $payment_method = $newMethod ?: $pending['payment_method'];
+    $description    = $newDesc ?: $pending['description'];
+    $pendingId      = $pending['id'];
 } else {
-    if (preg_match('/(mercado|supermercado|feira|açougue|padaria|comida|ifood)/i', $lowerText)) {
-        $category = 'Casa';
-    } elseif (preg_match('/(gasolina|combustivel|combustível|uber|estacionamento|pedagio|mecanico)/i', $lowerText)) {
-        $category = 'Transporte';
-    } elseif (preg_match('/(remedio|remédio|farmacia|farmácia|medico|médico|consulta)/i', $lowerText)) {
-        $category = 'Saúde';
-    } elseif (preg_match('/(cinema|show|festa|bar|restaurante|viagem|jogos|lazer)/i', $lowerText)) {
-        $category = 'Lazer';
-    }
+    // --- NOVO LANÇAMENTO ---
+    $type           = $newType ?: 'despesa';
+    $amount         = $newAmount;
+    $bank_name      = $newBank;
+    $payment_method = $newMethod;
+    $description    = $newDesc;
+    $pendingId      = null;
 }
 
-// Se o banco não foi informado OU a descrição ficou genérica, o Patrick pergunta!
-$isGenericDesc = ($description === 'Despesa via WhatsApp' || $description === 'Receita via WhatsApp');
+// --- VERIFICAÇÃO DE DADOS FALTANTES ---
+$missing = [];
+if ($amount <= 0) $missing[] = 'valor';
+if (empty($description)) $missing[] = 'descricao';
+if (empty($bank_name) && $payment_method !== 'Dinheiro') $missing[] = 'banco';
+if (empty($payment_method)) $missing[] = 'forma_pagamento';
 
-if ($bank_name === 'Geral' || $isGenericDesc) {
-    try {
-        $stmtSave = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, bank_name, description, category) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmtSave->execute([$user_id, $cleanPhone, $type, $amount, ($bank_name !== 'Geral' ? $bank_name : ''), (!$isGenericDesc ? $description : ''), $category]);
-    } catch (Exception $e) {}
+// Se AINDA FALTAM dados obrigatórios, atualiza a sessão e faz a PERGUNTA CONVERSACIONAL ÚNICA
+if (!empty($missing)) {
+    if ($pendingId) {
+        $stmtUpd = $pdo->prepare("UPDATE whatsapp_pending_sessions SET type=?, amount=?, description=?, bank_name=?, payment_method=? WHERE id=?");
+        $stmtUpd->execute([$type, $amount, $description, $bank_name, $payment_method, $pendingId]);
+    } else {
+        $stmtIns = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmtIns->execute([$user_id, $cleanPhone, $type, $amount, $description, $bank_name, $payment_method]);
+    }
 
-    $formattedAmount = number_format($amount, 2, ',', '.');
+    $formattedAmount = ($amount > 0) ? "R$ " . number_format($amount, 2, ',', '.') : "";
     $tipoTxt = ($type === 'receita') ? 'receita 🟢' : 'despesa 🔴';
 
-    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
-              . "Anotado os *R$ {$formattedAmount}* de {$tipoTxt}! 💰\n\n"
-              . "Só me conta duas coisinhas para eu categorizar certinho:\n\n"
-              . "1️⃣ *Em qual banco caiu/foi pago?* (Ex: Nubank, Sicredi, Itaú, C6...)\n"
-              . "2️⃣ *Qual foi o motivo ou origem?* (Ex: Venda no site, Mercado, Serviço...)";
+    // Monta UMA ÚNICA pergunta curta e natural
+    $questions = [];
+    if (in_array('valor', $missing)) {
+        $questions[] = "qual foi o valor";
+    }
+    if (in_array('descricao', $missing)) {
+        $questions[] = ($type === 'receita') ? "de onde veio essa receita" : "com o que você gastou";
+    }
+    if (in_array('banco', $missing) && in_array('forma_pagamento', $missing)) {
+        $questions[] = "qual conta/banco usou e se foi no PIX, débito ou crédito";
+    } elseif (in_array('banco', $missing)) {
+        $questions[] = "qual banco ou conta usou";
+    } elseif (in_array('forma_pagamento', $missing)) {
+        $questions[] = "foi no PIX, débito ou crédito";
+    }
 
+    $askText = implode(", ", $questions);
+    $introText = $formattedAmount ? "Anotado {$formattedAmount} de {$tipoTxt}! 💰\n\nSó me fala: " : "Só me conta: ";
+
+    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n" . $introText . ucfirst($askText) . "?";
+    
     echo json_encode(['success' => true, 'reply' => $replyMsg]);
     exit;
 }
 
+// ------------------------------------------------------------------
+// --- REGISTRO DO LANÇAMENTO COMPLETO NO PRICEXP ---
+// ------------------------------------------------------------------
+$category = inferCategory($description, $rawText, $type);
 $date = date('Y-m-d');
+$finalBank = $bank_name ?: 'Geral';
+if ($payment_method && $payment_method !== 'Dinheiro' && strpos($finalBank, $payment_method) === false) {
+    $finalBank .= " ({$payment_method})";
+} elseif ($payment_method === 'Dinheiro') {
+    $finalBank = 'Dinheiro';
+}
 
-// Grava o lançamento diretamente na tabela transactions do banco financas_db com segurança total
 try {
     $stmtIns = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmtIns->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $bank_name]);
+    $stmtIns->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $finalBank]);
     $insertedId = $pdo->lastInsertId();
+
+    if ($pendingId) {
+        $stmtDel = $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE id = ?");
+        $stmtDel->execute([$pendingId]);
+    }
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
-        'reply' => "🟢 *Patrick — Assistente PriceXP*\n\n⚠️ Ops! Tive um contratempo ao gravar no banco: " . $e->getMessage()
+        'reply' => "🟢 *Patrick — Assistente PriceXP*\n\n⚠️ Tive um contratempo ao gravar no banco: " . $e->getMessage()
     ]);
     exit;
 }
 
-logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO', "Lançamento via WhatsApp #{$insertedId}: {$type} - {$description} (R$ {$amount})", $amount, ['bank' => $bank_name, 'phone' => $cleanPhone]);
+logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO', "Lançamento via WhatsApp #{$insertedId}: {$type} - {$description} (R$ {$amount})", $amount, ['bank' => $finalBank, 'phone' => $cleanPhone]);
 
 $formattedAmount = number_format($amount, 2, ',', '.');
 $emojiType = ($type === 'receita') ? '🟢 Receita' : '🔴 Despesa';
@@ -338,9 +317,10 @@ $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
           . "💰 *Valor:* R$ {$formattedAmount}\n"
           . "📝 *Descrição:* {$description}\n"
           . "📁 *Categoria:* {$category}\n"
-          . "🏦 *Banco:* {$bank_name}\n"
+          . "🏦 *Banco:* {$finalBank}\n"
+          . "💳 *Forma:* " . ($payment_method ?: 'Outra') . "\n"
           . "📅 *Data:* " . date('d/m/Y') . "\n\n"
-          . "🚀 _Já atualizado no seu painel PriceXP!_";
+          . "🚀 _Já disponível no seu painel PriceXP!_";
 
 echo json_encode([
     'success' => true,
