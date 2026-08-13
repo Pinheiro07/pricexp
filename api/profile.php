@@ -144,7 +144,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $action === 'delete') {
 }
 
 // Se for GET normal, devolve os dados atuais para preencher o form
-$stmt = $pdo->prepare("SELECT first_name, last_name, email, profile_picture, whatsapp FROM users WHERE id = ?");
+$stmt = $pdo->prepare("SELECT id, first_name, last_name, email, profile_picture, whatsapp FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
-echo json_encode($stmt->fetch());
+$userData = $stmt->fetch();
+if ($userData) {
+    $userData['whatsapp_connect_link'] = 'https://wa.me/552833441530?text=' . urlencode('Ativar conta XP-' . $userData['id']);
+}
+echo json_encode($userData);
 ?>

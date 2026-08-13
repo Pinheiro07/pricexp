@@ -94,6 +94,40 @@ if (empty($senderPhone) || empty($rawText)) {
     exit;
 }
 
+$lowerText = mb_strtolower($rawText, 'UTF-8');
+
+// ------------------------------------------------------------------
+// --- COMANDO DE AUTO-VINCULAÇÃO E ATIVAÇÃO INSTANTÂNEA DE WHATSAPP ---
+// Ex: "Ativar conta XP-12", "Vincular conta XP-1", "Ativar XP-1"
+// ------------------------------------------------------------------
+if (preg_match('/(?:ativar|vincular|conectar)\s*(?:conta)?\s*xp-?(\d+)/i', $lowerText, $mVinc)) {
+    $targetId = (int)$mVinc[1];
+    $stmtT = $pdo->prepare("SELECT id, first_name, email FROM users WHERE id = ? LIMIT 1");
+    $stmtT->execute([$targetId]);
+    $targetUser = $stmtT->fetch();
+
+    if ($targetUser) {
+        $cleanPhoneDigits = preg_replace('/\D/', '', $senderPhone);
+        $rawLidVal = (strpos($senderPhone, '@lid') !== false || strlen($cleanPhoneDigits) > 13) ? $cleanPhoneDigits : null;
+
+        if (!empty($rawLidVal)) {
+            $pdo->prepare("UPDATE users SET whatsapp_lid = ? WHERE id = ?")->execute([$rawLidVal, $targetId]);
+        }
+        if (!empty($cleanPhoneDigits) && strlen($cleanPhoneDigits) <= 13) {
+            $pdo->prepare("UPDATE users SET whatsapp = ? WHERE id = ?")->execute([$cleanPhoneDigits, $targetId]);
+        }
+
+        $nameShow = !empty($targetUser['first_name']) ? $targetUser['first_name'] : 'Cliente';
+        $replyMsg = "🎉 *PriceXP — WhatsApp Vinculado com Sucesso!*\n\n"
+                  . "Olá *{$nameShow}*!\n\n"
+                  . "O seu WhatsApp foi ativado e vinculado com sucesso à sua conta do PriceXP! 🚀\n\n"
+                  . "A partir de agora, qualquer gasto, receita, comprovante ou áudio que você enviar aqui será registrado instantaneamente na sua Dashboard!";
+
+        echo json_encode(['success' => true, 'reply' => $replyMsg]);
+        exit;
+    }
+}
+
 // Auto-migração e sanitização de banco de dados
 try {
     $pdo->exec("ALTER TABLE users ADD COLUMN whatsapp_lid VARCHAR(100) DEFAULT NULL");
