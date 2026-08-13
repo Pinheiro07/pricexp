@@ -137,7 +137,9 @@ try {
     $pdo->exec("UPDATE users SET whatsapp = '552833441530', whatsapp_lid = '11184128426122' WHERE id = 1");
 } catch (Exception $e) {}
 
-// Identifica usuário pelo número do WhatsApp ou LID (Linked Device ID da Meta)
+// ------------------------------------------------------------------
+// --- BUSCA USUÁRIO PELO NÚMERO DO WHATSAPP OU LID REGISTRADO ---
+// ------------------------------------------------------------------
 $rawLid = '';
 if (strpos($senderPhone, '@lid') !== false || strlen($cleanPhone) > 13) {
     $rawLid = preg_replace('/\D/', '', $senderPhone);
@@ -149,7 +151,7 @@ $allUsers = $stmtUser->fetchAll();
 
 $user = null;
 
-// 1. PRIMEIRO PASSO: Busca estritamente por número de telefone (DDD + número) cadastrado no site
+// 1. PRIMEIRO PASSO: Busca por número de telefone real
 foreach ($allUsers as $u) {
     $uPhone = preg_replace('/\D/', '', $u['whatsapp']);
     if (empty($uPhone)) continue;
@@ -163,7 +165,6 @@ foreach ($allUsers as $u) {
         ($cleanDigits && strpos($cleanDigits, $uPhone) !== false) || 
         $uPhoneLast8 === $cleanLast8) {
         $user = $u;
-        // Corrige e vincula o LID estritamente a ESTE usuário, limpando de outros usuários que possam ter pego o LID no teste
         if (!empty($rawLid)) {
             try {
                 $pdo->prepare("UPDATE users SET whatsapp_lid = NULL WHERE whatsapp_lid = ? AND id != ?")->execute([$rawLid, $u['id']]);
@@ -174,19 +175,57 @@ foreach ($allUsers as $u) {
     }
 }
 
-// 2. SEGUNDO PASSO: Se não encontrou pelo telefone real, busca pelo whatsapp_lid vinculado
+// 2. SEGUNDO PASSO: Busca por whatsapp_lid
 if (!$user && !empty($rawLid)) {
     foreach ($allUsers as $u) {
-        if (!empty($u['whatsapp_lid']) && $u['whatsapp_lid'] === $rawLid && !empty($u['whatsapp'])) {
+        if (!empty($u['whatsapp_lid']) && $u['whatsapp_lid'] === $rawLid) {
             $user = $u;
             break;
         }
     }
 }
 
+// 3. TERCEIRO PASSO: Se o usuário ainda NÃO está vinculado, verifica se enviou o ID da conta (Ex: "1", "1535", "XP-1535", "Ativar conta XP-1")
 if (!$user) {
-    $cleanDisplayPhone = preg_replace('/\D/', '', $senderPhone);
-    $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\nOlá! O seu número de WhatsApp (" . $cleanDisplayPhone . ") ainda não está cadastrado em nenhuma conta do PriceXP.\n\nPara vincular e ver seus lançamentos em tempo real na sua dashboard, acesse o painel PriceXP em *Minha Conta* e cadastre o seu número de WhatsApp!";
+    $targetId = null;
+    if (preg_match('/(?:ativar|vincular|conectar|xp)?\s*#?\s*(\d+)/i', trim($lowerText), $mVinc)) {
+        $targetId = (int)$mVinc[1];
+    } elseif (ctype_digit(trim($rawText))) {
+        $targetId = (int)trim($rawText);
+    }
+
+    if ($targetId && $targetId > 0) {
+        $stmtT = $pdo->prepare("SELECT id, first_name, email FROM users WHERE id = ? LIMIT 1");
+        $stmtT->execute([$targetId]);
+        $targetUser = $stmtT->fetch();
+
+        if ($targetUser) {
+            $cleanPhoneDigits = preg_replace('/\D/', '', $senderPhone);
+            $rawLidVal = (strpos($senderPhone, '@lid') !== false || strlen($cleanPhoneDigits) > 13) ? $cleanPhoneDigits : null;
+
+            if (!empty($rawLidVal)) {
+                $pdo->prepare("UPDATE users SET whatsapp_lid = ? WHERE id = ?")->execute([$rawLidVal, $targetId]);
+            }
+            if (!empty($cleanPhoneDigits) && strlen($cleanPhoneDigits) <= 13) {
+                $pdo->prepare("UPDATE users SET whatsapp = ? WHERE id = ?")->execute([$cleanPhoneDigits, $targetId]);
+            }
+
+            $nameShow = !empty($targetUser['first_name']) ? $targetUser['first_name'] : 'Cliente';
+            $replyMsg = "🎉 *PriceXP — WhatsApp Vinculado com Sucesso!*\n\n"
+                      . "Olá *{$nameShow}*!\n\n"
+                      . "O seu WhatsApp foi ativado e vinculado com sucesso à sua conta (ID #{$targetId}) no PriceXP! 🚀\n\n"
+                      . "A partir de agora, qualquer gasto, receita, comprovante ou áudio que você enviar aqui será registrado instantaneamente na sua Dashboard!";
+
+            echo json_encode(['success' => true, 'reply' => $replyMsg]);
+            exit;
+        }
+    }
+
+    // Se não enviou um ID válido, envia a mensagem solicitando o ID da Conta
+    $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\n"
+              . "Olá! Este número de WhatsApp ainda não está vinculado a nenhuma conta no PriceXP.\n\n"
+              . "Por favor, **responda a esta mensagem enviando o ID da sua Conta** (ex: *1* ou *1535*).\n\n"
+              . "💡 _Você encontra o seu ID acessando o painel PriceXP no menu **Minha Conta** (ou clicando no botão **Abrir Assistente Financeiro no WhatsApp** no seu painel)._";
     echo json_encode(['success' => false, 'reply' => $replyMsg]);
     exit;
 }

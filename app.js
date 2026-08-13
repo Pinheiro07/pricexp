@@ -1622,6 +1622,11 @@ function populateProfileForm(userData) {
         document.getElementById('profile-whatsapp').value = formatPhoneBR(userData.whatsapp || '');
     }
     
+    const spanId = document.getElementById('user-account-id-span');
+    if (spanId && userData.id) {
+        spanId.textContent = '#' + userData.id;
+    }
+
     const btnOpenWa = document.getElementById('btn-open-whatsapp');
     if (btnOpenWa && userData.id) {
         btnOpenWa.href = `https://wa.me/552833441530?text=` + encodeURIComponent(`Ativar conta XP-${userData.id}`);
