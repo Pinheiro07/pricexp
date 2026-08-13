@@ -776,10 +776,7 @@ if ($isEditModePending || $isCorrectionKeyword) {
             $finalCat = inferCategoryStrict($finalDesc, $rawText, $finalType);
         } else {
             $finalCat = !empty($lastTx['category']) ? $lastTx['category'] : inferCategoryStrict($finalDesc, $rawText, $finalType);
-        }x['bank_name'] ?: 'Geral');
-        $finalType   = $updType ?: $lastTx['type'];
-        $finalDesc   = (!empty($updDesc) && mb_strlen($updDesc) >= 2 && !in_array(strtolower($updDesc), ['corrigir', 'editar', 'alterar', 'na verdade', 'corrigindo', 'ops', 'era', 'mudar'])) ? $updDesc : $lastTx['description'];
-        $finalCat    = inferCategoryStrict($finalDesc, $rawText, $finalType);
+        }
 
         $stmtUpdTx = $pdo->prepare("UPDATE transactions SET type=?, category=?, description=?, amount=?, bank_name=? WHERE id=? AND user_id=?");
         $stmtUpdTx->execute([$finalType, $finalCat, $finalDesc, $finalAmount, $finalBank, $lastTx['id'], $workspace_id]);
