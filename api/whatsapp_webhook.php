@@ -281,8 +281,8 @@ function parseDescription($text, $type) {
         'no', 'na', 'nos', 'nas', 'do', 'da', 'dos', 'das', 'de', 'em', 'com', 'para', 'pro', 'pra', 'pelo', 'pela', 'por'
     ];
 
-    // 1. Extrai de frases "comprei X" ou "gastei no X" (Prioridade para o objeto real da ação)
-    if (preg_match('/(?:comprei|gastei|paguei|custou)\s+(?:no|na|em|de|pro|pra|um|uma|uns|umas)?\s*([a-zà-ú0-9\s]{2,30})/i', $bankCleanedText, $mComp)) {
+    // 1. Extrai de frases "comprei X", "comprei 2,00 de X", "gastei no X" (Prioridade para o objeto real da ação)
+    if (preg_match('/(?:comprei|gastei|paguei|custou)\s+(?:no|na|em|de|pro|pra|um|uma|uns|umas|\d+(?:[\.,]\d{1,2})?\s*(?:reais|real)?\s*de)?\s*([a-zà-ú0-9\s]{2,30})/i', $bankCleanedText, $mComp)) {
         $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real|reias|riais|por|na|no|em)\b/i', ' ', $mComp[1]);
         $extracted = trim(preg_replace('/[\s\d]+/', ' ', $extracted));
         if (mb_strlen($extracted, 'UTF-8') >= 2 && !preg_match('/^\d+$/', $extracted) && !in_array(strtolower($extracted), $actionVerbs) && !preg_match('/^r[eia]{2,4}s?$/i', $extracted)) {
@@ -630,12 +630,8 @@ $newDesc   = parseDescription($rawText, $newType ?: 'despesa');
 if ($pending) {
     $type = $newType ?: ($pending['type'] ?: 'despesa');
     
-    $hasMoneyContext = preg_match('/(r\$|reais|real|\bvalor\b|na verdade|corrigindo)/i', $lowerText);
-    if ((float)$pending['amount'] > 0) {
-        $amount = ($newAmount > 0 && $hasMoneyContext) ? $newAmount : (float)$pending['amount'];
-    } else {
-        $amount = ($newAmount > 0) ? $newAmount : 0.0;
-    }
+    // Se o usuário digitou um novo valor numérico (> 0), ele tem prioridade total sobre o rascunho anterior
+    $amount = ($newAmount > 0) ? $newAmount : (float)$pending['amount'];
 
     $bank_name      = $newBank ?: $pending['bank_name'];
     $payment_method = $newMethod ?: $pending['payment_method'];
