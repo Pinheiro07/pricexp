@@ -1549,5 +1549,85 @@ body.light-theme .credit-card-item .card-value-success {
     #shared-partner-activity-card {
         padding: 1.25rem 1rem !important;
     }
+
+    /* Mobile Transaction Item Polish */
+    .tx-item {
+        padding: 0.85rem 0.85rem !important;
+        gap: 0.5rem !important;
+    }
+
+    .tx-left {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+
+    .tx-desc {
+        font-size: 0.92rem !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    .tx-cat-date {
+        font-size: 0.76rem !important;
+    }
+
+    .tx-actions {
+        gap: 0.4rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    .tx-amount {
+        font-size: 0.95rem !important;
+        white-space: nowrap !important;
+    }
+
+    .tx-edit, .tx-delete {
+        padding: 6px !important;
+    }
+
+    /* Mobile Dashboard Metrics Grid (2x2 on Mobile) */
+    .dashboard-metrics,
+    .metrics-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
+    }
+
+    .metric-card {
+        padding: 1rem 0.85rem !important;
+    }
+
+    .metric-card h3 {
+        font-size: 0.78rem !important;
+    }
+
+    .metric-card .value {
+        font-size: 1.15rem !important;
+    }
+
+    /* Full Width Buttons on Mobile */
+    .btn-primary,
+    .btn-secondary,
+    #btn-open-whatsapp,
+    #btn-ofx-confirm {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center !important;
+    }
+
+    /* Filter Toolbar Stack on Mobile */
+    .filter-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+    }
+
+    .filter-toolbar select,
+    .filter-toolbar input {
+        width: 100% !important;
+    }
 }
 
