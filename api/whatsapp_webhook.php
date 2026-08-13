@@ -446,7 +446,7 @@ if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerTex
         try {
             $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
             $stmtInsEdit = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'edit_mode', ?, ?, ?, 'Outra')");
-            $stmtInsEdit->execute([$user_id, $cleanPhone, $lastTx['amount'], $lastTx['description'], $lastTx['bank_name']]);
+            $stmtInsEdit->execute([$user_id, $cleanPhone, $lastTx['amount'], 'tx_id:' . $lastTx['id'], $lastTx['bank_name']]);
         } catch (Exception $e) {}
 
         $fmtVal = number_format((float)$lastTx['amount'], 2, ',', '.');
@@ -473,9 +473,22 @@ if ($isEditModePending ||
     preg_match('/^(corrigir|editar|alterar|na verdade|corrigindo|mudar para|muda para)/i', trim($lowerText)) || 
     preg_match('/(na verdade foi|na verdade era|corrigindo valor|corrigir valor)/i', $lowerText)) {
     
-    $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name, date FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 1");
-    $stmtLast->execute([$workspace_id]);
-    $lastTx = $stmtLast->fetch();
+    $targetTxId = null;
+    if ($isEditModePending && strpos($isEditModePending['description'], 'tx_id:') !== false) {
+        $targetTxId = (int)str_replace('tx_id:', '', $isEditModePending['description']);
+    }
+
+    if ($targetTxId) {
+        $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name, date FROM transactions WHERE id = ? AND user_id = ?");
+        $stmtLast->execute([$targetTxId, $workspace_id]);
+        $lastTx = $stmtLast->fetch();
+    }
+    
+    if (empty($lastTx)) {
+        $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name, date FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 1");
+        $stmtLast->execute([$workspace_id]);
+        $lastTx = $stmtLast->fetch();
+    }
 
     if ($lastTx) {
         $updAmount = parseAmount($lowerText);
@@ -501,7 +514,7 @@ if ($isEditModePending ||
         $fmtDate = date('d/m/Y', strtotime($lastTx['date']));
 
         $replyMsg = "✏️ *PriceXP — Lançamento Atualizado*\n\n"
-                  . "O seu último lançamento foi alterado com sucesso:\n\n"
+                  . "O seu lançamento #{$lastTx['id']} foi alterado com sucesso:\n\n"
                   . "• Tipo: {$tipoIcon}\n"
                   . "• Descrição: {$finalDesc}\n"
                   . "• Novo Valor: R$ {$fmtVal}\n"
