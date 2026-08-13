@@ -1602,6 +1602,17 @@ const btnDeleteAccount = document.getElementById('btn-delete-account');
 const profilePhotoInput = document.getElementById('profile-photo');
 const profilePhotoPreview = document.getElementById('profile-photo-preview');
 
+function formatPhoneBR(v) {
+    if (!v) return '';
+    v = v.replace(/\D/g, '');
+    if (v.length > 11) v = v.substring(0, 11);
+    if (v.length > 10) return `(${v.substring(0, 2)}) ${v.substring(2, 7)}-${v.substring(7)}`;
+    if (v.length > 6) return `(${v.substring(0, 2)}) ${v.substring(2, 6)}-${v.substring(6)}`;
+    if (v.length > 2) return `(${v.substring(0, 2)}) ${v.substring(2)}`;
+    if (v.length > 0) return `(${v}`;
+    return '';
+}
+
 // Preenche o formulário quando logado
 function populateProfileForm(userData) {
     if (!document.getElementById('profile-firstname')) return;
@@ -1609,7 +1620,7 @@ function populateProfileForm(userData) {
     document.getElementById('profile-lastname').value = userData.last_name || '';
     document.getElementById('profile-email').value = userData.email || '';
     if (document.getElementById('profile-whatsapp')) {
-        document.getElementById('profile-whatsapp').value = userData.whatsapp || '';
+        document.getElementById('profile-whatsapp').value = formatPhoneBR(userData.whatsapp || '');
     }
     
     if (userData.profile_picture && userData.profile_picture !== 'default.png') {
@@ -1617,6 +1628,13 @@ function populateProfileForm(userData) {
     } else {
         profilePhotoPreview.src = 'https://ui-avatars.com/api/?name=' + (userData.first_name || 'U') + '&background=3b82f6&color=fff';
     }
+}
+
+const inputWhatsAppEl = document.getElementById('profile-whatsapp');
+if (inputWhatsAppEl) {
+    inputWhatsAppEl.addEventListener('input', (e) => {
+        e.target.value = formatPhoneBR(e.target.value);
+    });
 }
 
 if (profilePhotoInput) {
