@@ -55,16 +55,23 @@ $data = json_decode($rawInput, true) ?? $_POST;
 $senderPhone = '';
 $rawText     = '';
 
-if (!empty($data['phone'])) {
-    $senderPhone = $data['phone'];
-} elseif (!empty($data['sender'])) {
-    $senderPhone = $data['sender'];
-} elseif (!empty($data['from'])) {
-    $senderPhone = $data['from'];
-} elseif (!empty($data['data']['key']['remoteJid'])) {
-    $senderPhone = $data['data']['key']['remoteJid'];
-} elseif (!empty($data['entry'][0]['changes'][0]['value']['messages'][0]['from'])) {
-    $senderPhone = $data['entry'][0]['changes'][0]['value']['messages'][0]['from'];
+$possiblePhones = [
+    $data['phone'] ?? '',
+    $data['sender'] ?? '',
+    $data['from'] ?? '',
+    $data['data']['key']['participant'] ?? '',
+    $data['data']['key']['remoteJid'] ?? '',
+    $data['entry'][0]['changes'][0]['value']['messages'][0]['from'] ?? ''
+];
+
+foreach ($possiblePhones as $p) {
+    if (!empty($p) && is_string($p) && strpos($p, '@lid') === false) {
+        $senderPhone = $p;
+        break;
+    }
+}
+if (empty($senderPhone)) {
+    $senderPhone = $data['phone'] ?? $data['sender'] ?? $data['from'] ?? '';
 }
 
 if (!empty($data['body'])) {
@@ -80,7 +87,7 @@ if (!empty($data['body'])) {
 }
 
 $cleanPhone = preg_replace('/\D/', '', $senderPhone);
-$remoteJid  = $senderPhone;
+$remoteJid  = $data['remoteJid'] ?? $senderPhone;
 
 if (empty($senderPhone) || empty($rawText)) {
     echo json_encode(['success' => false, 'error' => 'Payload inválido']);
