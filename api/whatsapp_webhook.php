@@ -251,15 +251,7 @@ function parseType($text) {
 function parseDescription($text, $type) {
     $lower = mb_strtolower($text, 'UTF-8');
 
-    if (preg_match('/(?:gastei|paguei|comprei|saiu|custou|recebi|ganhei)\s+(?:r\$\s*)?\d+(?:[\.,]\d+)?\s*(?:reais|real|mil|k)?\s+(?:no|na|do|da|de|em|com|para)\s+([a-zà-ú0-9\s]{2,35})/i', $text, $mStruct)) {
-        $extracted = $mStruct[1];
-        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $extracted);
-        $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
-        if (mb_strlen($extracted, 'UTF-8') >= 3 && !preg_match('/^(banco|banco c|conta|cartao|cartão)$/i', $extracted)) {
-            return ucfirst($extracted);
-        }
-    }
-
+    // 1. Dicionário de palavras-chave explícitas (ex: comida, mercado, gasolina, aluguel)
     $expenseKeywords = [
         'mercado' => 'Mercado', 'supermercado' => 'Mercado', 'feira' => 'Feira', 'açougue' => 'Açougue', 'padaria' => 'Padaria',
         'ifood' => 'iFood', 'restaurante' => 'Restaurante', 'almoço' => 'Almoço', 'almoco' => 'Almoço', 'jantar' => 'Jantar',
@@ -284,6 +276,15 @@ function parseDescription($text, $type) {
         }
     }
 
+    // 2. Extrai de frases "comprei X" ou "gastei no X"
+    if (preg_match('/(?:comprei|gastei|paguei|custou)\s+([a-zà-ú0-9\s]{2,30})/i', $text, $mComp)) {
+        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real)\b/i', ' ', $mComp[1]);
+        $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
+        if (mb_strlen($extracted, 'UTF-8') >= 3) {
+            return ucfirst($extracted);
+        }
+    }
+
     if (preg_match('/(?:pix|receb\w+|veio|pagamento)\s+(?:do|da|de)\s+([a-zà-ú]{3,15})/i', $lower, $mPerson)) {
         return 'Pix de ' . ucfirst($mPerson[1]);
     }
@@ -303,8 +304,8 @@ function inferCategoryStrict($description, $text, $type) {
         if (preg_match('/(freelance|serviço|servico|venda|site|bico|cliente)/i', $combined)) return 'Renda Extra Líquida';
         return 'Outras Receitas';
     } else {
-        if (preg_match('/(mercado|supermercado|feira|açougue|padaria|aluguel|condomínio|condominio|luz|água|agua|internet|telefone|energia|móveis|moveis|faxina)/i', $combined)) return 'Casa';
-        if (preg_match('/(ifood|restaurante|lanchonete|pizza|comida|almoço|almoco|jantar|mcdonald)/i', $combined)) return 'Casa';
+        if (preg_match('/(comida|mercado|supermercado|feira|açougue|padaria|aluguel|condomínio|condominio|luz|água|agua|internet|telefone|energia|móveis|moveis|faxina)/i', $combined)) return 'Casa';
+        if (preg_match('/(ifood|restaurante|lanchonete|pizza|almoço|almoco|jantar|mcdonald)/i', $combined)) return 'Casa';
         if (preg_match('/(farmacia|farmácia|médico|medico|consulta|hospital|remedio|remédio|dentista|exame)/i', $combined)) return 'Saúde';
         if (preg_match('/(gasolina|combustivel|combustível|uber|99|táxi|taxi|ônibus|onibus|pedagio|estacionamento|mecanico|mecânico)/i', $combined)) return 'Transporte';
         if (preg_match('/(passagem|viagem|mobilidade)/i', $combined)) return 'Locomoção';
