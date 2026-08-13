@@ -319,7 +319,7 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
     $saldo = $totalRec - $totalDesp;
     $saldoSign = ($saldo >= 0) ? '+' : '-';
 
-    $stmtTop = $pdo->prepare("SELECT category, SUM(amount) AS total FROM transactions WHERE user_id = ? AND type = 'despesa' AND date >= ? AND date <= ? GROUP BY category ORDER BY total DESC LIMIT 3");
+    $stmtTop = $pdo->prepare("SELECT category, SUM(amount) AS total FROM transactions WHERE user_id = ? AND type = 'despesa' AND date >= ? AND date <= ? GROUP BY category ORDER BY total DESC LIMIT 5");
     $stmtTop->execute([$workspace_id, $firstDay, $lastDay]);
     $topCategories = $stmtTop->fetchAll();
 
@@ -333,7 +333,7 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
         $topText = "Sem despesas registradas no período.\n";
     }
 
-    $stmtBanks = $pdo->prepare("SELECT bank_name, SUM(amount) AS total FROM transactions WHERE user_id = ? AND date >= ? AND date <= ? AND bank_name IS NOT NULL AND bank_name != '' AND bank_name != 'Geral' GROUP BY bank_name ORDER BY total DESC LIMIT 2");
+    $stmtBanks = $pdo->prepare("SELECT bank_name, SUM(amount) AS total FROM transactions WHERE user_id = ? AND date >= ? AND date <= ? AND bank_name IS NOT NULL AND bank_name != '' AND bank_name != 'Geral' GROUP BY bank_name ORDER BY total DESC LIMIT 6");
     $stmtBanks->execute([$workspace_id, $firstDay, $lastDay]);
     $topBanks = $stmtBanks->fetchAll();
 
