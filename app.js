@@ -1613,7 +1613,6 @@ function formatPhoneBR(v) {
     return '';
 }
 
-// Preenche o formulário quando logado
 function populateProfileForm(userData) {
     if (!document.getElementById('profile-firstname')) return;
     document.getElementById('profile-firstname').value = userData.first_name || '';
@@ -1621,6 +1620,11 @@ function populateProfileForm(userData) {
     document.getElementById('profile-email').value = userData.email || '';
     if (document.getElementById('profile-whatsapp')) {
         document.getElementById('profile-whatsapp').value = formatPhoneBR(userData.whatsapp || '');
+    }
+    
+    const btnOpenWa = document.getElementById('btn-open-whatsapp');
+    if (btnOpenWa && userData.id) {
+        btnOpenWa.href = `https://wa.me/552833441530?text=` + encodeURIComponent(`Ativar conta XP-${userData.id}`);
     }
     
     if (userData.profile_picture && userData.profile_picture !== 'default.png') {
