@@ -202,21 +202,22 @@ function parseType($text) {
     return null;
 }
 
-// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE ---
+// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE (ESTRUTURA DA FRASE + DICIONÁRIO & NOMES) ---
 function parseDescription($text, $type) {
     $lower = mb_strtolower($text, 'UTF-8');
 
     // 1. Captura direta da estrutura natural: "gastei X [em/no/na/de/com] [DESCRIÇÃO]"
     if (preg_match('/(?:gastei|paguei|comprei|saiu|custou|recebi|ganhei)\s+(?:r\$\s*)?\d+(?:[\.,]\d+)?\s*(?:reais|real|mil|k)?\s+(?:no|na|do|da|de|em|com|para)\s+([a-zà-ú0-9\s]{2,35})/i', $text, $mStruct)) {
         $extracted = $mStruct[1];
-        $extracted = preg_replace('/\b(nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $extracted);
+        // Limpa bancos, contas e termos de pagamento
+        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $extracted);
         $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
-        if (mb_strlen($extracted, 'UTF-8') >= 2) {
+        if (mb_strlen($extracted, 'UTF-8') >= 3 && !preg_match('/^(banco|banco c|conta|cartao|cartão)$/i', $extracted)) {
             return ucfirst($extracted);
         }
     }
 
-    // 2. Dicionário de Palavras-Chave Conhecidas
+    // 2. Dicionário de Palavras-Chave Conhecidas de Lugares/Serviços
     $expenseKeywords = [
         'mercado' => 'Mercado', 'supermercado' => 'Mercado', 'feira' => 'Feira', 'açougue' => 'Açougue', 'padaria' => 'Padaria',
         'ifood' => 'iFood', 'restaurante' => 'Restaurante', 'almoço' => 'Almoço', 'almoco' => 'Almoço', 'jantar' => 'Jantar',
@@ -245,18 +246,8 @@ function parseDescription($text, $type) {
         return 'Pix de ' . ucfirst($mPerson[1]);
     }
 
-    // 3. Limpeza Geral
-    $clean = preg_replace('/^(patrick[,\s]*|oi\s+patrick[,\s]*|olá\s+patrick[,\s]*)/i', '', $text);
-    $clean = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*\s*(mil|k)?|\b(reais|real|gastei|gastamos|paguei|pagamos|comprei|compramos|recebi|recebemos|ganhei|ganhamos|depositei|foi|caiu|entrou|tava|estava|ficou)\b)/i', ' ', $clean);
-    $clean = preg_replace('/\b(no|na|do|da|de|em|para|com|pelo|pela|por)\b/i', ' ', $clean);
-    $clean = preg_replace('/\b(nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $clean);
-    $clean = preg_replace('/[^\p{L}\p{N}\s]/u', '', $clean);
-    $clean = trim(preg_replace('/\s+/', ' ', $clean));
-
-    if (empty($clean) || mb_strlen($clean, 'UTF-8') < 2) {
-        return null;
-    }
-    return ucfirst($clean);
+    // Se NÃO identificou nenhum lugar/motivo real, retorna NULL para o Patrick perguntar!
+    return null;
 }
 
 // --- HELPER DE CATEGORIAS OFICIAIS DO PRICEXP ---
