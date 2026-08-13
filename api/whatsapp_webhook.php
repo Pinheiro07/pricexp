@@ -24,14 +24,15 @@ try {
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         phone VARCHAR(50) NOT NULL,
-        type ENUM('despesa', 'receita') DEFAULT NULL,
-        amount DECIMAL(10, 2) DEFAULT NULL,
-        description VARCHAR(255) DEFAULT NULL,
-        category VARCHAR(100) DEFAULT NULL,
-        bank_name VARCHAR(100) DEFAULT NULL,
-        payment_method VARCHAR(50) DEFAULT NULL,
+        type VARCHAR(20) DEFAULT 'despesa',
+        amount DECIMAL(10, 2) DEFAULT 0.00,
+        description VARCHAR(255) DEFAULT '',
+        category VARCHAR(100) DEFAULT '',
+        bank_name VARCHAR(100) DEFAULT '',
+        payment_method VARCHAR(50) DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )");
+    @$pdo->exec("ALTER TABLE whatsapp_pending_sessions ADD COLUMN payment_method VARCHAR(50) DEFAULT ''");
 } catch (Exception $e) {}
 
 $rawInput = file_get_contents('php://input');
@@ -240,13 +241,15 @@ if (empty($payment_method)) $missing[] = 'forma_pagamento';
 
 // Se AINDA FALTAM dados obrigatórios, atualiza a sessão e faz a PERGUNTA CONVERSACIONAL ÚNICA
 if (!empty($missing)) {
-    if ($pendingId) {
-        $stmtUpd = $pdo->prepare("UPDATE whatsapp_pending_sessions SET type=?, amount=?, description=?, bank_name=?, payment_method=? WHERE id=?");
-        $stmtUpd->execute([$type, $amount, $description, $bank_name, $payment_method, $pendingId]);
-    } else {
-        $stmtIns = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmtIns->execute([$user_id, $cleanPhone, $type, $amount, $description, $bank_name, $payment_method]);
-    }
+    try {
+        if ($pendingId) {
+            $stmtUpd = $pdo->prepare("UPDATE whatsapp_pending_sessions SET type=?, amount=?, description=?, bank_name=?, payment_method=? WHERE id=?");
+            $stmtUpd->execute([$type, $amount, $description, $bank_name, $payment_method, $pendingId]);
+        } else {
+            $stmtIns = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtIns->execute([$user_id, $cleanPhone, $type, $amount, $description, $bank_name, $payment_method]);
+        }
+    } catch (Exception $ex) {}
 
     $formattedAmount = ($amount > 0) ? "R$ " . number_format($amount, 2, ',', '.') : "";
     $tipoTxt = ($type === 'receita') ? 'receita 🟢' : 'despesa 🔴';
