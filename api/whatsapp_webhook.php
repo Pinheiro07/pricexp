@@ -159,35 +159,52 @@ function parseType($text) {
     return null;
 }
 
-// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO ---
-function parseDescription($text) {
+// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE (DICIONÁRIO PADRÃO & NOMES) ---
+function parseDescription($text, $type) {
+    $lower = mb_strtolower($text, 'UTF-8');
+
+    // 1. Padrões Conhecidos de Despesas (Lugares, Serviços, Compras)
+    $expenseKeywords = [
+        'mercado' => 'Mercado', 'supermercado' => 'Mercado', 'feira' => 'Feira', 'açougue' => 'Açougue', 'padaria' => 'Padaria',
+        'ifood' => 'iFood', 'restaurante' => 'Restaurante', 'almoço' => 'Almoço', 'almoco' => 'Almoço', 'jantar' => 'Jantar',
+        'lanche' => 'Lanche', 'pizza' => 'Pizza', 'comida' => 'Alimentação', 'mcdonald' => 'McDonalds', 'burger' => 'Burger King',
+        'gasolina' => 'Gasolina', 'combustivel' => 'Gasolina', 'combustível' => 'Gasolina', 'uber' => 'Uber', '99' => 'Uber / 99', 'taxi' => 'Táxi', 'táxi' => 'Táxi',
+        'cinema' => 'Cinema', 'movie' => 'Cinema', 'netflix' => 'Netflix', 'spotify' => 'Spotify', 'jogos' => 'Jogos', 'bar' => 'Bar / Lazer',
+        'farmacia' => 'Farmácia', 'farmácia' => 'Farmácia', 'remedio' => 'Farmácia', 'remédio' => 'Farmácia', 'medico' => 'Consulta Médica', 'médico' => 'Consulta Médica',
+        'aluguel' => 'Aluguel', 'condominio' => 'Condomínio', 'condomínio' => 'Condomínio', 'luz' => 'Conta de Luz', 'energia' => 'Conta de Luz', 'água' => 'Conta de Água', 'agua' => 'Conta de Água', 'internet' => 'Internet', 'telefone' => 'Telefone',
+        'escola' => 'Escola', 'faculdade' => 'Faculdade', 'curso' => 'Curso', 'livro' => 'Livro / Estudo'
+    ];
+
+    // 2. Padrões Conhecidos de Receitas (Fontes, Vendas, Nomes)
+    $incomeKeywords = [
+        'salario' => 'Salário', 'salário' => 'Salário', 'holerite' => 'Salário', 'férias' => 'Férias', 'ferias' => 'Férias', '13' => '13º Salário',
+        'venda' => 'Venda', 'site' => 'Venda no Site', 'cliente' => 'Pagamento de Cliente', 'freelance' => 'Freelance', 'servico' => 'Serviço Prestado', 'serviço' => 'Serviço Prestado',
+        'comissao' => 'Comissão', 'comissão' => 'Comissão', 'bonus' => 'Bônus', 'bônus' => 'Bônus', 'plr' => 'PLR', 'rendimento' => 'Rendimento', 'investimento' => 'Investimento'
+    ];
+
+    // Checa palavras-chave conhecidas no dicionarizado
+    $dict = ($type === 'receita') ? array_merge($incomeKeywords, $expenseKeywords) : array_merge($expenseKeywords, $incomeKeywords);
+    foreach ($dict as $key => $label) {
+        if (preg_match('/\b' . preg_quote($key, '/') . '\b/i', $lower)) {
+            return $label;
+        }
+    }
+
+    // Detecta padrão de nome de pessoa em receitas / PIX (ex: "pix do Joao", "recebi do Carlos", "pix da Maria")
+    if (preg_match('/(?:pix|receb\w+|veio|pagamento)\s+(?:do|da|de)\s+([a-zà-ú]{3,15})/i', $lower, $mPerson)) {
+        return 'Pix de ' . ucfirst($mPerson[1]);
+    }
+
+    // Se o texto não é um áudio vago (ex: é uma resposta direta com mais de 2 caracteres)
     $clean = preg_replace('/^(patrick[,\s]*|oi\s+patrick[,\s]*|olá\s+patrick[,\s]*)/i', '', $text);
-    // Remove verbos e valores com limite de palavra
     $clean = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*\s*(mil|k)?|\b(reais|real|gastei|gastamos|paguei|pagamos|comprei|compramos|recebi|recebemos|ganhei|ganhamos|depositei)\b)/i', ' ', $clean);
-    // Remove preposições isoladas
     $clean = preg_replace('/\b(no|na|do|da|de|em|para|com|pelo|pela|por)\b/i', ' ', $clean);
-    // Remove bancos e métodos isolados
     $clean = preg_replace('/\b(nubank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|sicredi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $clean);
-    
-    // Remove pontuações e símbolos isolados
     $clean = preg_replace('/[^\p{L}\p{N}\s]/u', '', $clean);
     $clean = trim(preg_replace('/\s+/', ' ', $clean));
-    
+
+    // Se não há uma palavra clara de descrição, retorna NULL para o Patrick perguntar!
     if (empty($clean) || mb_strlen($clean, 'UTF-8') < 2) {
-        if (preg_match('/\b(ifood)\b/i', $text)) return 'iFood';
-        if (preg_match('/\b(restaurante)\b/i', $text)) return 'Restaurante';
-        if (preg_match('/\b(almoço|almoco)\b/i', $text)) return 'Almoço';
-        if (preg_match('/\b(jantar)\b/i', $text)) return 'Jantar';
-        if (preg_match('/\b(lanche)\b/i', $text)) return 'Lanche';
-        if (preg_match('/\b(pizza)\b/i', $text)) return 'Pizza';
-        if (preg_match('/\b(comida)\b/i', $text)) return 'Alimentação';
-        if (preg_match('/\b(mercado|supermercado)\b/i', $text)) return 'Mercado';
-        if (preg_match('/\b(gasolina|combustivel|combustível)\b/i', $text)) return 'Gasolina';
-        if (preg_match('/\b(uber|99|taxi)\b/i', $text)) return 'Uber';
-        if (preg_match('/\b(cinema|movie)\b/i', $text)) return 'Cinema';
-        if (preg_match('/\b(farmacia|farmácia|remedio|remédio)\b/i', $text)) return 'Farmácia';
-        if (preg_match('/\b(salario|salário|holerite)\b/i', $text)) return 'Salário';
-        if (preg_match('/\b(site|venda|cliente)\b/i', $text)) return 'Venda no Site';
         return null;
     }
     return ucfirst($clean);
@@ -281,7 +298,7 @@ $newType = parseType($lowerText);
 $newAmount = parseAmount($lowerText);
 $newBank = parseBank($lowerText);
 $newMethod = parsePaymentMethod($lowerText);
-$newDesc = parseDescription($rawText);
+$newDesc = parseDescription($rawText, $newType ?: 'despesa');
 
 if ($pending) {
     // --- CONVERSA INCREMENTAL / CORREÇÃO ---
