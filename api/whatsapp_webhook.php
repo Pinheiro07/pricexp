@@ -164,13 +164,16 @@ function parseDescription($text) {
     $clean = preg_replace('/^(patrick[,\s]*|oi\s+patrick[,\s]*|olá\s+patrick[,\s]*)/i', '', $text);
     // Remove verbos e valores com limite de palavra
     $clean = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*\s*(mil|k)?|\b(reais|real|gastei|gastamos|paguei|pagamos|comprei|compramos|recebi|recebemos|ganhei|ganhamos|depositei)\b)/i', ' ', $clean);
-    // Remove preposições isoladas (ex: "em", "no", "de") sem cortar palavras como cin-em-a
+    // Remove preposições isoladas
     $clean = preg_replace('/\b(no|na|do|da|de|em|para|com|pelo|pela|por)\b/i', ' ', $clean);
     // Remove bancos e métodos isolados
     $clean = preg_replace('/\b(nubank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco do brasil|sicoob|sicredi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto)\b/i', ' ', $clean);
+    
+    // Remove pontuações e símbolos isolados
+    $clean = preg_replace('/[^\p{L}\p{N}\s]/u', '', $clean);
     $clean = trim(preg_replace('/\s+/', ' ', $clean));
     
-    if (empty($clean) || strlen($clean) < 2) {
+    if (empty($clean) || mb_strlen($clean, 'UTF-8') < 2) {
         if (preg_match('/\b(ifood)\b/i', $text)) return 'iFood';
         if (preg_match('/\b(restaurante)\b/i', $text)) return 'Restaurante';
         if (preg_match('/\b(almoço|almoco)\b/i', $text)) return 'Almoço';
