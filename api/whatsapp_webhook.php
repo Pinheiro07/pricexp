@@ -148,14 +148,23 @@ if (preg_match('/(nubank|itau|itaú|bradesco|santander|inter|c6|caixa|bb|banco d
     if (strtolower($bank_name) === 'bb') $bank_name = 'Banco do Brasil';
 }
 
-// 4. Extração de Categoria & Descrição
-$category = ($type === 'despesa') ? 'Outras Despesas' : 'Outras Receitas';
-$description = trim(preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*|gastei|paguei|comprei|recebi|no|na|do|da|banco|nubank|itau|itaú|bradesco|santander|inter|c6|caixa)/i', '', $lowerText));
-$description = trim(preg_replace('/\s+/', ' ', $description));
-if (empty($description)) {
-    $description = ($type === 'despesa') ? 'Despesa via WhatsApp' : 'Receita via WhatsApp';
+// 4. Extração de Categoria & Descrição Inteligente
+// Remove saudações ao Patrick
+$cleanDesc = preg_replace('/^(patrick[,\s]*|oi\s+patrick[,\s]*|olá\s+patrick[,\s]*)/i', '', $rawText);
+// Remove palavras de controle, valores e bancos
+$cleanDesc = preg_replace('/(r\$\s*\d+[\.,]?\d*|\d+[\.,]?\d*|reais|real|gastei|paguei|comprei|recebi|depositei|no|na|do|da|de|em|para|banco|nubank|itau|itaú|bradesco|santander|inter|c6|caixa|sicoob|sicredi)/i', ' ', $cleanDesc);
+$cleanDesc = trim(preg_replace('/\s+/', ' ', $cleanDesc));
+
+// Inteligência para nomes limpos de descrição
+if (empty($cleanDesc) || strlen($cleanDesc) < 2) {
+    if (preg_match('/(mercado|supermercado)/i', $lowerText)) $cleanDesc = 'Mercado';
+    elseif (preg_match('/(gasolina|combustivel|combustível)/i', $lowerText)) $cleanDesc = 'Gasolina';
+    elseif (preg_match('/(almoço|almoco|jantar|lanche|comida|restaurante|ifood)/i', $lowerText)) $cleanDesc = 'Alimentação';
+    elseif (preg_match('/(farmacia|farmácia|remedio|remédio)/i', $lowerText)) $cleanDesc = 'Farmácia';
+    elseif (preg_match('/(uber|99|taxi)/i', $lowerText)) $cleanDesc = 'Uber / Transporte';
+    else $cleanDesc = ($type === 'despesa') ? 'Despesa via WhatsApp' : 'Receita via WhatsApp';
 }
-$description = ucfirst($description);
+$description = ucfirst($cleanDesc);
 
 // Mapeamento automático de categorias por palavras-chave
 if (preg_match('/(mercado|supermercado|feira|açougue|padaria|comida|ifood)/i', $lowerText)) {
