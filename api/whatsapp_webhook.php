@@ -259,6 +259,28 @@ if ($type === 'receita') {
     }
 }
 
+// Se o banco não foi informado OU a descrição ficou genérica, o Patrick pergunta!
+$isGenericDesc = ($description === 'Despesa via WhatsApp' || $description === 'Receita via WhatsApp');
+
+if ($bank_name === 'Geral' || $isGenericDesc) {
+    try {
+        $stmtSave = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, bank_name, description, category) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmtSave->execute([$user_id, $cleanPhone, $type, $amount, ($bank_name !== 'Geral' ? $bank_name : ''), (!$isGenericDesc ? $description : ''), $category]);
+    } catch (Exception $e) {}
+
+    $formattedAmount = number_format($amount, 2, ',', '.');
+    $tipoTxt = ($type === 'receita') ? 'receita 🟢' : 'despesa 🔴';
+
+    $replyMsg = "🟢 *Patrick — Assistente PriceXP*\n\n"
+              . "Anotado os *R$ {$formattedAmount}* de {$tipoTxt}! 💰\n\n"
+              . "Só me conta duas coisinhas para eu categorizar certinho:\n\n"
+              . "1️⃣ *Em qual banco caiu/foi pago?* (Ex: Nubank, Sicredi, Itaú, C6...)\n"
+              . "2️⃣ *Qual foi o motivo ou origem?* (Ex: Venda no site, Mercado, Serviço...)";
+
+    echo json_encode(['success' => true, 'reply' => $replyMsg]);
+    exit;
+}
+
 $date = date('Y-m-d');
 
 // Grava o lançamento diretamente na tabela transactions do banco financas_db com segurança total
