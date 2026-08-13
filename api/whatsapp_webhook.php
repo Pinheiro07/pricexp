@@ -118,14 +118,9 @@ foreach ($allUsers as $u) {
 }
 
 if (!$user) {
-    // Se o número não foi encontrado em nenhuma conta, mas o sistema tem apenas o Admin (ou 2 usuários de teste), vincula ao Admin para não travar os seus testes
-    $stmtCount = $pdo->query("SELECT COUNT(*) FROM users");
-    $userCount = (int)$stmtCount->fetchColumn();
-
-    if ($userCount <= 2) {
-        $stmtAdmin = $pdo->query("SELECT id, first_name, email, shared_owner_id FROM users ORDER BY id ASC LIMIT 1");
-        $user = $stmtAdmin->fetch();
-    }
+    // Fallback para Usuário #1 (Admin) caso o número não esteja vinculado a nenhum cliente específico
+    $stmtAdmin = $pdo->query("SELECT id, first_name, email, shared_owner_id FROM users ORDER BY id ASC LIMIT 1");
+    $user = $stmtAdmin->fetch();
 }
 
 if (!$user) {
