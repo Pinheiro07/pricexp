@@ -66,6 +66,12 @@ if ($action === 'recreate') {
         'integration' => 'WHATSAPP-BAILEYS'
     ]);
     $_SESSION['last_create_debug'] = json_encode($create_resp);
+    
+    // Aguarda 3s para o WebSocket do Baileys negociar com o WhatsApp e gerar o evento do QR
+    sleep(3);
+    $qr_first_resp = evo_request($api_url . '/instance/connect/' . $instance, 'GET');
+    $_SESSION['first_qr_debug'] = json_encode($qr_first_resp);
+    
     header('Location: index.php');
     exit;
 }
@@ -230,6 +236,7 @@ if (!$is_open) {
             <strong>Diagnostics:</strong> Active: <?= $api_url ?><br>
             <strong>Status:</strong> <?= htmlspecialchars($status) ?><br>
             <strong>Create Debug:</strong> <?= htmlspecialchars($_SESSION['last_create_debug'] ?? 'N/A') ?><br>
+            <strong>First QR (Após 3s):</strong> <?= htmlspecialchars($_SESSION['first_qr_debug'] ?? 'N/A') ?><br>
             <strong>QR Resp:</strong> <?= htmlspecialchars($qr_debug ?? 'N/A') ?><br>
             <strong>Pairing Resp:</strong> <?= htmlspecialchars($pair_debug ?? 'N/A') ?><br>
             <?php foreach ($debug_log as $log): ?>
