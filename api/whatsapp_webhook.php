@@ -128,21 +128,51 @@ function parseAmount($text) {
     $cleanText = preg_replace('/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/', ' ', $cleanText);
     $cleanText = preg_replace('/\b(c6\s*bank|c6)\b/i', ' ', $cleanText);
 
+    // 1. R$ 50,00 ou R$50
     if (preg_match('/r\$\s*(\d+(?:[\.,]\d{1,2})?)/i', $cleanText, $m)) {
         return (float)str_replace(',', '.', $m[1]);
     }
 
-    if (preg_match('/(?:total|valor|pago)\s*(?:r\$\s*)?(\d+(?:[\.,]\d{1,2})?)/i', $cleanText, $m)) {
+    // 2. total 50, valor 50, pago 50, foi 50
+    if (preg_match('/(?:total|valor|pago|foi|deu|caiu)\s*(?:r\$\s*)?(\d+(?:[\.,]\d{1,2})?)/i', $cleanText, $m)) {
         return (float)str_replace(',', '.', $m[1]);
     }
 
+    // 3. 5k ou 5 mil
     if (preg_match('/(\d+(?:[\.,]\d+)?)\s*(mil|k)\b/i', $cleanText, $m)) {
         $val = (float)str_replace(',', '.', $m[1]);
         return $val * 1000;
     }
 
+    // 4. 50 reais ou 50 real
     if (preg_match('/(?:\b\d+(?:[\.,]\d{1,2})?\b)(?:\s*reais|\s*real)/i', $cleanText, $m)) {
         return (float)str_replace(',', '.', $m[1]);
+    }
+
+    // 5. Número puro (ex: "5", "100", "50,90", "45.00")
+    if (preg_match('/^\s*(\d+(?:[\.,]\d{1,2})?)\s*$/', trim($cleanText), $m)) {
+        return (float)str_replace(',', '.', $m[1]);
+    }
+
+    // 6. Número isolado em qualquer frase (ex: "50 no inter", "gastou 100")
+    if (preg_match('/(?:\b|^)(\d+(?:[\.,]\d{1,2})?)(?:\b|$)/', $cleanText, $m)) {
+        $num = (float)str_replace(',', '.', $m[1]);
+        if ($num > 0) return $num;
+    }
+
+    // 7. Números por extenso em português
+    $wordMap = [
+        'um' => 1, 'uma' => 1, 'dois' => 2, 'duas' => 2, 'três' => 3, 'tres' => 3,
+        'quatro' => 4, 'cinco' => 5, 'seis' => 6, 'sete' => 7, 'oito' => 8, 'nove' => 9,
+        'dez' => 10, 'onze' => 11, 'doze' => 12, 'treze' => 13, 'quatorze' => 14, 'quinze' => 15,
+        'dezesseis' => 16, 'dezessete' => 17, 'dezoito' => 18, 'dezenove' => 19, 'vinte' => 20,
+        'trinta' => 30, 'quarenta' => 40, 'cinquenta' => 50, 'sessenta' => 60, 'setenta' => 70,
+        'oitenta' => 80, 'noventa' => 90, 'cem' => 100, 'cento' => 100, 'duzentos' => 200, 'quinhentos' => 500
+    ];
+
+    $lowerWord = mb_strtolower(trim($text), 'UTF-8');
+    if (isset($wordMap[$lowerWord])) {
+        return (float)$wordMap[$lowerWord];
     }
 
     return 0.0;
