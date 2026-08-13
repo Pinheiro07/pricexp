@@ -523,13 +523,35 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
 if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+último|\s+ultimo|\s+lançamento|\s+lancamento|\s+gasto)?$/i', trim($lowerText)) || 
     preg_match('/(excluir último|apagar último|deletar último|cancelar último|apagar o último|excluir o último|deletar o último|cancelar o último|delete_last_tx)/i', $lowerText)) {
     
-    $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? AND (created_by_user_id = ? OR created_by_user_id IS NULL OR created_by_user_id = 0) ORDER BY id DESC LIMIT 1");
-    $stmtLast->execute([$workspace_id, $user_id]);
-    $lastTx = $stmtLast->fetch();
+    // 1. Verifica se há uma ID ancorada especificamente no último lançamento deste usuário
+    $stmtLastSession = $pdo->prepare("SELECT description FROM whatsapp_pending_sessions WHERE user_id = ? AND (type = 'last_created_tx' OR type = 'edit_mode') ORDER BY id DESC LIMIT 1");
+    $stmtLastSession->execute([$user_id]);
+    $lastSess = $stmtLastSession->fetch();
+    
+    $targetTxId = null;
+    if ($lastSess && (strpos($lastSess['description'], 'last_tx:') !== false || strpos($lastSess['description'], 'tx_id:') !== false)) {
+        $targetTxId = (int)str_replace(['last_tx:', 'tx_id:'], '', $lastSess['description']);
+    }
+
+    $lastTx = null;
+    if ($targetTxId) {
+        $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE id = ? AND user_id = ? AND created_by_user_id = ?");
+        $stmtLast->execute([$targetTxId, $workspace_id, $user_id]);
+        $lastTx = $stmtLast->fetch();
+    }
+
+    // Fallback: Busca a última transação criada estritamente por este usuário
+    if (empty($lastTx)) {
+        $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? AND created_by_user_id = ? ORDER BY id DESC LIMIT 1");
+        $stmtLast->execute([$workspace_id, $user_id]);
+        $lastTx = $stmtLast->fetch();
+    }
 
     if ($lastTx) {
         $stmtDel = $pdo->prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?");
         $stmtDel->execute([$lastTx['id'], $workspace_id]);
+
+        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
 
         logUserActivity($pdo, $user_id, 'WHATSAPP_EXCLUSAO', "Exclusão via WhatsApp #{$lastTx['id']}: {$lastTx['description']} (R$ {$lastTx['amount']})", $lastTx['amount'], ['phone' => $cleanPhone]);
 
@@ -546,7 +568,7 @@ if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+
                   . "• Data: {$fmtDate}\n\n"
                   . "🚀 _Seu saldo e gráficos foram atualizados no painel PriceXP._";
     } else {
-        $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nNenhum lançamento recente foi encontrado para ser excluído.";
+        $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nNenhum lançamento recente criado por você foi encontrado para ser excluído.";
     }
 
     echo json_encode(['success' => true, 'reply' => $replyMsg]);
@@ -557,9 +579,27 @@ if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+
 // --- COMANDO DE EDIÇÃO / CORREÇÃO DE LANÇAMENTO VIA WHATSAPP (BOTÃO 1 OU PALAVRA) ---
 // ------------------------------------------------------------------
 if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerText) === 'edit_last_tx' || trim($lowerText) === 'editar' || trim($lowerText) === 'editar lançamento') {
-    $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name FROM transactions WHERE user_id = ? AND (created_by_user_id = ? OR created_by_user_id IS NULL OR created_by_user_id = 0) ORDER BY id DESC LIMIT 1");
-    $stmtLast->execute([$workspace_id, $user_id]);
-    $lastTx = $stmtLast->fetch();
+    $stmtLastSession = $pdo->prepare("SELECT description FROM whatsapp_pending_sessions WHERE user_id = ? AND (type = 'last_created_tx' OR type = 'edit_mode') ORDER BY id DESC LIMIT 1");
+    $stmtLastSession->execute([$user_id]);
+    $lastSess = $stmtLastSession->fetch();
+    
+    $targetTxId = null;
+    if ($lastSess && (strpos($lastSess['description'], 'last_tx:') !== false || strpos($lastSess['description'], 'tx_id:') !== false)) {
+        $targetTxId = (int)str_replace(['last_tx:', 'tx_id:'], '', $lastSess['description']);
+    }
+
+    $lastTx = null;
+    if ($targetTxId) {
+        $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name FROM transactions WHERE id = ? AND user_id = ? AND created_by_user_id = ?");
+        $stmtLast->execute([$targetTxId, $workspace_id, $user_id]);
+        $lastTx = $stmtLast->fetch();
+    }
+
+    if (empty($lastTx)) {
+        $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name FROM transactions WHERE user_id = ? AND created_by_user_id = ? ORDER BY id DESC LIMIT 1");
+        $stmtLast->execute([$workspace_id, $user_id]);
+        $lastTx = $stmtLast->fetch();
+    }
 
     if ($lastTx) {
         try {
@@ -759,10 +799,11 @@ try {
     $stmtIns->execute([$workspace_id, $user_id, $type, $category, $description, $amount, $date, $finalBank, $card_id]);
     $insertedId = $pdo->lastInsertId();
 
-    if ($pendingId) {
-        $stmtDel = $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE id = ?");
-        $stmtDel->execute([$pendingId]);
-    }
+    try {
+        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+        $stmtInsLast = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'last_created_tx', ?, ?, ?, 'Outra')");
+        $stmtInsLast->execute([$user_id, $cleanPhone, $amount, 'last_tx:' . $insertedId, $finalBank]);
+    } catch (Exception $exSess) {}
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
