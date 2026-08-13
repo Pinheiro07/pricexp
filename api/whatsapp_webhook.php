@@ -331,14 +331,24 @@ function inferCategoryStrict($description, $text, $type) {
 }
 
 // ------------------------------------------------------------------
-// --- COMANDO DE RELATÓRIO FINANCEIRO CORPORATIVO (SEMANAL, MENSAL, ANUAL) ---
+// --- COMANDO DE RELATÓRIO FINANCEIRO CORPORATIVO (DIÁRIO, ONTEM, SEMANAL, MENSAL, ANUAL) ---
 // ------------------------------------------------------------------
-if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|extrato|balanço|balanco|relatório|relatorio|semanal|semana|mensal|mês|mes|anual|ano)/i', $lowerText)) {
+if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|extrato|balanço|balanco|relatório|relatorio|semanal|semana|mensal|mês|mes|anual|ano|hoje|ontem|diário|diario)/i', $lowerText)) {
     
     $periodTitle = "MENSAL";
     $periodLabel = "Mês (" . date('m/Y') . ")";
 
-    if (preg_match('/(semanal|semana)/i', $lowerText)) {
+    if (preg_match('/(hoje|diário|diario)/i', $lowerText)) {
+        $periodTitle = "DIÁRIO";
+        $firstDay = date('Y-m-d');
+        $lastDay  = date('Y-m-d');
+        $periodLabel = "Hoje (" . date('d/m/Y') . ")";
+    } elseif (preg_match('/(ontem)/i', $lowerText)) {
+        $periodTitle = "DE ONTEM";
+        $firstDay = date('Y-m-d', strtotime('-1 day'));
+        $lastDay  = date('Y-m-d', strtotime('-1 day'));
+        $periodLabel = "Ontem (" . date('d/m/Y', strtotime('-1 day')) . ")";
+    } elseif (preg_match('/(semanal|semana)/i', $lowerText)) {
         $periodTitle = "SEMANAL";
         $firstDay = date('Y-m-d', strtotime('monday this week'));
         $lastDay  = date('Y-m-d', strtotime('sunday this week'));
@@ -391,6 +401,23 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
         }
     }
 
+    $itemDetailsText = "";
+    if ($periodTitle === 'DIÁRIO' || $periodTitle === 'DE ONTEM') {
+        $stmtItems = $pdo->prepare("SELECT description, amount, bank_name, type FROM transactions WHERE user_id = ? AND date >= ? AND date <= ? ORDER BY id DESC LIMIT 10");
+        $stmtItems->execute([$workspace_id, $firstDay, $lastDay]);
+        $itemsList = $stmtItems->fetchAll();
+        if ($itemsList) {
+            $itemDetailsText = "📋 *Lançamentos do Período:*\n";
+            foreach ($itemsList as $it) {
+                $icon = ($it['type'] === 'receita') ? '🟢' : '🔴';
+                $valStr = number_format($it['amount'], 2, ',', '.');
+                $bStr = $it['bank_name'] ? " ({$it['bank_name']})" : "";
+                $itemDetailsText .= "• {$icon} {$it['description']}: R$ {$valStr}{$bStr}\n";
+            }
+            $itemDetailsText .= "\n";
+        }
+    }
+
     $fmtRec  = number_format($totalRec, 2, ',', '.');
     $fmtDesp = number_format($totalDesp, 2, ',', '.');
     $fmtSal  = number_format(abs($saldo), 2, ',', '.');
@@ -402,6 +429,7 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
               . "🟢 Entradas: R$ {$fmtRec}\n"
               . "🔴 Saídas: R$ {$fmtDesp}\n"
               . "💰 Saldo Líquido: R$ {$saldoSign}{$fmtSal}\n\n"
+              . $itemDetailsText
               . "*Principais Categorias de Despesa:*\n"
               . $topText . "\n"
               . ($bankText ? "🏦 *Bancos Utilizados:*\n" . $bankText . "\n" : "")
