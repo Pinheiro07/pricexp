@@ -118,14 +118,8 @@ foreach ($allUsers as $u) {
 }
 
 if (!$user) {
-    // Fallback para Usuário #1 (Admin) caso o número não esteja vinculado a nenhum cliente específico
-    $stmtAdmin = $pdo->query("SELECT id, first_name, email, shared_owner_id FROM users ORDER BY id ASC LIMIT 1");
-    $user = $stmtAdmin->fetch();
-}
-
-if (!$user) {
     $cleanDisplayPhone = preg_replace('/\D/', '', $senderPhone);
-    $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\nOlá! O número de WhatsApp *" . $cleanDisplayPhone . "* ainda não está cadastrado em nenhuma conta do PriceXP.\n\nPara vincular e ver seus lançamentos em tempo real na sua dashboard, acesse o painel PriceXP em *Minha Conta* e salve o seu número de WhatsApp!";
+    $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\nOlá! O seu número de WhatsApp (" . $cleanDisplayPhone . ") ainda não está cadastrado em nenhuma conta do PriceXP.\n\nPara vincular e ver seus lançamentos em tempo real na sua dashboard, acesse o painel PriceXP em *Minha Conta* e cadastre o seu número de WhatsApp!";
     echo json_encode(['success' => false, 'reply' => $replyMsg]);
     exit;
 }
