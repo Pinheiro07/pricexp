@@ -1429,3 +1429,63 @@ body.light-theme .credit-card-item .card-value-success {
     }
 }
 
+/* ==========================================================================
+   ENHANCED MOBILE UX & RESPONSIVENESS POLISH (iOS & ANDROID)
+   ========================================================================== */
+@media (max-width: 768px) {
+    body {
+        -webkit-tap-highlight-color: transparent;
+        overflow-x: hidden;
+    }
+
+    /* Prevents automatic zoom-in on iOS Safari when tapping inputs */
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="email"],
+    input[type="password"],
+    select,
+    textarea {
+        font-size: 16px !important;
+        min-height: 44px !important;
+    }
+
+    button, .btn {
+        min-height: 44px !important;
+    }
+
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Native Bottom Nav styling with iOS safe-area support */
+    .mobile-bottom-nav {
+        padding-bottom: max(4px, env(safe-area-inset-bottom)) !important;
+        height: calc(62px + env(safe-area-inset-bottom)) !important;
+        background: rgba(15, 23, 42, 0.95) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+    }
+
+    .mob-nav-btn.active {
+        color: #10b981 !important;
+        font-weight: 700 !important;
+    }
+
+    .mob-nav-btn.active svg {
+        stroke: #10b981 !important;
+        filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.6));
+    }
+
+    /* Modal responsiveness & smooth mobile scrolling */
+    .modal-content {
+        max-height: 88vh !important;
+        overflow-y: auto !important;
+        border-radius: 1.25rem !important;
+    }
+}
+
