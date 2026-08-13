@@ -171,14 +171,20 @@ function parseDescription($text) {
     $clean = trim(preg_replace('/\s+/', ' ', $clean));
     
     if (empty($clean) || strlen($clean) < 2) {
-        if (preg_match('/(mercado|supermercado)/i', $text)) return 'Mercado';
-        if (preg_match('/(ifood|restaurante|pizza|lanche|comida)/i', $text)) return 'iFood';
-        if (preg_match('/(gasolina|combustivel|combustível)/i', $text)) return 'Gasolina';
-        if (preg_match('/(uber|99|taxi)/i', $text)) return 'Uber';
-        if (preg_match('/(cinema|movie)/i', $text)) return 'Cinema';
-        if (preg_match('/(farmacia|farmácia|remedio|remédio)/i', $text)) return 'Farmácia';
-        if (preg_match('/(salario|salário|holerite)/i', $text)) return 'Salário';
-        if (preg_match('/(site|venda|cliente)/i', $text)) return 'Venda no Site';
+        if (preg_match('/\b(ifood)\b/i', $text)) return 'iFood';
+        if (preg_match('/\b(restaurante)\b/i', $text)) return 'Restaurante';
+        if (preg_match('/\b(almoço|almoco)\b/i', $text)) return 'Almoço';
+        if (preg_match('/\b(jantar)\b/i', $text)) return 'Jantar';
+        if (preg_match('/\b(lanche)\b/i', $text)) return 'Lanche';
+        if (preg_match('/\b(pizza)\b/i', $text)) return 'Pizza';
+        if (preg_match('/\b(comida)\b/i', $text)) return 'Alimentação';
+        if (preg_match('/\b(mercado|supermercado)\b/i', $text)) return 'Mercado';
+        if (preg_match('/\b(gasolina|combustivel|combustível)\b/i', $text)) return 'Gasolina';
+        if (preg_match('/\b(uber|99|taxi)\b/i', $text)) return 'Uber';
+        if (preg_match('/\b(cinema|movie)\b/i', $text)) return 'Cinema';
+        if (preg_match('/\b(farmacia|farmácia|remedio|remédio)\b/i', $text)) return 'Farmácia';
+        if (preg_match('/\b(salario|salário|holerite)\b/i', $text)) return 'Salário';
+        if (preg_match('/\b(site|venda|cliente)\b/i', $text)) return 'Venda no Site';
         return null;
     }
     return ucfirst($clean);
