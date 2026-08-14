@@ -426,12 +426,23 @@ function showApp(userData) {
     
     dashboardWelcome.innerHTML = `Bem-vindo de volta, ${userData.first_name || ''}! 👋`;
     
-    // Configura a foto de perfil
+    // Configura a foto de perfil com fallback inteligente para erro 404
+    const avatarName = encodeURIComponent(userData.first_name || 'U');
+    const avatarFallback = `https://ui-avatars.com/api/?name=${avatarName}&background=1e3a8a&color=fff&bold=true`;
+    
+    sidebarPhoto.onerror = function() {
+        this.onerror = null;
+        this.src = avatarFallback;
+    };
+
     if (userData.profile_picture && userData.profile_picture !== 'default.png') {
-        sidebarPhoto.src = 'uploads/' + userData.profile_picture;
+        let pSrc = userData.profile_picture;
+        if (!pSrc.startsWith('http') && !pSrc.startsWith('uploads/')) {
+            pSrc = 'uploads/' + pSrc;
+        }
+        sidebarPhoto.src = pSrc;
     } else {
-        // Fallback genérico se não tiver foto
-        sidebarPhoto.src = 'https://ui-avatars.com/api/?name=' + (userData.first_name || 'U') + '&background=3b82f6&color=fff';
+        sidebarPhoto.src = avatarFallback;
     }
     
     // Botão exclusivo para a conta Admin
@@ -1714,10 +1725,22 @@ function populateProfileForm(userData) {
         btnOpenWa.href = `https://wa.me/552833441530?text=` + encodeURIComponent(`Olá, gostaria de ativar a conta PriceXP, meu ID é ${userData.id}`);
     }
     
+    const avatarName = encodeURIComponent(userData.first_name || 'U');
+    const avatarFallback = `https://ui-avatars.com/api/?name=${avatarName}&background=1e3a8a&color=fff&bold=true`;
+    
+    profilePhotoPreview.onerror = function() {
+        this.onerror = null;
+        this.src = avatarFallback;
+    };
+
     if (userData.profile_picture && userData.profile_picture !== 'default.png') {
-        profilePhotoPreview.src = 'uploads/' + userData.profile_picture;
+        let pSrc = userData.profile_picture;
+        if (!pSrc.startsWith('http') && !pSrc.startsWith('uploads/')) {
+            pSrc = 'uploads/' + pSrc;
+        }
+        profilePhotoPreview.src = pSrc;
     } else {
-        profilePhotoPreview.src = 'https://ui-avatars.com/api/?name=' + (userData.first_name || 'U') + '&background=3b82f6&color=fff';
+        profilePhotoPreview.src = avatarFallback;
     }
 }
 
