@@ -18,24 +18,50 @@ function getCategoryBadgeHTML(categoryName) {
     const catLower = cat.toLowerCase();
 
     let badgeClass = 'cat-badge-outras';
+    let bg = 'rgba(148, 163, 184, 0.15)';
+    let color = '#475569';
+    let border = 'rgba(148, 163, 184, 0.3)';
+
+    const isLight = document.body.classList.contains('light-theme');
 
     if (catLower.includes('lazer') || catLower.includes('viagem') || catLower.includes('disney')) {
         badgeClass = 'cat-badge-lazer';
+        bg = isLight ? '#f3e8ff' : 'rgba(168, 85, 247, 0.2)';
+        color = isLight ? '#7e22ce' : '#c084fc';
+        border = isLight ? '#d8b4fe' : 'rgba(168, 85, 247, 0.4)';
     } else if (catLower.includes('saúde') || catLower.includes('saude') || catLower.includes('farmácia') || catLower.includes('farmacia') || catLower.includes('remédio') || catLower.includes('remedio') || catLower.includes('cosmético') || catLower.includes('cosmetico')) {
         badgeClass = 'cat-badge-saude';
+        bg = isLight ? '#fce7f3' : 'rgba(236, 72, 153, 0.2)';
+        color = isLight ? '#be185d' : '#f472b6';
+        border = isLight ? '#fbcfe8' : 'rgba(236, 72, 153, 0.4)';
     } else if (catLower.includes('casa') || catLower.includes('moradia') || catLower.includes('aluguel') || catLower.includes('contas')) {
         badgeClass = 'cat-badge-casa';
+        bg = isLight ? '#dbeafe' : 'rgba(59, 130, 246, 0.2)';
+        color = isLight ? '#1d4ed8' : '#60a5fa';
+        border = isLight ? '#bfdbfe' : 'rgba(59, 130, 246, 0.4)';
     } else if (catLower.includes('transporte') || catLower.includes('locomoção') || catLower.includes('locomocao') || catLower.includes('combustível') || catLower.includes('combustivel') || catLower.includes('uber')) {
         badgeClass = 'cat-badge-transporte';
+        bg = isLight ? '#cffaff' : 'rgba(6, 182, 212, 0.2)';
+        color = isLight ? '#0e7490' : '#22d3ee';
+        border = isLight ? '#a5f3fc' : 'rgba(6, 182, 212, 0.4)';
     } else if (catLower.includes('alimentação') || catLower.includes('alimentacao') || catLower.includes('mercado') || catLower.includes('restaurante') || catLower.includes('açai') || catLower.includes('açaí')) {
         badgeClass = 'cat-badge-alimentacao';
+        bg = isLight ? '#fef3c7' : 'rgba(245, 158, 11, 0.2)';
+        color = isLight ? '#b45309' : '#fbbf24';
+        border = isLight ? '#fde68a' : 'rgba(245, 158, 11, 0.4)';
     } else if (catLower.includes('curso') || catLower.includes('educação') || catLower.includes('educacao')) {
         badgeClass = 'cat-badge-educacao';
+        bg = isLight ? '#ccfbf1' : 'rgba(20, 184, 166, 0.2)';
+        color = isLight ? '#0f766e' : '#2dd4bf';
+        border = isLight ? '#99f6e4' : 'rgba(20, 184, 166, 0.4)';
     } else if (catLower.includes('investimento') || catLower.includes('salário') || catLower.includes('salario') || catLower.includes('receita') || catLower.includes('bônus') || catLower.includes('bonus') || catLower.includes('férias') || catLower.includes('ferias') || catLower.includes('13º')) {
         badgeClass = 'cat-badge-receita';
+        bg = isLight ? '#d1fae5' : 'rgba(16, 185, 129, 0.2)';
+        color = isLight ? '#047857' : '#34d399';
+        border = isLight ? '#a7f3d0' : 'rgba(16, 185, 129, 0.4)';
     }
 
-    return `<span class="cat-badge ${badgeClass}">${cat}</span>`;
+    return `<span class="cat-badge ${badgeClass}" style="background:${bg} !important; color:${color} !important; border:1px solid ${border} !important; padding: 2px 9px; border-radius: 9999px; font-size: 0.73rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; line-height: 1.2;">${cat}</span>`;
 }
 
 const btnToggleTheme = document.getElementById('btn-toggle-theme');
