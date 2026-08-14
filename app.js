@@ -12,6 +12,32 @@ let CATEGORIES = {
     despesa: ["Casa", "Saúde", "Locomoção", "Lazer", "Transporte", "Investimentos", "Outras Despesas"]
 }
 
+function getCategoryBadgeHTML(categoryName) {
+    if (!categoryName) return '';
+    const cat = categoryName.trim();
+    const catLower = cat.toLowerCase();
+
+    let badgeClass = 'cat-badge-outras';
+
+    if (catLower.includes('lazer') || catLower.includes('viagem') || catLower.includes('disney')) {
+        badgeClass = 'cat-badge-lazer';
+    } else if (catLower.includes('saúde') || catLower.includes('saude') || catLower.includes('farmácia') || catLower.includes('farmacia') || catLower.includes('remédio') || catLower.includes('remedio') || catLower.includes('cosmético') || catLower.includes('cosmetico')) {
+        badgeClass = 'cat-badge-saude';
+    } else if (catLower.includes('casa') || catLower.includes('moradia') || catLower.includes('aluguel') || catLower.includes('contas')) {
+        badgeClass = 'cat-badge-casa';
+    } else if (catLower.includes('transporte') || catLower.includes('locomoção') || catLower.includes('locomocao') || catLower.includes('combustível') || catLower.includes('combustivel') || catLower.includes('uber')) {
+        badgeClass = 'cat-badge-transporte';
+    } else if (catLower.includes('alimentação') || catLower.includes('alimentacao') || catLower.includes('mercado') || catLower.includes('restaurante') || catLower.includes('açai') || catLower.includes('açaí')) {
+        badgeClass = 'cat-badge-alimentacao';
+    } else if (catLower.includes('curso') || catLower.includes('educação') || catLower.includes('educacao')) {
+        badgeClass = 'cat-badge-educacao';
+    } else if (catLower.includes('investimento') || catLower.includes('salário') || catLower.includes('salario') || catLower.includes('receita') || catLower.includes('bônus') || catLower.includes('bonus') || catLower.includes('férias') || catLower.includes('ferias') || catLower.includes('13º')) {
+        badgeClass = 'cat-badge-receita';
+    }
+
+    return `<span class="cat-badge ${badgeClass}">${cat}</span>`;
+}
+
 const btnToggleTheme = document.getElementById('btn-toggle-theme');
 if (btnToggleTheme) {
     btnToggleTheme.addEventListener('click', toggleTheme);
@@ -955,7 +981,10 @@ function renderTransactions() {
         item.innerHTML = `
             <div class="tx-left">
                 <span class="tx-desc">${tx.description}</span>
-                <span class="tx-cat-date">${tx.category} ${tx.bank_name ? '• ' + tx.bank_name : ''}${authorTag} • ${formatDate(tx.date)}</span>
+                <span class="tx-cat-date" style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap; margin-top:0.25rem;">
+                    ${getCategoryBadgeHTML(tx.category)}
+                    <span style="font-size:0.8rem; color:var(--text-muted);">${tx.bank_name ? '• ' + tx.bank_name : ''}${authorTag} • ${formatDate(tx.date)}</span>
+                </span>
             </div>
             <div class="tx-actions">
                 <span class="tx-amount ${colorClass}">${sign} ${formatCurrency(tx.amount)}</span>
@@ -1216,7 +1245,10 @@ function openDetailsModal(type) {
             item.innerHTML = `
                 <div style="flex: 1; min-width: 0;">
                     <span style="font-weight: 600; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${tx.description}</span>
-                    <span style="font-size: 0.78rem; color: var(--text-muted);">${tx.category} ${tx.bank_name ? '• ' + tx.bank_name : ''} • ${formatDate(tx.date)}</span>
+                    <span style="font-size: 0.78rem; color: var(--text-muted); display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap; margin-top:0.2rem;">
+                        ${getCategoryBadgeHTML(tx.category)}
+                        <span>${tx.bank_name ? '• ' + tx.bank_name : ''} • ${formatDate(tx.date)}</span>
+                    </span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0;">
                     <span style="font-weight: 600; white-space: nowrap;" class="${isReceita ? 'text-success' : 'text-danger'}">${isReceita ? '+' : '-'} ${formatCurrency(tx.amount)}</span>
@@ -2060,7 +2092,10 @@ async function fetchSharedAccountStatus() {
                             item.innerHTML = `
                                 <div class="tx-left">
                                     <span class="tx-desc" style="font-weight:600;">${tx.description}</span>
-                                    <span class="tx-cat-date" style="font-size:0.82rem; color:var(--text-muted);">${tx.category} ${tx.bank_name ? '• ' + tx.bank_name : ''} • ${formatDate(tx.date)}</span>
+                                    <span class="tx-cat-date" style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap; margin-top:0.25rem;">
+                                        ${getCategoryBadgeHTML(tx.category)}
+                                        <span style="font-size:0.8rem; color:var(--text-muted);">${tx.bank_name ? '• ' + tx.bank_name : ''} • ${formatDate(tx.date)}</span>
+                                    </span>
                                 </div>
                                 <div class="tx-actions">
                                     <span class="tx-amount ${colorClass}" style="font-weight:600;">${sign} ${formatCurrency(tx.amount)}</span>
