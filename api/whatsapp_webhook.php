@@ -457,20 +457,33 @@ function inferCategoryStrict($description, $text, $type) {
     $combined = mb_strtolower($description . ' ' . $text, 'UTF-8');
 
     if ($type === 'receita') {
-        if (preg_match('/(salario|salário|holerite)/i', $combined)) return 'Salário Líquido';
-        if (preg_match('/(13|décimo terceiro|decimo terceiro)/i', $combined)) return '13º Salário Líquido';
-        if (preg_match('/(férias|ferias)/i', $combined)) return 'Férias Líquida';
-        if (preg_match('/(bônus|bonus|comissão|comissao|plr|prêmio|premio)/i', $combined)) return 'Bônus + Comissões + PLR';
-        if (preg_match('/(freelance|serviço|servico|venda|site|bico|cliente)/i', $combined)) return 'Renda Extra Líquida';
+        if (preg_match('/\b(salario|salário|holerite)\b/i', $combined)) return 'Salário Líquido';
+        if (preg_match('/\b(13|décimo terceiro|decimo terceiro)\b/i', $combined)) return '13º Salário Líquido';
+        if (preg_match('/\b(férias|ferias)\b/i', $combined)) return 'Férias Líquida';
+        if (preg_match('/\b(bônus|bonus|comissão|comissao|plr|prêmio|premio)\b/i', $combined)) return 'Bônus + Comissões + PLR';
+        if (preg_match('/\b(freelance|serviço|servico|venda|site|bico|cliente)\b/i', $combined)) return 'Renda Extra Líquida';
         return 'Outras Receitas';
     } else {
-        if (preg_match('/(comida|mercado|supermercado|feira|açougue|padaria|aluguel|condomínio|condominio|luz|água|agua|internet|telefone|energia|móveis|moveis|faxina)/i', $combined)) return 'Casa';
-        if (preg_match('/(ifood|restaurante|lanchonete|pizza|almoço|almoco|jantar|mcdonald)/i', $combined)) return 'Casa';
-        if (preg_match('/(farmacia|farmácia|médico|medico|consulta|hospital|remedio|remédio|dentista|exame)/i', $combined)) return 'Saúde';
-        if (preg_match('/(gasolina|combustivel|combustível|uber|99|táxi|taxi|ônibus|onibus|pedagio|estacionamento|mecanico|mecânico)/i', $combined)) return 'Transporte';
-        if (preg_match('/(passagem|viagem|mobilidade)/i', $combined)) return 'Locomoção';
-        if (preg_match('/(netflix|spotify|cinema|jogos|lazer|show|bar|festa|presente)/i', $combined)) return 'Lazer';
-        if (preg_match('/(investimento|rendimento|ação|ações|cdb|tesouro|reserva)/i', $combined)) return 'Investimentos';
+        // 1. Casa / Pet / Limpeza / Higiene Lar
+        if (preg_match('/\b(comida|mercado|supermercado|feira|açougue|acougue|padaria|aluguel|condomínio|condominio|luz|água|agua|internet|telefone|energia|móveis|moveis|faxina|limpeza|limpesa|sabão|sabao|detergente|desinfetante|escova|amaciante|vassoura|pano|lixo|bucha)\b/i', $combined)) return 'Casa';
+        if (preg_match('/\b(gato|gata|cachorro|cão|cao|pet|ração|racao|areia|veterinario|veterinário|vet|banho|tosa|brinquedo)\b/i', $combined)) return 'Casa';
+        
+        // 2. Saúde / Estética / Beleza / Depilação
+        if (preg_match('/\b(farmacia|farmácia|médico|medico|consulta|hospital|remedio|remédio|dentista|exame|psicologo|terapia)\b/i', $combined)) return 'Saúde';
+        if (preg_match('/\b(creme|depilatorio|depilatório|depilação|depilacao|cosmetico|cosmético|perfume|shampoo|condicionador|sabonete|maquiagem|skincare|estética|estetica|salão|salao|barbearia|corte)\b/i', $combined)) return 'Saúde';
+
+        // 3. Transporte / Veículo / Combustível
+        if (preg_match('/\b(gasolina|combustivel|combustível|etanol|diesel|uber|99|táxi|taxi|ônibus|onibus|pedagio|pedágio|estacionamento|mecanico|mecânico|ipva|multa|oficina)\b/i', $combined)) return 'Transporte';
+
+        // 4. Lazer / Alimentação Fora / Entretenimento
+        if (preg_match('/\b(ifood|restaurante|lanchonete|pizza|almoço|almoco|jantar|mcdonald|burger|lanche|bar|cerveja|churrasco|netflix|spotify|cinema|jogos|steam|lazer|show|festa|presente|clube|ingresso)\b/i', $combined)) return 'Lazer';
+
+        // 5. Locomoção / Viagem
+        if (preg_match('/\b(passagem|viagem|mobilidade|hotel|pousada|voo|aviao|avião)\b/i', $combined)) return 'Locomoção';
+
+        // 6. Investimentos
+        if (preg_match('/\b(investimento|rendimento|ação|ações|cdb|tesouro|reserva|cripto|poupança|poupanca)\b/i', $combined)) return 'Investimentos';
+
         return 'Outras Despesas';
     }
 }
