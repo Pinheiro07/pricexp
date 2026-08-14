@@ -861,9 +861,9 @@ if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+
     if ($isBatchDelete && !empty($batchTxIds)) {
         // --- EXCLUSÃO DE LOTE INTEIRO DENTRO DE TRANSAÇÃO PDO ATÔMICA ---
         $inPlaceholders = implode(',', array_fill(0, count($batchTxIds), '?'));
-        $paramsFetch = array_merge([$workspace_id, $user_id], $batchTxIds);
+        $paramsFetch = array_merge([$workspace_id], $batchTxIds);
         
-        $stmtFetchBatch = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? AND created_by_user_id = ? AND id IN ($inPlaceholders) ORDER BY id ASC");
+        $stmtFetchBatch = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? AND id IN ($inPlaceholders) ORDER BY id ASC");
         $stmtFetchBatch->execute($paramsFetch);
         $batchTransactions = $stmtFetchBatch->fetchAll();
 
@@ -918,14 +918,14 @@ if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+
 
     $lastTx = null;
     if ($targetTxId) {
-        $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE id = ? AND user_id = ? AND created_by_user_id = ?");
-        $stmtLast->execute([$targetTxId, $workspace_id, $user_id]);
+        $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE id = ? AND user_id = ?");
+        $stmtLast->execute([$targetTxId, $workspace_id]);
         $lastTx = $stmtLast->fetch();
     }
 
     // Fallback apenas se houver uma sessão pendente válida de lançamento recente
     if (empty($lastTx) && $lastSess && (strpos($lastSess['description'], 'last_tx:') !== false || strpos($lastSess['description'], 'tx_id:') !== false)) {
-        $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? AND created_by_user_id = ? ORDER BY id DESC LIMIT 1");
+        $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? AND (created_by_user_id = ? OR created_by_user_id IS NULL OR created_by_user_id = 0) ORDER BY id DESC LIMIT 1");
         $stmtLast->execute([$workspace_id, $user_id]);
         $lastTx = $stmtLast->fetch();
     }
