@@ -1206,8 +1206,9 @@ if (count($batchItems) >= 2) {
     $uniqueBankName = $hasSingleUniqueBank ? reset($allBanksInBatch) : null;
 
     // Executa o salvamento de todo o lote dentro de uma transação PDO atômica
-    $pdo->beginTransaction();
     try {
+        $pdo->beginTransaction();
+
         $stmtBatchIns = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name, card_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         foreach ($batchItems as $idx => $item) {
@@ -1237,8 +1238,6 @@ if (count($batchItems) >= 2) {
             $insertedCount++;
             $totalBatchAmount += $item['amount'];
 
-            logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO_LOTE', "Lançamento via WhatsApp #{$newTxId}: {$item['type']} - {$item['description']} (R$ {$item['amount']}) [Banco: {$item['bank_name']} | Pagamento: {$item['payment_method']}]", $item['amount'], ['bank' => $item['bank_name'], 'method' => $item['payment_method'], 'phone' => $cleanPhone]);
-
             $fmtVal = number_format($item['amount'], 2, ',', '.');
             $icon = ($item['type'] === 'receita') ? '🟢' : '🔴';
             $itemNum = $idx + 1;
@@ -1261,9 +1260,19 @@ if (count($batchItems) >= 2) {
 
         $pdo->commit();
     } catch (Exception $exBatch) {
-        $pdo->rollBack();
-        echo json_encode(['success' => false, 'error' => 'Falha ao registrar o lote de lançamentos.']);
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log("Erro no lote WhatsApp: " . $exBatch->getMessage());
+        $replyMsg = "⚠️ *PriceXP — Ops!*\n\nOcorreu uma instabilidade ao salvar o lote. Por favor, tente enviar a mensagem novamente.";
+        echo json_encode(['success' => true, 'reply' => $replyMsg]);
         exit;
+    }
+
+    // Registra os logs de atividade com segurança fora da transação atômica
+    foreach ($batchItems as $idx => $item) {
+        $txId = $createdBatchIds[$idx] ?? null;
+        logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO_LOTE', "Lançamento via WhatsApp #{$txId}: {$item['type']} - {$item['description']} (R$ {$item['amount']}) [Banco: {$item['bank_name']} | Pagamento: {$item['payment_method']}]", $item['amount'], ['bank' => $item['bank_name'], 'method' => $item['payment_method'], 'phone' => $cleanPhone]);
     }
 
     $fmtTotalBatch = number_format($totalBatchAmount, 2, ',', '.');
