@@ -26,14 +26,16 @@ try {
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         phone VARCHAR(50) NOT NULL,
-        type VARCHAR(20) DEFAULT 'despesa',
+        type VARCHAR(50) DEFAULT 'despesa',
         amount DECIMAL(10, 2) DEFAULT 0.00,
-        description VARCHAR(255) DEFAULT '',
+        description TEXT,
         category VARCHAR(100) DEFAULT '',
         bank_name VARCHAR(100) DEFAULT '',
         payment_method VARCHAR(50) DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )");
+    @$pdo->exec("ALTER TABLE whatsapp_pending_sessions MODIFY COLUMN type VARCHAR(50) DEFAULT 'despesa'");
+    @$pdo->exec("ALTER TABLE whatsapp_pending_sessions MODIFY COLUMN description TEXT");
     @$pdo->exec("ALTER TABLE whatsapp_pending_sessions ADD COLUMN payment_method VARCHAR(50) DEFAULT ''");
 } catch (Exception $e) {}
 
@@ -1253,9 +1255,13 @@ if (count($batchItems) >= 2) {
 
         // Armazena no estado da conversa a lista EXATA de IDs criados neste lote
         if (!empty($createdBatchIds)) {
-            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
-            $stmtInsLast = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'last_created_batch', ?, ?, ?, 'Outra')");
-            $stmtInsLast->execute([$user_id, $cleanPhone, $totalBatchAmount, 'batch_ids:' . implode(',', $createdBatchIds), $hasSingleUniqueBank ? $uniqueBankName : 'Geral']);
+            try {
+                $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+                $stmtInsLast = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'last_created_batch', ?, ?, ?, 'Outra')");
+                $stmtInsLast->execute([$user_id, $cleanPhone, $totalBatchAmount, 'batch_ids:' . implode(',', $createdBatchIds), $hasSingleUniqueBank ? $uniqueBankName : 'Geral']);
+            } catch (Exception $exSessSave) {
+                error_log("Aviso: Nao foi possivel salvar a sessao do lote: " . $exSessSave->getMessage());
+            }
         }
 
         $pdo->commit();
