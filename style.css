@@ -542,6 +542,8 @@ button {
 }
 .danger-zone {
     border-color: rgba(239, 68, 68, 0.3);
+    align-self: start !important;
+    height: auto !important;
 }
 
 @media (max-width: 1024px) {
