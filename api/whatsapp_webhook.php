@@ -839,11 +839,131 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
 }
 
 // ------------------------------------------------------------------
+// --- SELEÇÃO DO ITEM DO LOTE PARA EDIÇÃO (ESTADO WAITING_BATCH_EDIT_SELECTION) ---
+// ------------------------------------------------------------------
+$stmtCheckSelection = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type = 'waiting_batch_edit_selection' ORDER BY id DESC LIMIT 1");
+$stmtCheckSelection->execute([$user_id]);
+$pendingSelection = $stmtCheckSelection->fetch();
+
+if ($pendingSelection) {
+    // 1. Aceita comandos de cancelamento
+    if (in_array(strtolower(trim($lowerText)), ['cancelar', 'voltar', 'sair'])) {
+        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+        $replyMsg = "ℹ️ *PriceXP — Operação Cancelada*\n\nA edição do lote foi cancelada. Nenhum lançamento foi alterado.";
+        echo json_encode(['success' => true, 'reply' => $replyMsg]);
+        exit;
+    }
+
+    $rawIds = array_filter(array_map('intval', explode(',', str_replace('batch_ids:', '', $pendingSelection['description']))));
+    $batchTxIds = array_values($rawIds);
+    $countBatch = count($batchTxIds);
+
+    // 2. Verifica se o usuário informou uma alteração GLOBAL para TODO O LOTE (ex: "Nubank", "todos no Nubank", "Sicredi")
+    $globalBank   = parseBank($lowerText, $workspace_id, $pdo);
+    $globalMethod = parsePaymentMethod($lowerText);
+
+    $isNumericIndex = is_numeric(trim($lowerText)) && ((int)trim($lowerText) >= 1) && ((int)trim($lowerText) <= $countBatch);
+
+    if (!$isNumericIndex && ($globalBank || $globalMethod !== 'Outra')) {
+        $inPlaceholders = implode(',', array_fill(0, count($batchTxIds), '?'));
+        $paramsFetch = array_merge([$workspace_id], $batchTxIds);
+
+        $stmtFetchBatch = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE user_id = ? AND id IN ($inPlaceholders) ORDER BY id ASC");
+        $stmtFetchBatch->execute($paramsFetch);
+        $batchTransactions = $stmtFetchBatch->fetchAll();
+
+        if ($batchTransactions) {
+            $updatedChanges = [];
+            if ($globalBank) {
+                $stmtUpdBank = $pdo->prepare("UPDATE transactions SET bank_name = ? WHERE user_id = ? AND id IN ($inPlaceholders)");
+                $stmtUpdBank->execute(array_merge([$globalBank, $workspace_id], $batchTxIds));
+                $updatedChanges[] = "🏦 Banco: *{$globalBank}*";
+            }
+
+            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+
+            logUserActivity($pdo, $user_id, 'WHATSAPP_EDICAO_LOTE_GLOBAL', "Atualização de banco global no lote via WhatsApp (" . count($batchTransactions) . " itens): {$globalBank}", 0, ['phone' => $cleanPhone]);
+
+            $itemLines = [];
+            $totalBatchAmount = 0;
+            foreach ($batchTransactions as $idx => $tx) {
+                $num = $idx + 1;
+                $totalBatchAmount += (float)$tx['amount'];
+                $fmtVal = number_format((float)$tx['amount'], 2, ',', '.');
+                $bName = $globalBank ?: ($tx['bank_name'] ?: 'Geral');
+                $itemLines[] = "{$num}️⃣ *R$ {$fmtVal}* – {$tx['description']} _({$tx['category']})_\n   🏦 {$bName}";
+            }
+
+            $fmtTotalBatch = number_format($totalBatchAmount, 2, ',', '.');
+
+            $replyMsg = "✅ *PriceXP — Lote Atualizado com Sucesso!*\n\n"
+                      . "Os *{$countBatch} lançamentos* do lote tiveram o banco alterado para *{$globalBank}*:\n\n"
+                      . implode("\n\n", $itemLines) . "\n\n"
+                      . "💰 *Total do Lote:* R$ {$fmtTotalBatch}\n"
+                      . "🏦 *Banco/Conta:* {$globalBank}\n\n"
+                      . "🚀 _Seu saldo e gráficos foram atualizados no painel PriceXP._";
+
+            echo json_encode(['success' => true, 'reply' => $replyMsg]);
+            exit;
+        }
+    }
+
+    // 3. Seleção de Item Único via Índice Numérico
+    $selectedIndex = (int)trim($lowerText);
+
+    if ($selectedIndex < 1 || $selectedIndex > $countBatch) {
+        $replyMsg = "⚠️ *PriceXP — Opção Inválida*\n\n"
+                  . "Por favor, responda com o número entre *1* e *{$countBatch}* (para editar um item)\n"
+                  . "ou informe o novo Banco (ex: *\"Nubank\"* ou *\"todos no Nubank\"*) para alterar o lote todo.\n\n"
+                  . "↩️ _Ou envie \"cancelar\" para sair sem alterar nada._";
+        echo json_encode(['success' => true, 'reply' => $replyMsg]);
+        exit;
+    }
+
+    // Posição válida selecionada (1-indexed)
+    $targetTxId = $batchTxIds[$selectedIndex - 1];
+
+    $stmtSelected = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE id = ? AND user_id = ?");
+    $stmtSelected->execute([$targetTxId, $workspace_id]);
+    $selectedTx = $stmtSelected->fetch();
+
+    if ($selectedTx) {
+        try {
+            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+            $stmtInsEdit = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'edit_mode', ?, ?, ?, 'Outra')");
+            $stmtInsEdit->execute([$user_id, $cleanPhone, $selectedTx['amount'], 'tx_id:' . $selectedTx['id'], $selectedTx['bank_name']]);
+        } catch (Exception $e) {}
+
+        $fmtVal   = number_format((float)$selectedTx['amount'], 2, ',', '.');
+        $catShow  = !empty($selectedTx['category']) ? $selectedTx['category'] : 'Geral';
+        $bankShow = !empty($selectedTx['bank_name']) ? $selectedTx['bank_name'] : 'Geral';
+
+        $replyMsg = "✏️ *PriceXP — Editar Lançamento*\n\n"
+                  . "Lançamento selecionado (#{$selectedIndex} do lote):\n\n"
+                  . "• *Descrição:* {$selectedTx['description']}\n"
+                  . "• *Valor:* R$ {$fmtVal}\n"
+                  . "• *Banco/Conta:* {$bankShow}\n"
+                  . "• *Categoria:* {$catShow}\n\n"
+                  . "O que você gostaria de alterar? Envie tudo na mesma mensagem:\n\n"
+                  . "• Ex: *\"80 reais\"* (altera o valor)\n"
+                  . "• Ex: *\"Nubank\"* (altera o banco)\n"
+                  . "• Ex: *\"Sicredi crédito\"* (altera banco e pagamento)\n"
+                  . "• Ex: *\"Ração cachorro 45,90\"* (altera descrição e valor)\n\n"
+                  . "💡 _Você pode informar apenas o campo que deseja mudar e o Patrick atualizará automaticamente!_";
+    } else {
+        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+        $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nO lançamento selecionado não foi encontrado no seu painel.";
+    }
+
+    echo json_encode(['success' => true, 'reply' => $replyMsg]);
+    exit;
+}
+
 // ------------------------------------------------------------------
 // --- COMANDO DE EXCLUSÃO DE LANÇAMENTO / LOTE VIA WHATSAPP (BOTÃO 2 OU PALAVRA) ---
 // ------------------------------------------------------------------
-if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+último|\s+ultimo|\s+lançamento|\s+lancamento|\s+gasto|\s+lote)?$/i', trim($lowerText)) || 
-    preg_match('/(excluir último|apagar último|deletar último|cancelar último|apagar o último|excluir o último|deletar o último|cancelar o último|delete_last_tx|excluir lote|cancelar lote)/i', $lowerText)) {
+if (preg_match('/^(excluir|deletar|apagar|delete_last_tx|2|2️⃣)(\s+último|\s+ultimo|\s+lançamento|\s+lancamento|\s+gasto|\s+lote)?$/i', trim($lowerText)) || 
+    preg_match('/(excluir último|apagar último|deletar último|apagar o último|excluir o último|deletar o último|delete_last_tx|excluir lote)/i', $lowerText)) {
     
     // 1. Busca no estado da conversa se o último envio criou um LOTE ou um LANÇAMENTO ÚNICO
     $stmtLastSession = $pdo->prepare("SELECT type, description FROM whatsapp_pending_sessions WHERE user_id = ? AND type IN ('last_created_tx', 'last_created_batch', 'edit_mode') ORDER BY id DESC LIMIT 1");
@@ -964,127 +1084,6 @@ if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+
                   . "🚀 _Seu saldo e gráficos foram atualizados no painel PriceXP._";
     } else {
         $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nNenhum lançamento ou lote recente disponível para exclusão.";
-    }
-
-    echo json_encode(['success' => true, 'reply' => $replyMsg]);
-    exit;
-}
-
-// ------------------------------------------------------------------
-// --- SELEÇÃO DO ITEM DO LOTE PARA EDIÇÃO (ESTADO WAITING_BATCH_EDIT_SELECTION) ---
-// ------------------------------------------------------------------
-$stmtCheckSelection = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type = 'waiting_batch_edit_selection' ORDER BY id DESC LIMIT 1");
-$stmtCheckSelection->execute([$user_id]);
-$pendingSelection = $stmtCheckSelection->fetch();
-
-if ($pendingSelection) {
-    // 1. Aceita comandos de cancelamento
-    if (in_array(strtolower(trim($lowerText)), ['cancelar', 'voltar', 'sair'])) {
-        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
-        $replyMsg = "ℹ️ *PriceXP — Operação Cancelada*\n\nA edição do lote foi cancelada. Nenhum lançamento foi alterado.";
-        echo json_encode(['success' => true, 'reply' => $replyMsg]);
-        exit;
-    }
-
-    $rawIds = array_filter(array_map('intval', explode(',', str_replace('batch_ids:', '', $pendingSelection['description']))));
-    $batchTxIds = array_values($rawIds);
-    $countBatch = count($batchTxIds);
-
-    // 2. Verifica se o usuário informou uma alteração GLOBAL para TODO O LOTE (ex: "Nubank", "todos no Nubank", "Sicredi")
-    $globalBank   = parseBank($lowerText, $workspace_id, $pdo);
-    $globalMethod = parsePaymentMethod($lowerText);
-
-    $isNumericIndex = is_numeric(trim($lowerText)) && ((int)trim($lowerText) >= 1) && ((int)trim($lowerText) <= $countBatch);
-
-    if (!$isNumericIndex && ($globalBank || $globalMethod !== 'Outra')) {
-        $inPlaceholders = implode(',', array_fill(0, count($batchTxIds), '?'));
-        $paramsFetch = array_merge([$workspace_id], $batchTxIds);
-
-        $stmtFetchBatch = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE user_id = ? AND id IN ($inPlaceholders) ORDER BY id ASC");
-        $stmtFetchBatch->execute($paramsFetch);
-        $batchTransactions = $stmtFetchBatch->fetchAll();
-
-        if ($batchTransactions) {
-            $updatedChanges = [];
-            if ($globalBank) {
-                $stmtUpdBank = $pdo->prepare("UPDATE transactions SET bank_name = ? WHERE user_id = ? AND id IN ($inPlaceholders)");
-                $stmtUpdBank->execute(array_merge([$globalBank, $workspace_id], $batchTxIds));
-                $updatedChanges[] = "🏦 Banco: *{$globalBank}*";
-            }
-
-            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
-
-            logUserActivity($pdo, $user_id, 'WHATSAPP_EDICAO_LOTE_GLOBAL', "Atualização de banco global no lote via WhatsApp (" . count($batchTransactions) . " itens): {$globalBank}", 0, ['phone' => $cleanPhone]);
-
-            $itemLines = [];
-            $totalBatchAmount = 0;
-            foreach ($batchTransactions as $idx => $tx) {
-                $num = $idx + 1;
-                $totalBatchAmount += (float)$tx['amount'];
-                $fmtVal = number_format((float)$tx['amount'], 2, ',', '.');
-                $bName = $globalBank ?: ($tx['bank_name'] ?: 'Geral');
-                $itemLines[] = "{$num}️⃣ *R$ {$fmtVal}* – {$tx['description']} _({$tx['category']})_\n   🏦 {$bName}";
-            }
-
-            $fmtTotalBatch = number_format($totalBatchAmount, 2, ',', '.');
-
-            $replyMsg = "✅ *PriceXP — Lote Atualizado com Sucesso!*\n\n"
-                      . "Os *{$countBatch} lançamentos* do lote tiveram o banco alterado para *{$globalBank}*:\n\n"
-                      . implode("\n\n", $itemLines) . "\n\n"
-                      . "💰 *Total do Lote:* R$ {$fmtTotalBatch}\n"
-                      . "🏦 *Banco/Conta:* {$globalBank}\n\n"
-                      . "🚀 _Seu saldo e gráficos foram atualizados no painel PriceXP._";
-
-            echo json_encode(['success' => true, 'reply' => $replyMsg]);
-            exit;
-        }
-    }
-
-    // 3. Seleção de Item Único via Índice Numérico
-    $selectedIndex = (int)trim($lowerText);
-
-    if ($selectedIndex < 1 || $selectedIndex > $countBatch) {
-        $replyMsg = "⚠️ *PriceXP — Opção Inválida*\n\n"
-                  . "Por favor, responda com o número entre *1* e *{$countBatch}* (para editar um item)\n"
-                  . "ou informe o novo Banco (ex: *\"Nubank\"* ou *\"todos no Nubank\"*) para alterar o lote todo.\n\n"
-                  . "↩️ _Ou envie \"cancelar\" para sair sem alterar nada._";
-        echo json_encode(['success' => true, 'reply' => $replyMsg]);
-        exit;
-    }
-
-    // Posição válida selecionada (1-indexed)
-    $targetTxId = $batchTxIds[$selectedIndex - 1];
-
-    $stmtSelected = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE id = ? AND user_id = ?");
-    $stmtSelected->execute([$targetTxId, $workspace_id]);
-    $selectedTx = $stmtSelected->fetch();
-
-    if ($selectedTx) {
-        try {
-            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
-            $stmtInsEdit = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'edit_mode', ?, ?, ?, 'Outra')");
-            $stmtInsEdit->execute([$user_id, $cleanPhone, $selectedTx['amount'], 'tx_id:' . $selectedTx['id'], $selectedTx['bank_name']]);
-        } catch (Exception $e) {}
-
-        $fmtVal   = number_format((float)$selectedTx['amount'], 2, ',', '.');
-        $catShow  = !empty($selectedTx['category']) ? $selectedTx['category'] : 'Geral';
-        $bankShow = !empty($selectedTx['bank_name']) ? $selectedTx['bank_name'] : 'Geral';
-
-        $replyMsg = "✏️ *PriceXP — Editar Lançamento*\n\n"
-                  . "Lançamento selecionado (#{$selectedIndex} do lote):\n\n"
-                  . "• *Descrição:* {$selectedTx['description']}\n"
-                  . "• *Valor:* R$ {$fmtVal}\n"
-                  . "• *Banco/Conta:* {$bankShow}\n"
-                  . "• *Categoria:* {$catShow}\n\n"
-                  . "O que você gostaria de alterar? Envie tudo na mesma mensagem:\n\n"
-                  . "• Ex: *\"80 reais\"* (altera o valor)\n"
-                  . "• Ex: *\"Nubank\"* (altera o banco)\n"
-                  . "• Ex: *\"Sicredi crédito\"* (altera banco e pagamento)\n"
-                  . "• Ex: *\"Ração cachorro 45,90\"* (altera descrição e valor)\n\n"
-                  . "💡 _Você pode informar apenas o campo que deseja mudar e o Patrick atualizará automaticamente!_";
-    } else {
-        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
-        $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nO lançamento selecionado não foi encontrado no seu painel.";
     }
 
     echo json_encode(['success' => true, 'reply' => $replyMsg]);
