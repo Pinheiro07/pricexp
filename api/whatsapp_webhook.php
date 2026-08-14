@@ -990,12 +990,64 @@ if ($pendingSelection) {
     $batchTxIds = array_values($rawIds);
     $countBatch = count($batchTxIds);
 
+    // 2. Verifica se o usuário informou uma alteração GLOBAL para TODO O LOTE (ex: "Nubank", "todos no Nubank", "Sicredi")
+    $globalBank   = parseBank($lowerText, $workspace_id, $pdo);
+    $globalMethod = parsePaymentMethod($lowerText);
+
+    $isNumericIndex = is_numeric(trim($lowerText)) && ((int)trim($lowerText) >= 1) && ((int)trim($lowerText) <= $countBatch);
+
+    if (!$isNumericIndex && ($globalBank || $globalMethod !== 'Outra')) {
+        $inPlaceholders = implode(',', array_fill(0, count($batchTxIds), '?'));
+        $paramsFetch = array_merge([$workspace_id], $batchTxIds);
+
+        $stmtFetchBatch = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE user_id = ? AND id IN ($inPlaceholders) ORDER BY id ASC");
+        $stmtFetchBatch->execute($paramsFetch);
+        $batchTransactions = $stmtFetchBatch->fetchAll();
+
+        if ($batchTransactions) {
+            $updatedChanges = [];
+            if ($globalBank) {
+                $stmtUpdBank = $pdo->prepare("UPDATE transactions SET bank_name = ? WHERE user_id = ? AND id IN ($inPlaceholders)");
+                $stmtUpdBank->execute(array_merge([$globalBank, $workspace_id], $batchTxIds));
+                $updatedChanges[] = "🏦 Banco: *{$globalBank}*";
+            }
+
+            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+
+            logUserActivity($pdo, $user_id, 'WHATSAPP_EDICAO_LOTE_GLOBAL', "Atualização de banco global no lote via WhatsApp (" . count($batchTransactions) . " itens): {$globalBank}", 0, ['phone' => $cleanPhone]);
+
+            $itemLines = [];
+            $totalBatchAmount = 0;
+            foreach ($batchTransactions as $idx => $tx) {
+                $num = $idx + 1;
+                $totalBatchAmount += (float)$tx['amount'];
+                $fmtVal = number_format((float)$tx['amount'], 2, ',', '.');
+                $bName = $globalBank ?: ($tx['bank_name'] ?: 'Geral');
+                $itemLines[] = "{$num}️⃣ *R$ {$fmtVal}* – {$tx['description']} _({$tx['category']})_\n   🏦 {$bName}";
+            }
+
+            $fmtTotalBatch = number_format($totalBatchAmount, 2, ',', '.');
+
+            $replyMsg = "✅ *PriceXP — Lote Atualizado com Sucesso!*\n\n"
+                      . "Os *{$countBatch} lançamentos* do lote tiveram o banco alterado para *{$globalBank}*:\n\n"
+                      . implode("\n\n", $itemLines) . "\n\n"
+                      . "💰 *Total do Lote:* R$ {$fmtTotalBatch}\n"
+                      . "🏦 *Banco/Conta:* {$globalBank}\n\n"
+                      . "🚀 _Seu saldo e gráficos foram atualizados no painel PriceXP._";
+
+            echo json_encode(['success' => true, 'reply' => $replyMsg]);
+            exit;
+        }
+    }
+
+    // 3. Seleção de Item Único via Índice Numérico
     $selectedIndex = (int)trim($lowerText);
 
     if ($selectedIndex < 1 || $selectedIndex > $countBatch) {
         $replyMsg = "⚠️ *PriceXP — Opção Inválida*\n\n"
-                  . "Por favor, escolha um número válido entre *1* e *{$countBatch}*.\n\n"
-                  . "↩️ _Responda com o número do lançamento que deseja alterar ou envie \"cancelar\"._";
+                  . "Por favor, responda com o número entre *1* e *{$countBatch}* (para editar um item)\n"
+                  . "ou informe o novo Banco (ex: *\"Nubank\"* ou *\"todos no Nubank\"*) para alterar o lote todo.\n\n"
+                  . "↩️ _Ou envie \"cancelar\" para sair sem alterar nada._";
         echo json_encode(['success' => true, 'reply' => $replyMsg]);
         exit;
     }
