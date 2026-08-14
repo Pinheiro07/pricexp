@@ -412,7 +412,9 @@ function parseDescription($text, $type, $amount = null, $bankName = null, $payme
     }
 
     // Preserva acentuação e capitaliza a primeira letra
-    return mb_strtoupper(mb_substr($clean, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($clean, 1, null, 'UTF-8');
+    $firstChar = mb_strtoupper(mb_substr($clean, 0, 1, 'UTF-8'), 'UTF-8');
+    $restChar  = mb_substr($clean, 1, mb_strlen($clean, 'UTF-8'), 'UTF-8');
+    return $firstChar . $restChar;
 }
 
 // --- HELPER DE NORMALIZAÇÃO DE TEXTO PARA CATEGORIZAÇÃO ---
@@ -975,8 +977,13 @@ if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerTex
     $lastSess = $stmtLastSession->fetch();
     
     $targetTxId = null;
-    if ($lastSess && (strpos($lastSess['description'], 'last_tx:') !== false || strpos($lastSess['description'], 'tx_id:') !== false)) {
-        $targetTxId = (int)str_replace(['last_tx:', 'tx_id:'], '', $lastSess['description']);
+    if ($lastSess) {
+        if (strpos($lastSess['description'], 'batch_ids:') !== false) {
+            $rawIds = array_filter(array_map('intval', explode(',', str_replace('batch_ids:', '', $lastSess['description']))));
+            $targetTxId = end($rawIds) ?: null;
+        } elseif (strpos($lastSess['description'], 'last_tx:') !== false || strpos($lastSess['description'], 'tx_id:') !== false) {
+            $targetTxId = (int)str_replace(['last_tx:', 'tx_id:'], '', $lastSess['description']);
+        }
     }
 
     $lastTx = null;
@@ -1279,7 +1286,7 @@ if (count($batchItems) >= 2) {
 // ------------------------------------------------------------------
 // --- BUSCA SESSÃO PENDENTE DO USUÁRIO (RASCUNHOS APENAS) ---
 // ------------------------------------------------------------------
-$stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type NOT IN ('last_created_tx', 'edit_mode') ORDER BY id DESC LIMIT 1");
+$stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type NOT IN ('last_created_tx', 'last_created_batch', 'edit_mode') ORDER BY id DESC LIMIT 1");
 $stmtPending->execute([$user_id]);
 $pending = $stmtPending->fetch();
 
