@@ -835,16 +835,80 @@ if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|ex
 }
 
 // ------------------------------------------------------------------
-// --- COMANDO DE EXCLUSÃO DE LANÇAMENTO VIA WHATSAPP (BOTÃO 2 OU PALAVRA) ---
 // ------------------------------------------------------------------
-if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+último|\s+ultimo|\s+lançamento|\s+lancamento|\s+gasto)?$/i', trim($lowerText)) || 
-    preg_match('/(excluir último|apagar último|deletar último|cancelar último|apagar o último|excluir o último|deletar o último|cancelar o último|delete_last_tx)/i', $lowerText)) {
+// --- COMANDO DE EXCLUSÃO DE LANÇAMENTO / LOTE VIA WHATSAPP (BOTÃO 2 OU PALAVRA) ---
+// ------------------------------------------------------------------
+if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+último|\s+ultimo|\s+lançamento|\s+lancamento|\s+gasto|\s+lote)?$/i', trim($lowerText)) || 
+    preg_match('/(excluir último|apagar último|deletar último|cancelar último|apagar o último|excluir o último|deletar o último|cancelar o último|delete_last_tx|excluir lote|cancelar lote)/i', $lowerText)) {
     
-    // 1. Verifica se há uma ID ancorada especificamente no último lançamento deste usuário
-    $stmtLastSession = $pdo->prepare("SELECT description FROM whatsapp_pending_sessions WHERE user_id = ? AND (type = 'last_created_tx' OR type = 'edit_mode') ORDER BY id DESC LIMIT 1");
+    // 1. Busca no estado da conversa se o último envio criou um LOTE ou um LANÇAMENTO ÚNICO
+    $stmtLastSession = $pdo->prepare("SELECT type, description FROM whatsapp_pending_sessions WHERE user_id = ? AND type IN ('last_created_tx', 'last_created_batch', 'edit_mode') ORDER BY id DESC LIMIT 1");
     $stmtLastSession->execute([$user_id]);
     $lastSess = $stmtLastSession->fetch();
     
+    $batchTxIds = [];
+    $isBatchDelete = false;
+
+    if ($lastSess && strpos($lastSess['description'], 'batch_ids:') !== false) {
+        $rawIdsStr = str_replace('batch_ids:', '', $lastSess['description']);
+        $parsedIds = array_map('intval', explode(',', $rawIdsStr));
+        $batchTxIds = array_filter($parsedIds, function($id) { return $id > 0; });
+        $isBatchDelete = (count($batchTxIds) >= 2);
+    }
+
+    if ($isBatchDelete && !empty($batchTxIds)) {
+        // --- EXCLUSÃO DE LOTE INTEIRO DENTRO DE TRANSAÇÃO PDO ATÔMICA ---
+        $inPlaceholders = implode(',', array_fill(0, count($batchTxIds), '?'));
+        $paramsFetch = array_merge([$workspace_id, $user_id], $batchTxIds);
+        
+        $stmtFetchBatch = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? AND created_by_user_id = ? AND id IN ($inPlaceholders) ORDER BY id ASC");
+        $stmtFetchBatch->execute($paramsFetch);
+        $batchTransactions = $stmtFetchBatch->fetchAll();
+
+        if ($batchTransactions) {
+            $pdo->beginTransaction();
+            try {
+                $delParams = array_merge([$workspace_id], array_column($batchTransactions, 'id'));
+                $delIn = implode(',', array_fill(0, count($batchTransactions), '?'));
+                $stmtDelBatch = $pdo->prepare("DELETE FROM transactions WHERE user_id = ? AND id IN ($delIn)");
+                $stmtDelBatch->execute($delParams);
+
+                // Limpa imediatamente o estado da conversa para impedir dupla exclusão
+                $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+
+                $pdo->commit();
+            } catch (Exception $exDel) {
+                $pdo->rollBack();
+                echo json_encode(['success' => false, 'error' => 'Falha ao excluir lote de lançamentos.']);
+                exit;
+            }
+
+            $totalDeletedAmount = 0;
+            $itemSummaryList = [];
+            foreach ($batchTransactions as $idx => $tx) {
+                $totalDeletedAmount += (float)$tx['amount'];
+                $fmtVal = number_format((float)$tx['amount'], 2, ',', '.');
+                $itemNum = $idx + 1;
+                $itemSummaryList[] = "{$itemNum}️⃣ R$ {$fmtVal} – {$tx['description']}";
+            }
+
+            logUserActivity($pdo, $user_id, 'WHATSAPP_EXCLUSAO_LOTE', "Exclusão de lote via WhatsApp (" . count($batchTransactions) . " itens, R$ {$totalDeletedAmount})", $totalDeletedAmount, ['phone' => $cleanPhone]);
+
+            $fmtTotalDel = number_format($totalDeletedAmount, 2, ',', '.');
+            $countDel = count($batchTransactions);
+
+            $replyMsg = "🗑️ *PriceXP — Lote Excluído*\n\n"
+                      . "Os *{$countDel} lançamentos* do último lote foram removidos com sucesso:\n\n"
+                      . implode("\n", $itemSummaryList) . "\n\n"
+                      . "💰 *Total removido:* R$ {$fmtTotalDel}\n\n"
+                      . "🚀 _Seu saldo e gráficos foram atualizados no painel PriceXP._";
+
+            echo json_encode(['success' => true, 'reply' => $replyMsg]);
+            exit;
+        }
+    }
+
+    // --- EXCLUSÃO DE LANÇAMENTO INDIVIDUAL ---
     $targetTxId = null;
     if ($lastSess && (strpos($lastSess['description'], 'last_tx:') !== false || strpos($lastSess['description'], 'tx_id:') !== false)) {
         $targetTxId = (int)str_replace(['last_tx:', 'tx_id:'], '', $lastSess['description']);
@@ -857,18 +921,28 @@ if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+
         $lastTx = $stmtLast->fetch();
     }
 
-    // Fallback: Busca a última transação criada estritamente por este usuário
-    if (empty($lastTx)) {
+    // Fallback apenas se houver uma sessão pendente válida de lançamento recente
+    if (empty($lastTx) && $lastSess && (strpos($lastSess['description'], 'last_tx:') !== false || strpos($lastSess['description'], 'tx_id:') !== false)) {
         $stmtLast = $pdo->prepare("SELECT id, type, description, amount, bank_name, date FROM transactions WHERE user_id = ? AND created_by_user_id = ? ORDER BY id DESC LIMIT 1");
         $stmtLast->execute([$workspace_id, $user_id]);
         $lastTx = $stmtLast->fetch();
     }
 
     if ($lastTx) {
-        $stmtDel = $pdo->prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?");
-        $stmtDel->execute([$lastTx['id'], $workspace_id]);
+        $pdo->beginTransaction();
+        try {
+            $stmtDel = $pdo->prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?");
+            $stmtDel->execute([$lastTx['id'], $workspace_id]);
 
-        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+            // Limpa o estado da conversa
+            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+
+            $pdo->commit();
+        } catch (Exception $exSingle) {
+            $pdo->rollBack();
+            echo json_encode(['success' => false, 'error' => 'Falha ao excluir lançamento.']);
+            exit;
+        }
 
         logUserActivity($pdo, $user_id, 'WHATSAPP_EXCLUSAO', "Exclusão via WhatsApp #{$lastTx['id']}: {$lastTx['description']} (R$ {$lastTx['amount']})", $lastTx['amount'], ['phone' => $cleanPhone]);
 
@@ -885,7 +959,7 @@ if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+
                   . "• Data: {$fmtDate}\n\n"
                   . "🚀 _Seu saldo e gráficos foram atualizados no painel PriceXP._";
     } else {
-        $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nNenhum lançamento recente criado por você foi encontrado para ser excluído.";
+        $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nNenhum lançamento ou lote recente disponível para exclusão.";
     }
 
     echo json_encode(['success' => true, 'reply' => $replyMsg]);
@@ -1115,7 +1189,7 @@ foreach ($lines as $lineIndex => $line) {
 if (count($batchItems) >= 2) {
     $insertedCount = 0;
     $totalBatchAmount = 0;
-    $lastInsertedId = null;
+    $createdBatchIds = [];
     $todayDate = date('Y-m-d');
     $itemSummaryList = [];
 
@@ -1124,56 +1198,65 @@ if (count($batchItems) >= 2) {
     $hasSingleUniqueBank = (count($allBanksInBatch) === 1);
     $uniqueBankName = $hasSingleUniqueBank ? reset($allBanksInBatch) : null;
 
-    $stmtBatchIns = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name, card_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    // Executa o salvamento de todo o lote dentro de uma transação PDO atômica
+    $pdo->beginTransaction();
+    try {
+        $stmtBatchIns = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name, card_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    foreach ($batchItems as $idx => $item) {
-        $card_id = null;
-        if ($item['type'] === 'despesa' && $item['payment_method'] === 'Crédito' && $item['bank_name'] !== 'Geral') {
-            try {
-                $stmtCard = $pdo->prepare("SELECT id FROM credit_cards WHERE user_id = ? AND LOWER(name) LIKE ? LIMIT 1");
-                $stmtCard->execute([$workspace_id, '%' . strtolower($item['bank_name']) . '%']);
-                $card_id = $stmtCard->fetchColumn() ?: null;
-            } catch (Exception $e) {}
+        foreach ($batchItems as $idx => $item) {
+            $card_id = null;
+            if ($item['type'] === 'despesa' && $item['payment_method'] === 'Crédito' && $item['bank_name'] !== 'Geral') {
+                try {
+                    $stmtCard = $pdo->prepare("SELECT id FROM credit_cards WHERE user_id = ? AND LOWER(name) LIKE ? LIMIT 1");
+                    $stmtCard->execute([$workspace_id, '%' . strtolower($item['bank_name']) . '%']);
+                    $card_id = $stmtCard->fetchColumn() ?: null;
+                } catch (Exception $e) {}
+            }
+
+            $stmtBatchIns->execute([
+                $workspace_id,
+                $user_id,
+                $item['type'],
+                $item['category'],
+                $item['description'],
+                $item['amount'],
+                $todayDate,
+                $item['bank_name'],
+                $card_id
+            ]);
+
+            $newTxId = $pdo->lastInsertId();
+            $createdBatchIds[] = $newTxId;
+            $insertedCount++;
+            $totalBatchAmount += $item['amount'];
+
+            logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO_LOTE', "Lançamento via WhatsApp #{$newTxId}: {$item['type']} - {$item['description']} (R$ {$item['amount']}) [Banco: {$item['bank_name']} | Pagamento: {$item['payment_method']}]", $item['amount'], ['bank' => $item['bank_name'], 'method' => $item['payment_method'], 'phone' => $cleanPhone]);
+
+            $fmtVal = number_format($item['amount'], 2, ',', '.');
+            $icon = ($item['type'] === 'receita') ? '🟢' : '🔴';
+            $itemNum = $idx + 1;
+
+            if ($hasSingleUniqueBank) {
+                $itemSummaryList[] = "{$itemNum}️⃣ {$icon} *R$ {$fmtVal}* — {$item['description']} _({$item['category']})_";
+            } else {
+                $pmStr = ($item['payment_method'] !== 'Outra') ? " • {$item['payment_method']}" : "";
+                $bankMethodStr = "🏦 {$item['bank_name']}{$pmStr}";
+                $itemSummaryList[] = "{$itemNum}️⃣ {$icon} *R$ {$fmtVal}* — {$item['description']} _({$item['category']})_\n   {$bankMethodStr}";
+            }
         }
 
-        $stmtBatchIns->execute([
-            $workspace_id,
-            $user_id,
-            $item['type'],
-            $item['category'],
-            $item['description'],
-            $item['amount'],
-            $todayDate,
-            $item['bank_name'],
-            $card_id
-        ]);
-
-        $lastInsertedId = $pdo->lastInsertId();
-        $insertedCount++;
-        $totalBatchAmount += $item['amount'];
-
-        logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO_LOTE', "Lançamento via WhatsApp #{$lastInsertedId}: {$item['type']} - {$item['description']} (R$ {$item['amount']}) [Banco: {$item['bank_name']} | Pagamento: {$item['payment_method']}]", $item['amount'], ['bank' => $item['bank_name'], 'method' => $item['payment_method'], 'phone' => $cleanPhone]);
-
-        $fmtVal = number_format($item['amount'], 2, ',', '.');
-        $icon = ($item['type'] === 'receita') ? '🟢' : '🔴';
-        $itemNum = $idx + 1;
-
-        if ($hasSingleUniqueBank) {
-            $itemSummaryList[] = "{$itemNum}️⃣ {$icon} *R$ {$fmtVal}* — {$item['description']} _({$item['category']})_";
-        } else {
-            $pmStr = ($item['payment_method'] !== 'Outra') ? " • {$item['payment_method']}" : "";
-            $bankMethodStr = "🏦 {$item['bank_name']}{$pmStr}";
-            $itemSummaryList[] = "{$itemNum}️⃣ {$icon} *R$ {$fmtVal}* — {$item['description']} _({$item['category']})_\n   {$bankMethodStr}";
-        }
-    }
-
-    // Atualiza rascunhos salvando a última transação criada para opções de edição/exclusão
-    if ($lastInsertedId) {
-        try {
+        // Armazena no estado da conversa a lista EXATA de IDs criados neste lote
+        if (!empty($createdBatchIds)) {
             $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
-            $stmtInsLast = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'last_created_tx', ?, ?, ?, 'Outra')");
-            $stmtInsLast->execute([$user_id, $cleanPhone, $totalBatchAmount, 'last_tx:' . $lastInsertedId, $hasSingleUniqueBank ? $uniqueBankName : 'Geral']);
-        } catch (Exception $exSess) {}
+            $stmtInsLast = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'last_created_batch', ?, ?, ?, 'Outra')");
+            $stmtInsLast->execute([$user_id, $cleanPhone, $totalBatchAmount, 'batch_ids:' . implode(',', $createdBatchIds), $hasSingleUniqueBank ? $uniqueBankName : 'Geral']);
+        }
+
+        $pdo->commit();
+    } catch (Exception $exBatch) {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'error' => 'Falha ao registrar o lote de lançamentos.']);
+        exit;
     }
 
     $fmtTotalBatch = number_format($totalBatchAmount, 2, ',', '.');
@@ -1187,7 +1270,7 @@ if (count($batchItems) >= 2) {
               . "🚀 _Todos os lançamentos foram salvos instantaneamente no seu painel PriceXP._\n\n"
               . "🔘 *Opções Rápidas:*\n"
               . "1️⃣ Responda *1* ou *\"Editar\"* ➔ Alterar o último lançamento\n"
-              . "2️⃣ Responda *2* ou *\"Excluir\"* ➔ Cancelar o último lançamento";
+              . "2️⃣ Responda *2* ou *\"Excluir\"* ➔ Excluir os {$insertedCount} lançamentos deste lote";
 
     echo json_encode(['success' => true, 'reply' => $replyMsg]);
     exit;
