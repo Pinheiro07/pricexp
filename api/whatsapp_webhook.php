@@ -370,86 +370,49 @@ function parseType($text) {
     return null;
 }
 
-// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE ---
-function parseDescription($text, $type) {
-    // Limpa do texto qualquer nome de banco/instituição para não confundir (ex: "mercado pago" -> não virar "Mercado")
-    $bankCleanedText = preg_replace('/\b(mercado pago|mercado livre|pagbank|pag bank|picpay|pic pay|c6 bank|c6bank|will bank|willbank|banco inter|banco do brasil)\b/i', ' ', $text);
-    $lower = mb_strtolower(trim($bankCleanedText), 'UTF-8');
+// --- HELPER DE EXTRAÇÃO DE DESCRIÇÃO INTELIGENTE E LIMPA ---
+function parseDescription($text, $type, $amount = null, $bankName = null, $paymentMethod = null) {
+    $clean = $text;
 
+    // Remove o valor da frase
+    if ($amount !== null && $amount > 0) {
+        $clean = preg_replace('/(?:r\$\s*)?\b' . preg_replace('/[\.,]/', '[\.,]', (string)$amount) . '\b/iu', ' ', $clean);
+        $clean = preg_replace('/(?:r\$\s*)?\b\d+(?:[\.,]\d{1,2})?\b/iu', ' ', $clean);
+    }
+
+    // Remove o banco identificado e bancos conhecidos
+    if (!empty($bankName)) {
+        $clean = preg_replace('/\b' . preg_quote($bankName, '/') . '\b/iu', ' ', $clean);
+    }
+    $clean = preg_replace('/\b(banco inter|inter|nubank|nu bank|nu|sicredi|secredi|c6 bank|c6bank|c6|caju|itau|itaú|bradesco|santander|caixa|banco do brasil|bb|sicoob|secob|pagbank|pag bank|picpay|pic pay|mercado pago|mercado livre|btg pactual|btg|will bank|will|neon)\b/iu', ' ', $clean);
+
+    // Remove a forma de pagamento identificada
+    if (!empty($paymentMethod)) {
+        $clean = preg_replace('/\b' . preg_quote($paymentMethod, '/') . '\b/iu', ' ', $clean);
+    }
+    $clean = preg_replace('/\b(pix|credito|crédito|debito|débito|dinheiro|especie|espécie|transferencia|transferência|ted|doc|boleto)\b/iu', ' ', $clean);
+
+    // Remove palavras de ruído e conectores
     $actionVerbs = [
         'gastei', 'gaste', 'paguei', 'pague', 'comprei', 'comprai', 'custou', 'recebi', 'ganhei', 'foi', 'deu', 'caiu', 
         'anota', 'anotar', 'lançar', 'lancar', 'lança', 'lanca', 'despesa', 'receita', 'valor', 'reais', 'real', 'reias', 
-        'riais', 'reaiss', 'sim', 'nao', 'não', 'pix', 'débito', 'debito', 'crédito', 'credito', 'dinheiro', 'boleto',
-        'no', 'na', 'nos', 'nas', 'do', 'da', 'dos', 'das', 'de', 'em', 'com', 'para', 'pro', 'pra', 'pelo', 'pela', 'por'
+        'riais', 'reaiss', 'sim', 'nao', 'não', 'banco', 'bancos', 'conta', 'contas', 'cartão', 'cartao', 'cartões', 'cartoes',
+        'no', 'na', 'nos', 'nas', 'do', 'da', 'dos', 'das', 'de', 'em', 'com', 'para', 'pro', 'pra', 'pelo', 'pela', 'por', 'r$'
     ];
 
-    // 1. Extrai de frases "comprei X", "comprei 2,00 de X", "gastei no X" (Prioridade para o objeto real da ação)
-    if (preg_match('/(?:comprei|gastei|paguei|custou)\s+(?:no|na|em|de|pro|pra|um|uma|uns|umas|\d+(?:[\.,]\d{1,2})?\s*(?:reais|real)?\s*de)?\s*([a-zà-ú0-9\s]{2,30})/i', $bankCleanedText, $mComp)) {
-        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real|reias|riais|por|na|no|em)\b/i', ' ', $mComp[1]);
-        $extracted = trim(preg_replace('/[\s\d]+/', ' ', $extracted));
-        if (mb_strlen($extracted, 'UTF-8') >= 2 && !preg_match('/^\d+$/', $extracted) && !in_array(strtolower($extracted), $actionVerbs) && !preg_match('/^r[eia]{2,4}s?$/i', $extracted)) {
-            return ucfirst($extracted);
-        }
+    foreach ($actionVerbs as $verb) {
+        $clean = preg_replace('/\b' . preg_quote($verb, '/') . '\b/iu', ' ', $clean);
     }
 
-    // 2. Dicionário de palavras-chave explícitas (ex: comida, mercado, compras, gasolina, aluguel, google, youtube, etc.)
-    $expenseKeywords = [
-        'compras' => 'Compras', 'compra' => 'Compras', 'mercado' => 'Mercado', 'supermercado' => 'Mercado', 'feira' => 'Feira', 'açougue' => 'Açougue', 'padaria' => 'Padaria',
-        'ifood' => 'iFood', 'restaurante' => 'Restaurante', 'almoço' => 'Almoço', 'almoco' => 'Almoço', 'jantar' => 'Jantar',
-        'lanche' => 'Lanche', 'pizza' => 'Pizza', 'comida' => 'Alimentação', 'mcdonald' => 'McDonalds', 'burger' => 'Burger King',
-        'gasolina' => 'Gasolina', 'combustivel' => 'Gasolina', 'combustível' => 'Gasolina', 'uber' => 'Uber', '99' => 'Uber / 99', 'taxi' => 'Táxi', 'táxi' => 'Táxi',
-        'cinema' => 'Cinema', 'movie' => 'Cinema', 'netflix' => 'Netflix', 'spotify' => 'Spotify', 'jogos' => 'Jogos', 'bar' => 'Bar / Lazer',
-        'farmacia' => 'Farmácia', 'farmácia' => 'Farmácia', 'remedio' => 'Farmácia', 'remédio' => 'Farmácia', 'medico' => 'Consulta Médica', 'médico' => 'Consulta Médica',
-        'aluguel' => 'Aluguel', 'condominio' => 'Condomínio', 'condomínio' => 'Condomínio', 'luz' => 'Conta de Luz', 'energia' => 'Conta de Luz', 'água' => 'Conta de Água', 'agua' => 'Conta de Água', 'internet' => 'Internet', 'telefone' => 'Telefone',
-        'escola' => 'Escola', 'faculdade' => 'Faculdade', 'curso' => 'Curso', 'livro' => 'Livro / Estudo',
-        'google' => 'Google', 'youtube' => 'YouTube', 'amazon' => 'Amazon', 'shopee' => 'Shopee', 'shein' => 'Shein', 'steam' => 'Steam', 'apple' => 'Apple'
-    ];
+    $clean = preg_replace('/[^a-zA-Zà-úÀ-Ú0-9\s]/u', ' ', $clean);
+    $clean = trim(preg_replace('/\s+/', ' ', $clean));
 
-    $incomeKeywords = [
-        'salario' => 'Salário', 'salário' => 'Salário', 'holerite' => 'Salário', 'férias' => 'Férias', 'ferias' => 'Férias', '13' => '13º Salário',
-        'venda' => 'Venda', 'site' => 'Venda no Site', 'cliente' => 'Pagamento de Cliente', 'freelance' => 'Freelance', 'servico' => 'Serviço Prestado', 'serviço' => 'Serviço Prestado',
-        'comissao' => 'Comissão', 'comissão' => 'Comissão', 'bonus' => 'Bônus', 'bônus' => 'Bônus', 'plr' => 'PLR', 'rendimento' => 'Rendimento', 'investimento' => 'Investimento'
-    ];
-
-    $dict = ($type === 'receita') ? array_merge($incomeKeywords, $expenseKeywords) : array_merge($expenseKeywords, $incomeKeywords);
-    foreach ($dict as $key => $label) {
-        if (preg_match('/\b' . preg_quote($key, '/') . '\b/i', $lower)) {
-            return $label;
-        }
+    if (empty($clean)) {
+        return 'Lançamento Geral';
     }
 
-    if (preg_match('/(?:pix|receb\w+|veio|pagamento)\s+(?:do|da|de)\s+([a-zà-ú]{3,15})/i', $lower, $mPerson)) {
-        return 'Pix de ' . ucfirst($mPerson[1]);
-    }
-
-    // 3. FALLBACK UNIVERSAL INTELIGENTE: Limpa bancos, meios de pagamento e verbos de ação
-    $cleanText = trim($bankCleanedText);
-
-    if (mb_strlen($cleanText, 'UTF-8') >= 2 && !preg_match('/^\d+(?:[\.,]\d+)?$/', $cleanText)) {
-        $extracted = preg_replace('/\b(banco|bancos|conta|contas|cartão|cartao|cartões|cartoes|nubank|nu bank|itau|itaú|bradesco|santander|inter|c6|c6bank|c6 bank|caixa|bb|banco do brasil|sicoob|secob|sicredi|secredi|sicrede|si credi|se credi|pagbank|picpay|mercado pago|pix|débito|debito|crédito|credito|dinheiro|boleto|reais|real|reias|riais|gastei|paguei|comprei|recebi|ganhei|custou|saiu|foi|deu|caiu|anota|anotar|lançar|lancar|lança|lanca|despesa|receita)\b/i', ' ', $cleanText);
-        
-        // Remove conectores do início e fim (ex: ", no ", " no ", " na ")
-        $extracted = preg_replace('/[\,;\.]/', ' ', $extracted);
-        $extracted = trim(preg_replace('/\s+/', ' ', $extracted));
-        
-        // Separa por espaço e remove conectores soltos ("no", "na", "de", etc.)
-        $words = explode(' ', $extracted);
-        $filteredWords = [];
-        foreach ($words as $w) {
-            $wClean = trim($w);
-            if (!empty($wClean) && !in_array(strtolower($wClean), $actionVerbs) && !preg_match('/^\d+$/', $wClean)) {
-                $filteredWords[] = $wClean;
-            }
-        }
-
-        $finalStr = trim(implode(' ', $filteredWords));
-
-        if (mb_strlen($finalStr, 'UTF-8') >= 2 && !in_array(strtolower($finalStr), $actionVerbs) && !preg_match('/^r[eia]{2,4}s?$/i', $finalStr) && !preg_match('/^(gast|pagu|compr|receb|ganh)/i', $finalStr)) {
-            return ucfirst($finalStr);
-        }
-    }
-
-    return null;
+    // Preserva acentuação e capitaliza a primeira letra
+    return mb_strtoupper(mb_substr($clean, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($clean, 1, null, 'UTF-8');
 }
 
 // --- HELPER DE NORMALIZAÇÃO DE TEXTO PARA CATEGORIZAÇÃO ---
@@ -1096,38 +1059,54 @@ if ($isEditModePending || $isCorrectionKeyword) {
 $lines = explode("\n", str_replace("\r", "", $rawText));
 $batchItems = [];
 
-// Detecta se há informações globais no texto (ex: "Gastei no Nubank em Crédito:")
-$globalBank   = parseBank($lowerText, $workspace_id, $pdo);
-$globalMethod = parsePaymentMethod($lowerText);
-$globalType   = parseType($lowerText) ?: 'despesa';
+// Detecta se a PRIMEIRA LINHA é apenas um cabeçalho com banco global (ex: "Nubank:" ou "Gastei no Nubank:")
+$headerBank   = null;
+$headerMethod = null;
+$headerType   = 'despesa';
 
-foreach ($lines as $line) {
+if (count($lines) > 1) {
+    $firstLine = trim($lines[0]);
+    if (parseAmount($firstLine) <= 0) {
+        $headerBank   = parseBank($firstLine, $workspace_id, $pdo);
+        $headerMethod = parsePaymentMethod($firstLine);
+        $headerType   = parseType($firstLine) ?: 'despesa';
+    }
+}
+
+foreach ($lines as $lineIndex => $line) {
     $lineTrimmed = trim($line);
     if (empty($lineTrimmed)) continue;
 
-    // Se a linha for apenas um cabeçalho/verbo sem valor (ex: "Gastei", "Lançamentos de hoje:", "Nubank:"), ignora a linha como item isolado
     $lineAmount = parseAmount($lineTrimmed);
     if ($lineAmount <= 0) continue;
 
-    // Extrai banco e método de pagamento específicos da linha, ou usa o global
-    $lineBank   = parseBank($lineTrimmed, $workspace_id, $pdo) ?: ($globalBank ?: 'Geral');
-    $lineMethod = parsePaymentMethod($lineTrimmed) ?: ($globalMethod ?: 'Outra');
-    $lineType   = parseType($lineTrimmed) ?: $globalType;
-    $lineDesc   = parseDescription($lineTrimmed, $lineType);
+    // Detecta banco e forma de pagamento ESPECÍFICOS estritamente da linha atual
+    $lineBankDetected   = parseBank($lineTrimmed, $workspace_id, $pdo);
+    $lineMethodDetected = parsePaymentMethod($lineTrimmed);
+    $lineType           = parseType($lineTrimmed) ?: $headerType;
+
+    // Prioridade de Banco: 1º Banco explícito na linha -> 2º Banco do cabeçalho -> 3º 'Geral'
+    $finalBankName = $lineBankDetected ?: ($headerBank ?: 'Geral');
+    // Prioridade de Pagamento: 1º Método explícito na linha -> 2º Método do cabeçalho -> 3º 'Outra'
+    $finalPaymentMethod = $lineMethodDetected ?: ($headerMethod ?: 'Outra');
+
+    // Limpa a descrição removendo valor, banco, forma de pagamento e conectores do texto da linha
+    $lineDesc = parseDescription($lineTrimmed, $lineType, $lineAmount, $finalBankName, $finalPaymentMethod);
 
     if (empty($lineDesc) || in_array(strtolower($lineDesc), ['gastei', 'recebi', 'paguei', 'compras'])) {
-        $lineDesc = 'Lançamento';
+        $lineDesc = 'Lançamento Geral';
     }
 
-    $lineCategory = inferCategoryStrict($lineDesc, $lineTrimmed, $lineType);
+    // Infere categoria usando a descrição limpa e a linha original
+    $lineCategory = inferCategoryStrict($lineDesc, $lineTrimmed, $lineType, $workspace_id, $pdo);
 
     $batchItems[] = [
+        'type'           => $lineType,
         'amount'         => $lineAmount,
         'description'    => $lineDesc,
-        'type'           => $lineType,
         'category'       => $lineCategory,
-        'bank_name'      => $lineBank,
-        'payment_method' => $lineMethod,
+        'bank_name'      => $finalBankName,
+        'payment_method' => $finalPaymentMethod,
         'raw_line'       => $lineTrimmed
     ];
 }
@@ -1139,6 +1118,11 @@ if (count($batchItems) >= 2) {
     $lastInsertedId = null;
     $todayDate = date('Y-m-d');
     $itemSummaryList = [];
+
+    // Verifica se TODOS os lançamentos do lote possuem o MESMO banco
+    $allBanksInBatch = array_unique(array_column($batchItems, 'bank_name'));
+    $hasSingleUniqueBank = (count($allBanksInBatch) === 1);
+    $uniqueBankName = $hasSingleUniqueBank ? reset($allBanksInBatch) : null;
 
     $stmtBatchIns = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name, card_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
@@ -1168,12 +1152,19 @@ if (count($batchItems) >= 2) {
         $insertedCount++;
         $totalBatchAmount += $item['amount'];
 
-        logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO_LOTE', "Lançamento via WhatsApp #{$lastInsertedId}: {$item['type']} - {$item['description']} (R$ {$item['amount']})", $item['amount'], ['bank' => $item['bank_name'], 'phone' => $cleanPhone]);
+        logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO_LOTE', "Lançamento via WhatsApp #{$lastInsertedId}: {$item['type']} - {$item['description']} (R$ {$item['amount']}) [Banco: {$item['bank_name']} | Pagamento: {$item['payment_method']}]", $item['amount'], ['bank' => $item['bank_name'], 'method' => $item['payment_method'], 'phone' => $cleanPhone]);
 
         $fmtVal = number_format($item['amount'], 2, ',', '.');
         $icon = ($item['type'] === 'receita') ? '🟢' : '🔴';
         $itemNum = $idx + 1;
-        $itemSummaryList[] = "{$itemNum}️⃣ {$icon} *R$ {$fmtVal}* — {$item['description']} _({$item['category']})_";
+
+        if ($hasSingleUniqueBank) {
+            $itemSummaryList[] = "{$itemNum}️⃣ {$icon} *R$ {$fmtVal}* — {$item['description']} _({$item['category']})_";
+        } else {
+            $pmStr = ($item['payment_method'] !== 'Outra') ? " • {$item['payment_method']}" : "";
+            $bankMethodStr = "🏦 {$item['bank_name']}{$pmStr}";
+            $itemSummaryList[] = "{$itemNum}️⃣ {$icon} *R$ {$fmtVal}* — {$item['description']} _({$item['category']})_\n   {$bankMethodStr}";
+        }
     }
 
     // Atualiza rascunhos salvando a última transação criada para opções de edição/exclusão
@@ -1181,18 +1172,17 @@ if (count($batchItems) >= 2) {
         try {
             $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
             $stmtInsLast = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'last_created_tx', ?, ?, ?, 'Outra')");
-            $stmtInsLast->execute([$user_id, $cleanPhone, $totalBatchAmount, 'last_tx:' . $lastInsertedId, $globalBank ?: 'Geral']);
+            $stmtInsLast->execute([$user_id, $cleanPhone, $totalBatchAmount, 'last_tx:' . $lastInsertedId, $hasSingleUniqueBank ? $uniqueBankName : 'Geral']);
         } catch (Exception $exSess) {}
     }
 
     $fmtTotalBatch = number_format($totalBatchAmount, 2, ',', '.');
-    $bankInfoStr = $globalBank ?: 'Geral';
 
     $replyMsg = "🎉 *PriceXP — Múltiplos Lançamentos Registrados!*\n\n"
               . "Olá *{$userName}*! Registramos os *{$insertedCount} lançamentos* com sucesso:\n\n"
-              . implode("\n", $itemSummaryList) . "\n\n"
+              . implode("\n\n", $itemSummaryList) . "\n\n"
               . "💰 *Total do Lote:* R$ {$fmtTotalBatch}\n"
-              . "🏦 *Banco/Conta:* {$bankInfoStr}\n"
+              . ($hasSingleUniqueBank ? "🏦 *Banco/Conta:* {$uniqueBankName}\n" : "")
               . "📅 *Data:* " . date('d/m/Y') . "\n\n"
               . "🚀 _Todos os lançamentos foram salvos instantaneamente no seu painel PriceXP._\n\n"
               . "🔘 *Opções Rápidas:*\n"
