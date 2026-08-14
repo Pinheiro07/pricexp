@@ -1136,7 +1136,9 @@ if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerTex
                       . "O seu último envio contém *{$countBatch} lançamentos*.\n\n"
                       . "Qual deles você deseja alterar?\n\n"
                       . implode("\n\n", $itemLines) . "\n\n"
-                      . "↩️ *Responda com o número (1 a {$countBatch})* do lançamento que deseja alterar.\n"
+                      . "↩️ *Como alterar:*\n"
+                      . "• Responda com um *número (1 a {$countBatch})* para alterar um lançamento específico.\n"
+                      . "• Ou informe o novo *Banco* (ex: *\"Nubank\"* ou *\"todos no Nubank\"*) para alterar o banco de todo o lote de uma vez!\n"
                       . "_Ou responda \"cancelar\" para sair sem alterar nada._";
 
             echo json_encode(['success' => true, 'reply' => $replyMsg]);
