@@ -452,40 +452,311 @@ function parseDescription($text, $type) {
     return null;
 }
 
-// --- HELPER DE CATEGORIAS OFICIAIS DO PRICEXP ---
-function inferCategoryStrict($description, $text, $type) {
-    $combined = mb_strtolower($description . ' ' . $text, 'UTF-8');
+// --- HELPER DE NORMALIZAÇÃO DE TEXTO PARA CATEGORIZAÇÃO ---
+function normalizeStringForCategory($text) {
+    $text = mb_strtolower((string)$text, 'UTF-8');
+    
+    $utf8_map = [
+        'á'=>'a','à'=>'a','â'=>'a','ã'=>'a','ä'=>'a',
+        'é'=>'e','è'=>'e','ê'=>'e','ë'=>'e',
+        'í'=>'i','ì'=>'i','î'=>'i','ï'=>'i',
+        'ó'=>'o','ò'=>'o','ô'=>'o','õ'=>'o','ö'=>'o',
+        'ú'=>'u','ù'=>'u','û'=>'u','ü'=>'u',
+        'ç'=>'c','ñ'=>'n'
+    ];
+    $text = strtr($text, $utf8_map);
+    $text = preg_replace('/[^a-z0-9\s]/u', ' ', $text);
+    return trim(preg_replace('/\s+/', ' ', $text));
+}
 
-    if ($type === 'receita') {
-        if (preg_match('/\b(salario|salário|holerite)\b/i', $combined)) return 'Salário Líquido';
-        if (preg_match('/\b(13|décimo terceiro|decimo terceiro)\b/i', $combined)) return '13º Salário Líquido';
-        if (preg_match('/\b(férias|ferias)\b/i', $combined)) return 'Férias Líquida';
-        if (preg_match('/\b(bônus|bonus|comissão|comissao|plr|prêmio|premio)\b/i', $combined)) return 'Bônus + Comissões + PLR';
-        if (preg_match('/\b(freelance|serviço|servico|venda|site|bico|cliente)\b/i', $combined)) return 'Renda Extra Líquida';
-        return 'Outras Receitas';
-    } else {
-        // 1. Casa / Pet / Limpeza / Higiene Lar
-        if (preg_match('/\b(comida|mercado|supermercado|feira|açougue|acougue|padaria|aluguel|condomínio|condominio|luz|água|agua|internet|telefone|energia|móveis|moveis|faxina|limpeza|limpesa|sabão|sabao|detergente|desinfetante|escova|amaciante|vassoura|pano|lixo|bucha)\b/i', $combined)) return 'Casa';
-        if (preg_match('/\b(gato|gata|cachorro|cão|cao|pet|ração|racao|areia|veterinario|veterinário|vet|banho|tosa|brinquedo)\b/i', $combined)) return 'Casa';
-        
-        // 2. Saúde / Estética / Beleza / Depilação
-        if (preg_match('/\b(farmacia|farmácia|médico|medico|consulta|hospital|remedio|remédio|dentista|exame|psicologo|terapia)\b/i', $combined)) return 'Saúde';
-        if (preg_match('/\b(creme|depilatorio|depilatório|depilação|depilacao|cosmetico|cosmético|perfume|shampoo|condicionador|sabonete|maquiagem|skincare|estética|estetica|salão|salao|barbearia|corte)\b/i', $combined)) return 'Saúde';
+// --- MOTOR CENTRALIZADO DE CATEGORIZAÇÃO BASEADO EM PONTUAÇÃO E CONTEXTO ---
+function categorizeWithScoringEngine($description, $text, $type, $workspace_id = null, $pdo = null) {
+    $rawCombined = $description . ' ' . $text;
+    $norm = normalizeStringForCategory($rawCombined);
 
-        // 3. Transporte / Veículo / Combustível
-        if (preg_match('/\b(gasolina|combustivel|combustível|etanol|diesel|uber|99|táxi|taxi|ônibus|onibus|pedagio|pedágio|estacionamento|mecanico|mecânico|ipva|multa|oficina)\b/i', $combined)) return 'Transporte';
+    // Fallback padrão de segurança de acordo com a taxonomia do PriceXP
+    $fallbackCategory = ($type === 'receita') ? 'Outras Receitas' : 'Outras Despesas';
 
-        // 4. Lazer / Alimentação Fora / Entretenimento
-        if (preg_match('/\b(ifood|restaurante|lanchonete|pizza|almoço|almoco|jantar|mcdonald|burger|lanche|bar|cerveja|churrasco|netflix|spotify|cinema|jogos|steam|lazer|show|festa|presente|clube|ingresso)\b/i', $combined)) return 'Lazer';
-
-        // 5. Locomoção / Viagem
-        if (preg_match('/\b(passagem|viagem|mobilidade|hotel|pousada|voo|aviao|avião)\b/i', $combined)) return 'Locomoção';
-
-        // 6. Investimentos
-        if (preg_match('/\b(investimento|rendimento|ação|ações|cdb|tesouro|reserva|cripto|poupança|poupanca)\b/i', $combined)) return 'Investimentos';
-
-        return 'Outras Despesas';
+    if (empty($norm)) {
+        return [
+            'category' => $fallbackCategory,
+            'top_category' => $fallbackCategory,
+            'top_score' => 0,
+            'second_category' => '',
+            'second_score' => 0,
+            'reason' => 'Texto vazio ou sem caracteres alfanuméricos'
+        ];
     }
+
+    // Regras de Receita
+    if ($type === 'receita') {
+        $incomeRules = [
+            'Salário Líquido' => [
+                'phrases' => ['salario liquido', 'pagamento de salario', 'deposito de salario', 'holerite do mes'],
+                'high_keywords' => ['salario', 'holerite', 'remuneracao', 'provento'],
+                'keywords' => ['salari', 'sueldo']
+            ],
+            '13º Salário Líquido' => [
+                'phrases' => ['13 salario', 'decimo terceiro', 'primeira parcela 13', 'segunda parcela 13'],
+                'high_keywords' => ['13º', 'decimo'],
+                'keywords' => ['13']
+            ],
+            'Férias Líquida' => [
+                'phrases' => ['pagamento de ferias', 'valor das ferias', 'adiantamento de ferias'],
+                'high_keywords' => ['ferias'],
+                'keywords' => ['férias']
+            ],
+            'Bônus + Comissões + PLR' => [
+                'phrases' => ['participacao nos lucros', 'bonus de vendas', 'comissao de vendas', 'participacao lucros'],
+                'high_keywords' => ['bonus', 'comissao', 'plr', 'premiacao'],
+                'keywords' => ['premio']
+            ],
+            'Renda Extra Líquida' => [
+                'phrases' => ['servico prestado', 'trabalho freelance', 'bico do final de semana', 'venda de produto', 'venda no site'],
+                'high_keywords' => ['freelance', 'freela', 'bico', 'venda', 'site', 'cliente', 'servico', 'reembolso'],
+                'keywords' => ['extra', 'renda', 'ganho', 'recebi', 'deposito', 'caiu']
+            ]
+        ];
+
+        $scores = [];
+        foreach ($incomeRules as $cat => $data) {
+            $scores[$cat] = 0;
+            foreach ($data['phrases'] as $p) {
+                if (preg_match('/\b' . preg_quote($p, '/') . '\b/iu', $norm)) $scores[$cat] += 6;
+            }
+            foreach ($data['high_keywords'] as $hkw) {
+                if (preg_match('/\b' . preg_quote($hkw, '/') . '\b/iu', $norm)) $scores[$cat] += 4;
+            }
+            foreach ($data['keywords'] as $kw) {
+                if (preg_match('/\b' . preg_quote($kw, '/') . '\b/iu', $norm)) $scores[$cat] += 2;
+            }
+        }
+
+        arsort($scores);
+        $topCat = array_key_first($scores);
+        $topScore = $scores[$topCat];
+        $keys = array_keys($scores);
+        $secondCat = $keys[1] ?? '';
+        $secondScore = $scores[$secondCat] ?? 0;
+
+        if ($topScore >= 3 && ($topScore - $secondScore >= 2 || $secondScore < 3)) {
+            return [
+                'category' => $topCat,
+                'top_category' => $topCat,
+                'top_score' => $topScore,
+                'second_category' => $secondCat,
+                'second_score' => $secondScore,
+                'reason' => "Confiança suficiente ({$topScore} pts contra {$secondScore} pts)"
+            ];
+        }
+        return [
+            'category' => 'Outras Receitas',
+            'top_category' => $topCat,
+            'top_score' => $topScore,
+            'second_category' => $secondCat,
+            'second_score' => $secondScore,
+            'reason' => "Pontuação insuficiente ou margem estreita (Top: {$topScore})"
+        ];
+    }
+
+    // Regras de Despesa mapeadas para as categorias oficiais do PriceXP
+    $expenseRules = [
+        'Casa' => [
+            'phrases' => [
+                'areia de gato', 'areia para gato', 'areia gato', 'areia de cachorro', 'areia cachorro', 'areia pet',
+                'racao de gato', 'racao para gato', 'racao gato', 'racao de cachorro', 'racao para cachorro', 'racao cachorro', 'racao pet',
+                'brinquedo de gato', 'brinquedo para gato', 'brinquedo gato', 'brinquedo de cachorro', 'brinquedo para cachorro', 'brinquedo cachorro', 'brinquedo pet',
+                'produto de limpeza', 'produtos de limpeza', 'produto limpeza', 'material de limpeza', 'escova de limpeza', 'escova limpeza', 'item de limpeza',
+                'conta de luz', 'conta de agua', 'conta de energia', 'conta de gas', 'conta de internet', 'internet residencial', 'internet de casa',
+                'aluguel de casa', 'aluguel residencia', 'taxa de condominio', 'banho e tosa', 'banho pet', 'tosa pet'
+            ],
+            'contexts' => [
+                ['racao', 'gato'], ['racao', 'cachorro'], ['areia', 'gato'], ['brinquedo', 'gato'], ['brinquedo', 'cachorro'], ['pet', 'vet'],
+                ['produto', 'limpeza'], ['material', 'limpeza'], ['escova', 'limpeza'], ['conta', 'luz'], ['conta', 'agua'], ['conta', 'energia'], ['conta', 'internet']
+            ],
+            'high_keywords' => [
+                'aluguel', 'condominio', 'luz', 'agua', 'energia', 'internet', 'mercado', 'supermercado', 'gato', 'gata', 'cachorro', 'racao', 'areia', 'limpeza', 'limpesa'
+            ],
+            'keywords' => [
+                'sabao', 'detergente', 'desinfetante', 'amaciante', 'vassoura', 'pano', 'lixo', 'bucha', 'escova',
+                'cao', 'pet', 'vet', 'veterinario', 'veterinaria', 'telefone', 'gas', 'moveis', 'faxina', 'residencia', 'casa', 'home', 'feira', 'acougue', 'padaria'
+            ],
+            'brands' => ['cobasi', 'petz', 'petlove', 'carrefour', 'extra', 'assai', 'atacadao', 'pao de acucar']
+        ],
+        'Saúde' => [
+            'phrases' => [
+                'creme depilatorio', 'creme de barbear', 'consulta medica', 'consulta dentista', 'exame de sangue', 'exame medico',
+                'corte de cabelo', 'salao de beleza', 'mensalidade academia', 'mensalidade faculdade', 'mensalidade curso'
+            ],
+            'contexts' => [
+                ['creme', 'depilatorio'], ['consulta', 'medica'], ['consulta', 'dentista'], ['exame', 'medico'], ['mensalidade', 'academia']
+            ],
+            'high_keywords' => [
+                'farmacia', 'drogaria', 'remedio', 'medicamento', 'medico', 'medica', 'dentista', 'hospital', 'exame', 'consulta', 'academia', 'depilatorio', 'depilacao', 'faculdade', 'curso'
+            ],
+            'keywords' => [
+                'psicologo', 'terapia', 'shampoo', 'condicionador', 'sabonete', 'creme', 'maquiagem', 'skincare', 'estetica', 'salao', 'barbearia', 'corte', 'perfume', 'livro', 'mensalidade'
+            ],
+            'brands' => ['drogasil', 'droga raia', 'pague menos', 'drogaria sao paulo', 'ultrafarma', 'smart fit', 'bluefit', 'udemy']
+        ],
+        'Transporte' => [
+            'phrases' => [
+                'troca de oleo', 'troca oleo', 'oleo de motor', 'oleo motor', 'pneu do carro', 'pneu da moto', 'pneu carro', 'pneu moto',
+                'manutencao do carro', 'manutencao da moto', 'manutencao carro', 'manutencao moto', 'posto de gasolina', 'posto de combustivel',
+                'corrida de uber', 'corrida 99'
+            ],
+            'contexts' => [
+                ['troca', 'oleo'], ['oleo', 'motor'], ['pneu', 'carro'], ['pneu', 'moto'], ['manutencao', 'carro'], ['manutencao', 'moto'], ['posto', 'shell'], ['posto', 'gasolina']
+            ],
+            'high_keywords' => [
+                'gasolina', 'combustivel', 'etanol', 'diesel', 'abastecimento', 'uber', '99', 'pop', 'taxi', 'onibus', 'pedagio', 'estacionamento', 'mecanico', 'mecanica', 'ipva', 'oficina'
+            ],
+            'keywords' => [
+                'multa', 'funilaria', 'revisao', 'automovel', 'carro', 'moto'
+            ],
+            'brands' => ['shell', 'ipiranga', 'petrobras', 'ale', 'sem parar', 'veloe', 'conectcar']
+        ],
+        'Locomoção' => [
+            'phrases' => [
+                'passagem de aviao', 'passagem de onibus', 'passagem aerea', 'bilhete aereo', 'reserva de hotel'
+            ],
+            'contexts' => [
+                ['passagem', 'aviao'], ['passagem', 'onibus'], ['reserva', 'hotel']
+            ],
+            'high_keywords' => ['passagem', 'viagem', 'voo', 'hospedagem'],
+            'keywords' => ['mobilidade', 'hotel', 'pousada', 'hostel', 'aviao'],
+            'brands' => ['latam', 'gol', 'azul', 'booking', 'airbnb', 'decolar', 'trivago', 'buser']
+        ],
+        'Lazer' => [
+            'phrases' => [
+                'ingresso para show', 'ingresso show', 'ingresso cinema', 'festa de aniversario', 'presente de aniversario', 'restaurante com amigos'
+            ],
+            'contexts' => [
+                ['ingresso', 'show'], ['ingresso', 'cinema'], ['festa', 'aniversario'], ['presente', 'aniversario']
+            ],
+            'high_keywords' => [
+                'ifood', 'restaurante', 'pizza', 'pizzaria', 'netflix', 'spotify', 'cinema', 'show', 'ingresso'
+            ],
+            'keywords' => [
+                'lanchonete', 'almoco', 'jantar', 'lanche', 'hamburguer', 'mcdonalds', 'burger', 'bar', 'cerveja', 'churrasco', 'jogos', 'steam', 'playstation', 'xbox', 'nintendo', 'lazer', 'festa', 'presente', 'clube', 'teatro'
+            ],
+            'brands' => ['ifood', 'mcdonalds', 'burger king', 'outback', 'starbucks', 'subway', 'netflix', 'spotify', 'hbo', 'disney', 'steam', 'playstation', 'xbox', 'sympla', 'eventim']
+        ],
+        'Investimentos' => [
+            'phrases' => [
+                'aplicacao financeira', 'reserva de emergencia', 'compra de acoes', 'aporte mensal'
+            ],
+            'contexts' => [
+                ['reserva', 'emergencia'], ['compra', 'acoes'], ['aporte', 'mensal']
+            ],
+            'high_keywords' => ['investimento', 'investimentos', 'acao', 'acoes', 'cdb', 'tesouro', 'cripto', 'bitcoin'],
+            'keywords' => ['rendimento', 'reserva', 'poupanca', 'fundo', 'fii', 'fiis', 'aporte'],
+            'brands' => ['xp', 'rico', 'clear', 'nuinvest', 'btg']
+        ]
+    ];
+
+    // Penalidades / Travas anti-conflito
+    $penalties = [
+        'Transporte' => ['gato', 'gata', 'cachorro', 'pet', 'racao', 'areia', 'remedio', 'farmacia', 'faculdade', 'depilatorio', 'aluguel', 'luz', 'agua'],
+        'Saúde' => ['gasolina', 'uber', '99', 'pedagio', 'estacionamento'],
+        'Casa' => ['gasolina', 'uber', '99', 'pedagio', 'mecanico']
+    ];
+
+    $scores = [];
+    foreach ($expenseRules as $cat => $data) {
+        $scores[$cat] = 0;
+
+        // Frases completas (+6)
+        foreach ($data['phrases'] as $phrase) {
+            if (preg_match('/\b' . preg_quote($phrase, '/') . '\b/iu', $norm)) {
+                $scores[$cat] += 6;
+            }
+        }
+
+        // Contextos compostos (+5)
+        foreach ($data['contexts'] as $ctx) {
+            $allMatched = true;
+            foreach ($ctx as $w) {
+                if (!preg_match('/\b' . preg_quote($w, '/') . '\b/iu', $norm)) {
+                    $allMatched = false;
+                    break;
+                }
+            }
+            if ($allMatched) {
+                $scores[$cat] += 5;
+            }
+        }
+
+        // Palavras-chave de alta especificidade (+4)
+        foreach ($data['high_keywords'] as $hkw) {
+            if (preg_match('/\b' . preg_quote($hkw, '/') . '\b/iu', $norm)) {
+                $scores[$cat] += 4;
+            }
+        }
+
+        // Marcas e estabelecimentos (+3)
+        foreach ($data['brands'] as $brand) {
+            if (preg_match('/\b' . preg_quote($brand, '/') . '\b/iu', $norm)) {
+                $scores[$cat] += 3;
+            }
+        }
+
+        // Palavras-chave gerais (+2)
+        foreach ($data['keywords'] as $kw) {
+            if (preg_match('/\b' . preg_quote($kw, '/') . '\b/iu', $norm)) {
+                $scores[$cat] += 2;
+            }
+        }
+
+        // Aplicação de Penalidades Anti-Conflito (-10)
+        if (isset($penalties[$cat])) {
+            foreach ($penalties[$cat] as $badKw) {
+                if (preg_match('/\b' . preg_quote($badKw, '/') . '\b/iu', $norm)) {
+                    $scores[$cat] -= 10;
+                }
+            }
+        }
+    }
+
+    arsort($scores);
+    $topCat = array_key_first($scores);
+    $topScore = $scores[$topCat];
+    $keys = array_keys($scores);
+    $secondCat = $keys[1] ?? '';
+    $secondScore = $scores[$secondCat] ?? 0;
+
+    $MIN_CONFIDENCE_SCORE = 3;
+    $MIN_MARGIN = 2;
+
+    if ($topScore >= $MIN_CONFIDENCE_SCORE && ($topScore - $secondScore >= $MIN_MARGIN || $secondScore < $MIN_CONFIDENCE_SCORE)) {
+        return [
+            'category' => $topCat,
+            'top_category' => $topCat,
+            'top_score' => $topScore,
+            'second_category' => $secondCat,
+            'second_score' => $secondScore,
+            'reason' => "Confiança suficiente ({$topScore} pts contra {$secondScore} pts de {$secondCat})"
+        ];
+    }
+
+    $reasonStr = ($topScore < $MIN_CONFIDENCE_SCORE) 
+        ? "Pontuação máxima {$topScore} abaixo do limite mínimo {$MIN_CONFIDENCE_SCORE}"
+        : "Empate ou margem insuficiente entre {$topCat} ({$topScore}) e {$secondCat} ({$secondScore})";
+
+    return [
+        'category' => 'Outras Despesas',
+        'top_category' => $topCat,
+        'top_score' => $topScore,
+        'second_category' => $secondCat,
+        'second_score' => $secondScore,
+        'reason' => $reasonStr
+    ];
+}
+
+// Wrapper retrocompatível com todo o código existente do PriceXP
+function inferCategoryStrict($description, $text, $type, $workspace_id = null, $pdo = null) {
+    $result = categorizeWithScoringEngine($description, $text, $type, $workspace_id, $pdo);
+    return $result['category'];
 }
 
 // ------------------------------------------------------------------
