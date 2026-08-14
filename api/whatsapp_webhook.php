@@ -807,6 +807,119 @@ if ($isEditModePending || $isCorrectionKeyword) {
 }
 
 // ------------------------------------------------------------------
+// --- PROCESSAMENTO INTELIGENTE DE MÚLTIPLOS LANÇAMENTOS (LOTE / MULTILINHA) ---
+// ------------------------------------------------------------------
+$lines = explode("\n", str_replace("\r", "", $rawText));
+$batchItems = [];
+
+// Detecta se há informações globais no texto (ex: "Gastei no Nubank em Crédito:")
+$globalBank   = parseBank($lowerText, $workspace_id, $pdo);
+$globalMethod = parsePaymentMethod($lowerText);
+$globalType   = parseType($lowerText) ?: 'despesa';
+
+foreach ($lines as $line) {
+    $lineTrimmed = trim($line);
+    if (empty($lineTrimmed)) continue;
+
+    // Se a linha for apenas um cabeçalho/verbo sem valor (ex: "Gastei", "Lançamentos de hoje:", "Nubank:"), ignora a linha como item isolado
+    $lineAmount = parseAmount($lineTrimmed);
+    if ($lineAmount <= 0) continue;
+
+    // Extrai banco e método de pagamento específicos da linha, ou usa o global
+    $lineBank   = parseBank($lineTrimmed, $workspace_id, $pdo) ?: ($globalBank ?: 'Geral');
+    $lineMethod = parsePaymentMethod($lineTrimmed) ?: ($globalMethod ?: 'Outra');
+    $lineType   = parseType($lineTrimmed) ?: $globalType;
+    $lineDesc   = parseDescription($lineTrimmed, $lineType);
+
+    if (empty($lineDesc) || in_array(strtolower($lineDesc), ['gastei', 'recebi', 'paguei', 'compras'])) {
+        $lineDesc = 'Lançamento';
+    }
+
+    $lineCategory = inferCategoryStrict($lineDesc, $lineTrimmed, $lineType);
+
+    $batchItems[] = [
+        'amount'         => $lineAmount,
+        'description'    => $lineDesc,
+        'type'           => $lineType,
+        'category'       => $lineCategory,
+        'bank_name'      => $lineBank,
+        'payment_method' => $lineMethod,
+        'raw_line'       => $lineTrimmed
+    ];
+}
+
+// Se identificamos 2 ou mais lançamentos com valor na mensagem:
+if (count($batchItems) >= 2) {
+    $insertedCount = 0;
+    $totalBatchAmount = 0;
+    $lastInsertedId = null;
+    $todayDate = date('Y-m-d');
+    $itemSummaryList = [];
+
+    $stmtBatchIns = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name, card_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+    foreach ($batchItems as $idx => $item) {
+        $card_id = null;
+        if ($item['type'] === 'despesa' && $item['payment_method'] === 'Crédito' && $item['bank_name'] !== 'Geral') {
+            try {
+                $stmtCard = $pdo->prepare("SELECT id FROM credit_cards WHERE user_id = ? AND LOWER(name) LIKE ? LIMIT 1");
+                $stmtCard->execute([$workspace_id, '%' . strtolower($item['bank_name']) . '%']);
+                $card_id = $stmtCard->fetchColumn() ?: null;
+            } catch (Exception $e) {}
+        }
+
+        $stmtBatchIns->execute([
+            $workspace_id,
+            $user_id,
+            $item['type'],
+            $item['category'],
+            $item['description'],
+            $item['amount'],
+            $todayDate,
+            $item['bank_name'],
+            $card_id
+        ]);
+
+        $lastInsertedId = $pdo->lastInsertId();
+        $insertedCount++;
+        $totalBatchAmount += $item['amount'];
+
+        logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO_LOTE', "Lançamento via WhatsApp #{$lastInsertedId}: {$item['type']} - {$item['description']} (R$ {$item['amount']})", $item['amount'], ['bank' => $item['bank_name'], 'phone' => $cleanPhone]);
+
+        $fmtVal = number_format($item['amount'], 2, ',', '.');
+        $icon = ($item['type'] === 'receita') ? '🟢' : '🔴';
+        $itemNum = $idx + 1;
+        $itemSummaryList[] = "{$itemNum}️⃣ {$icon} *R$ {$fmtVal}* — {$item['description']} _({$item['category']})_";
+    }
+
+    // Atualiza rascunhos salvando a última transação criada para opções de edição/exclusão
+    if ($lastInsertedId) {
+        try {
+            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+            $stmtInsLast = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'last_created_tx', ?, ?, ?, 'Outra')");
+            $stmtInsLast->execute([$user_id, $cleanPhone, $totalBatchAmount, 'last_tx:' . $lastInsertedId, $globalBank ?: 'Geral']);
+        } catch (Exception $exSess) {}
+    }
+
+    $fmtTotalBatch = number_format($totalBatchAmount, 2, ',', '.');
+    $bankInfoStr = $globalBank ?: 'Geral';
+
+    $replyMsg = "🎉 *PriceXP — Múltiplos Lançamentos Registrados!*\n\n"
+              . "Olá *{$userName}*! Registramos os *{$insertedCount} lançamentos* com sucesso:\n\n"
+              . implode("\n", $itemSummaryList) . "\n\n"
+              . "💰 *Total do Lote:* R$ {$fmtTotalBatch}\n"
+              . "🏦 *Banco/Conta:* {$bankInfoStr}\n"
+              . "📅 *Data:* " . date('d/m/Y') . "\n\n"
+              . "🚀 _Todos os lançamentos foram salvos instantaneamente no seu painel PriceXP._\n\n"
+              . "🔘 *Opções Rápidas:*\n"
+              . "1️⃣ Responda *1* ou *\"Editar\"* ➔ Alterar o último lançamento\n"
+              . "2️⃣ Responda *2* ou *\"Excluir\"* ➔ Cancelar o último lançamento";
+
+    echo json_encode(['success' => true, 'reply' => $replyMsg]);
+    exit;
+}
+
+// ------------------------------------------------------------------
 // --- BUSCA SESSÃO PENDENTE DO USUÁRIO (RASCUNHOS APENAS) ---
 // ------------------------------------------------------------------
 $stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type NOT IN ('last_created_tx', 'edit_mode') ORDER BY id DESC LIMIT 1");
