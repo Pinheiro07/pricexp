@@ -973,30 +973,75 @@ if (preg_match('/^(excluir|deletar|apagar|cancelar|delete_last_tx|2|2️⃣)(\s+
 // ------------------------------------------------------------------
 // --- COMANDO DE EDIÇÃO / CORREÇÃO DE LANÇAMENTO VIA WHATSAPP (BOTÃO 1 OU PALAVRA) ---
 // ------------------------------------------------------------------
+// ------------------------------------------------------------------
+// --- COMANDO DE EDIÇÃO / CORREÇÃO DE LANÇAMENTO VIA WHATSAPP (BOTÃO 1 OU PALAVRA) ---
+// ------------------------------------------------------------------
 if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerText) === 'edit_last_tx' || trim($lowerText) === 'editar' || trim($lowerText) === 'editar lançamento') {
-    $stmtLastSession = $pdo->prepare("SELECT description FROM whatsapp_pending_sessions WHERE user_id = ? AND (type = 'last_created_tx' OR type = 'edit_mode') ORDER BY id DESC LIMIT 1");
+    // 1. Verifica se a última sessão é um LOTE com múltiplos lançamentos
+    $stmtLastSession = $pdo->prepare("SELECT type, description FROM whatsapp_pending_sessions WHERE user_id = ? AND type IN ('last_created_tx', 'last_created_batch', 'waiting_batch_edit_selection', 'edit_mode') ORDER BY id DESC LIMIT 1");
     $stmtLastSession->execute([$user_id]);
     $lastSess = $stmtLastSession->fetch();
-    
-    $targetTxId = null;
-    if ($lastSess) {
-        if (strpos($lastSess['description'], 'batch_ids:') !== false) {
-            $rawIds = array_filter(array_map('intval', explode(',', str_replace('batch_ids:', '', $lastSess['description']))));
-            $targetTxId = end($rawIds) ?: null;
-        } elseif (strpos($lastSess['description'], 'last_tx:') !== false || strpos($lastSess['description'], 'tx_id:') !== false) {
-            $targetTxId = (int)str_replace(['last_tx:', 'tx_id:'], '', $lastSess['description']);
+
+    $batchTxIds = [];
+    if ($lastSess && strpos($lastSess['description'], 'batch_ids:') !== false) {
+        $rawIds = array_filter(array_map('intval', explode(',', str_replace('batch_ids:', '', $lastSess['description']))));
+        $batchTxIds = array_values($rawIds);
+    }
+
+    if (count($batchTxIds) >= 2) {
+        // --- MENU INTERATIVO DE SELEÇÃO DO ITEM DO LOTE ---
+        $inPlaceholders = implode(',', array_fill(0, count($batchTxIds), '?'));
+        $paramsFetch = array_merge([$workspace_id], $batchTxIds);
+
+        $stmtFetchBatch = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE user_id = ? AND id IN ($inPlaceholders) ORDER BY id ASC");
+        $stmtFetchBatch->execute($paramsFetch);
+        $batchTransactions = $stmtFetchBatch->fetchAll();
+
+        if ($batchTransactions) {
+            // Salva estado da conversa: waiting_batch_edit_selection
+            try {
+                $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+                $stmtInsWait = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'waiting_batch_edit_selection', 0, ?, 'Geral', 'Outra')");
+                $stmtInsWait->execute([$user_id, $cleanPhone, 'batch_ids:' . implode(',', array_column($batchTransactions, 'id'))]);
+            } catch (Exception $e) {}
+
+            $itemLines = [];
+            foreach ($batchTransactions as $idx => $tx) {
+                $num = $idx + 1;
+                $fmtVal = number_format((float)$tx['amount'], 2, ',', '.');
+                $bankStr = !empty($tx['bank_name']) ? " 🏦 {$tx['bank_name']}" : "";
+                $catStr  = !empty($tx['category'])  ? " _({$tx['category']})_" : "";
+                $itemLines[] = "{$num}️⃣ *R$ {$fmtVal}* – {$tx['description']}{$catStr}\n   {$bankStr}";
+            }
+
+            $countBatch = count($batchTransactions);
+            $replyMsg = "✏️ *PriceXP — Editar Lançamento*\n\n"
+                      . "O seu último envio contém *{$countBatch} lançamentos*.\n\n"
+                      . "Qual deles você deseja alterar?\n\n"
+                      . implode("\n\n", $itemLines) . "\n\n"
+                      . "↩️ *Responda com o número (1 a {$countBatch})* do lançamento que deseja alterar.\n"
+                      . "_Ou responda \"cancelar\" para sair sem alterar nada._";
+
+            echo json_encode(['success' => true, 'reply' => $replyMsg]);
+            exit;
         }
+    }
+
+    // --- FLUXO DIRETO PARA LANÇAMENTO ÚNICO ---
+    $targetTxId = null;
+    if ($lastSess && (strpos($lastSess['description'], 'last_tx:') !== false || strpos($lastSess['description'], 'tx_id:') !== false)) {
+        $targetTxId = (int)str_replace(['last_tx:', 'tx_id:'], '', $lastSess['description']);
     }
 
     $lastTx = null;
     if ($targetTxId) {
-        $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE id = ? AND user_id = ? AND created_by_user_id = ?");
-        $stmtLast->execute([$targetTxId, $workspace_id, $user_id]);
+        $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE id = ? AND user_id = ?");
+        $stmtLast->execute([$targetTxId, $workspace_id]);
         $lastTx = $stmtLast->fetch();
     }
 
     if (empty($lastTx)) {
-        $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE user_id = ? AND created_by_user_id = ? ORDER BY id DESC LIMIT 1");
+        $stmtLast = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE user_id = ? AND (created_by_user_id = ? OR created_by_user_id IS NULL OR created_by_user_id = 0) ORDER BY id DESC LIMIT 1");
         $stmtLast->execute([$workspace_id, $user_id]);
         $lastTx = $stmtLast->fetch();
     }
@@ -1013,16 +1058,17 @@ if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerTex
         $bankShow = !empty($lastTx['bank_name']) ? $lastTx['bank_name'] : 'Geral';
 
         $replyMsg = "✏️ *PriceXP — Editar Lançamento*\n\n"
-                  . "Lançamento atual #{$lastTx['id']}:\n"
+                  . "Lançamento selecionado:\n\n"
                   . "• *Descrição:* {$lastTx['description']}\n"
                   . "• *Valor:* R$ {$fmtVal}\n"
                   . "• *Banco/Conta:* {$bankShow}\n"
                   . "• *Categoria:* {$catShow}\n\n"
                   . "O que você gostaria de alterar? Envie tudo na mesma mensagem:\n\n"
                   . "• Ex: *\"80 reais\"* (altera o valor)\n"
-                  . "• Ex: *\"Almoço no Restaurante\"* (altera descrição e categoria)\n"
-                  . "• Ex: *\"Farmácia 45,90 no Nubank em Saúde\"* (altera tudo)\n\n"
-                  . "💡 _Você pode informar uma nova Descrição, Categoria, Banco ou Valor e o Patrick atualizará tudo automaticamente!_";
+                  . "• Ex: *\"Nubank\"* (altera o banco)\n"
+                  . "• Ex: *\"Sicredi crédito\"* (altera banco e pagamento)\n"
+                  . "• Ex: *\"Ração cachorro 45,90\"* (altera descrição e valor)\n\n"
+                  . "💡 _Você pode informar apenas o campo que deseja mudar e o Patrick atualizará automaticamente!_";
     } else {
         $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nNenhum lançamento recente foi encontrado para ser alterado.";
     }
@@ -1031,6 +1077,78 @@ if (trim($lowerText) === '1' || trim($lowerText) === '1️⃣' || trim($lowerTex
     exit;
 }
 
+// ------------------------------------------------------------------
+// --- SELEÇÃO DO ITEM DO LOTE PARA EDIÇÃO (ESTADO WAITING_BATCH_EDIT_SELECTION) ---
+// ------------------------------------------------------------------
+$stmtCheckSelection = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type = 'waiting_batch_edit_selection' ORDER BY id DESC LIMIT 1");
+$stmtCheckSelection->execute([$user_id]);
+$pendingSelection = $stmtCheckSelection->fetch();
+
+if ($pendingSelection) {
+    // 1. Aceita comandos de cancelamento
+    if (in_array(strtolower(trim($lowerText)), ['cancelar', 'voltar', 'sair'])) {
+        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+        $replyMsg = "ℹ️ *PriceXP — Operação Cancelada*\n\nA edição do lote foi cancelada. Nenhum lançamento foi alterado.";
+        echo json_encode(['success' => true, 'reply' => $replyMsg]);
+        exit;
+    }
+
+    $rawIds = array_filter(array_map('intval', explode(',', str_replace('batch_ids:', '', $pendingSelection['description']))));
+    $batchTxIds = array_values($rawIds);
+    $countBatch = count($batchTxIds);
+
+    $selectedIndex = (int)trim($lowerText);
+
+    if ($selectedIndex < 1 || $selectedIndex > $countBatch) {
+        $replyMsg = "⚠️ *PriceXP — Opção Inválida*\n\n"
+                  . "Por favor, escolha um número válido entre *1* e *{$countBatch}*.\n\n"
+                  . "↩️ _Responda com o número do lançamento que deseja alterar ou envie \"cancelar\"._";
+        echo json_encode(['success' => true, 'reply' => $replyMsg]);
+        exit;
+    }
+
+    // Posição válida selecionada (1-indexed)
+    $targetTxId = $batchTxIds[$selectedIndex - 1];
+
+    $stmtSelected = $pdo->prepare("SELECT id, type, category, description, amount, bank_name FROM transactions WHERE id = ? AND user_id = ?");
+    $stmtSelected->execute([$targetTxId, $workspace_id]);
+    $selectedTx = $stmtSelected->fetch();
+
+    if ($selectedTx) {
+        try {
+            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+            $stmtInsEdit = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'edit_mode', ?, ?, ?, 'Outra')");
+            $stmtInsEdit->execute([$user_id, $cleanPhone, $selectedTx['amount'], 'tx_id:' . $selectedTx['id'], $selectedTx['bank_name']]);
+        } catch (Exception $e) {}
+
+        $fmtVal   = number_format((float)$selectedTx['amount'], 2, ',', '.');
+        $catShow  = !empty($selectedTx['category']) ? $selectedTx['category'] : 'Geral';
+        $bankShow = !empty($selectedTx['bank_name']) ? $selectedTx['bank_name'] : 'Geral';
+
+        $replyMsg = "✏️ *PriceXP — Editar Lançamento*\n\n"
+                  . "Lançamento selecionado (#{$selectedIndex} do lote):\n\n"
+                  . "• *Descrição:* {$selectedTx['description']}\n"
+                  . "• *Valor:* R$ {$fmtVal}\n"
+                  . "• *Banco/Conta:* {$bankShow}\n"
+                  . "• *Categoria:* {$catShow}\n\n"
+                  . "O que você gostaria de alterar? Envie tudo na mesma mensagem:\n\n"
+                  . "• Ex: *\"80 reais\"* (altera o valor)\n"
+                  . "• Ex: *\"Nubank\"* (altera o banco)\n"
+                  . "• Ex: *\"Sicredi crédito\"* (altera banco e pagamento)\n"
+                  . "• Ex: *\"Ração cachorro 45,90\"* (altera descrição e valor)\n\n"
+                  . "💡 _Você pode informar apenas o campo que deseja mudar e o Patrick atualizará automaticamente!_";
+    } else {
+        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+        $replyMsg = "ℹ️ *PriceXP — Assistente Financeiro*\n\nO lançamento selecionado não foi encontrado no seu painel.";
+    }
+
+    echo json_encode(['success' => true, 'reply' => $replyMsg]);
+    exit;
+}
+
+// ------------------------------------------------------------------
+// --- PROCESSADOR DE EDIÇÃO PARCIAL (PATCH UPDATE EM EDIT_MODE) ---
+// ------------------------------------------------------------------
 $stmtCheckEdit = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type = 'edit_mode' ORDER BY id DESC LIMIT 1");
 $stmtCheckEdit->execute([$user_id]);
 $isEditModePending = $stmtCheckEdit->fetch();
@@ -1038,7 +1156,13 @@ $isEditModePending = $stmtCheckEdit->fetch();
 $isCorrectionKeyword = preg_match('/(?:corrigir|editar|alterar|na verdade|corrigindo|mudar|muda|ops|era|ajustar|rectificar)/i', $lowerText);
 
 if ($isEditModePending || $isCorrectionKeyword) {
-    
+    if (in_array(strtolower(trim($lowerText)), ['cancelar', 'voltar', 'sair'])) {
+        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+        $replyMsg = "ℹ️ *PriceXP — Operação Cancelada*\n\nA edição foi cancelada. O lançamento não foi alterado.";
+        echo json_encode(['success' => true, 'reply' => $replyMsg]);
+        exit;
+    }
+
     $targetTxId = null;
     if ($isEditModePending && strpos($isEditModePending['description'], 'tx_id:') !== false) {
         $targetTxId = (int)str_replace('tx_id:', '', $isEditModePending['description']);
@@ -1070,9 +1194,9 @@ if ($isEditModePending || $isCorrectionKeyword) {
         $updAmount = parseAmount($lowerText);
         $updBank   = parseBank($lowerText, $workspace_id, $pdo);
         $updType   = parseType($lowerText);
-        $updDesc   = parseDescription($rawText, $updType ?: $lastTx['type']);
+        $updMethod = parsePaymentMethod($lowerText);
 
-        // Detecta se o usuário informou explicitamente uma Categoria
+        // Detecta se o usuário informou uma Categoria explicitamente
         $updCat = null;
         $customCats = [];
         try {
@@ -1094,18 +1218,74 @@ if ($isEditModePending || $isCorrectionKeyword) {
             }
         }
 
-        $finalAmount = ($updAmount > 0) ? $updAmount : (float)$lastTx['amount'];
-        $finalBank   = $updBank ?: ($lastTx['bank_name'] ?: 'Geral');
-        $finalType   = $updType ?: $lastTx['type'];
-
-        $finalDesc = (!empty($updDesc) && mb_strlen($updDesc) >= 2 && !in_array(strtolower($updDesc), ['corrigir', 'editar', 'alterar', 'na verdade', 'corrigindo', 'ops', 'era', 'mudar'])) ? $updDesc : $lastTx['description'];
-
+        // --- DETECÇÃO DE DESCRIÇÃO RESIDUAL REAL ---
+        $cleanDescTest = $rawText;
+        if ($updAmount > 0) {
+            $cleanDescTest = preg_replace('/(?:r\$\s*)?\b' . preg_replace('/[\.,]/', '[\.,]', (string)$updAmount) . '\b/iu', ' ', $cleanDescTest);
+            $cleanDescTest = preg_replace('/(?:r\$\s*)?\b\d+(?:[\.,]\d{1,2})?\b/iu', ' ', $cleanDescTest);
+        }
+        if (!empty($updBank)) {
+            $cleanDescTest = preg_replace('/\b' . preg_quote($updBank, '/') . '\b/iu', ' ', $cleanDescTest);
+        }
+        $cleanDescTest = preg_replace('/\b(banco inter|inter|nubank|nu bank|nu|sicredi|secredi|c6 bank|c6bank|c6|caju|itau|itaú|bradesco|santander|caixa|banco do brasil|bb|sicoob|secob|pagbank|pag bank|picpay|pic pay|mercado pago|mercado livre|btg pactual|btg|will bank|will|neon)\b/iu', ' ', $cleanDescTest);
+        if ($updMethod !== 'Outra') {
+            $cleanDescTest = preg_replace('/\b' . preg_quote($updMethod, '/') . '\b/iu', ' ', $cleanDescTest);
+        }
+        $cleanDescTest = preg_replace('/\b(pix|credito|crédito|debito|débito|dinheiro|especie|espécie|transferencia|transferência|ted|doc|boleto)\b/iu', ' ', $cleanDescTest);
         if (!empty($updCat)) {
-            $finalCat = $updCat;
-        } elseif ($finalDesc !== $lastTx['description']) {
-            $finalCat = inferCategoryStrict($finalDesc, $rawText, $finalType);
-        } else {
-            $finalCat = !empty($lastTx['category']) ? $lastTx['category'] : inferCategoryStrict($finalDesc, $rawText, $finalType);
+            $cleanDescTest = preg_replace('/\b' . preg_quote($updCat, '/') . '\b/iu', ' ', $cleanDescTest);
+        }
+        $noiseVerbs = [
+            'gastei', 'gaste', 'paguei', 'pague', 'comprei', 'custou', 'recebi', 'ganhei', 'foi', 'deu', 'caiu',
+            'anota', 'anotar', 'lançar', 'lancar', 'despesa', 'receita', 'valor', 'reais', 'real', 'banco', 'bancos',
+            'conta', 'contas', 'cartão', 'cartao', 'no', 'na', 'nos', 'nas', 'do', 'da', 'de', 'em', 'com', 'para', 'pro', 'pra',
+            'corrigir', 'editar', 'alterar', 'na verdade', 'corrigindo', 'ops', 'era', 'mudar', 'muda', 'ajustar'
+        ];
+        foreach ($noiseVerbs as $verb) {
+            $cleanDescTest = preg_replace('/\b' . preg_quote($verb, '/') . '\b/iu', ' ', $cleanDescTest);
+        }
+        $cleanDescTest = trim(preg_replace('/\s+/', ' ', preg_replace('/[^a-zA-Zà-úÀ-Ú0-9\s]/u', ' ', $cleanDescTest)));
+
+        $hasRealNewDescription = (mb_strlen($cleanDescTest, 'UTF-8') >= 2 && !in_array(mb_strtolower($cleanDescTest, 'UTF-8'), ['gastei', 'recebi', 'paguei', 'compras', 'corrigir', 'editar', 'alterar', 'mudar', 'era', 'ops']));
+
+        // --- APLICAÇÃO DO PATCH PARCIAL ---
+        $updatedDiffs = [];
+
+        $finalAmount = (float)$lastTx['amount'];
+        if ($updAmount > 0 && (float)$updAmount !== (float)$lastTx['amount']) {
+            $finalAmount = $updAmount;
+            $updatedDiffs[] = "💰 *Valor:* R$ " . number_format((float)$lastTx['amount'], 2, ',', '.') . " ➔ R$ " . number_format($finalAmount, 2, ',', '.');
+        }
+
+        $finalBank = !empty($lastTx['bank_name']) ? $lastTx['bank_name'] : 'Geral';
+        if (!empty($updBank) && $updBank !== $lastTx['bank_name']) {
+            $finalBank = $updBank;
+            $updatedDiffs[] = "🏦 *Banco:* " . ($lastTx['bank_name'] ?: 'Geral') . " ➔ {$finalBank}";
+        }
+
+        $finalType = $updType ?: $lastTx['type'];
+
+        $finalDesc = $lastTx['description'];
+        if ($hasRealNewDescription) {
+            $parsedNewDesc = parseDescription($rawText, $finalType, $updAmount, $finalBank, $updMethod);
+            if (!empty($parsedNewDesc) && $parsedNewDesc !== 'Lançamento Geral' && $parsedNewDesc !== $lastTx['description']) {
+                $finalDesc = $parsedNewDesc;
+                $updatedDiffs[] = "📝 *Descrição:* {$lastTx['description']} ➔ {$finalDesc}";
+            }
+        }
+
+        $finalCat = !empty($lastTx['category']) ? $lastTx['category'] : 'Outras Despesas';
+        if (!empty($updCat)) {
+            if ($updCat !== $lastTx['category']) {
+                $finalCat = $updCat;
+                $updatedDiffs[] = "📁 *Categoria:* {$lastTx['category']} ➔ {$finalCat}";
+            }
+        } elseif ($hasRealNewDescription && $finalDesc !== $lastTx['description']) {
+            $inferred = inferCategoryStrict($finalDesc, $rawText, $finalType, $workspace_id, $pdo);
+            if ($inferred !== $lastTx['category']) {
+                $finalCat = $inferred;
+                $updatedDiffs[] = "📁 *Categoria:* {$lastTx['category']} ➔ {$finalCat}";
+            }
         }
 
         $stmtUpdTx = $pdo->prepare("UPDATE transactions SET type=?, category=?, description=?, amount=?, bank_name=? WHERE id=? AND user_id=?");
@@ -1119,12 +1299,18 @@ if ($isEditModePending || $isCorrectionKeyword) {
         $tipoIcon = ($finalType === 'receita') ? '🟢 Receita' : '🔴 Despesa';
         $fmtDate = date('d/m/Y', strtotime($lastTx['date']));
 
-        $replyMsg = "✏️ *PriceXP — Lançamento Atualizado*\n\n"
-                  . "O seu lançamento #{$lastTx['id']} foi alterado com sucesso:\n\n"
+        $diffsSummary = !empty($updatedDiffs) 
+            ? "🔄 *Alterações Realizadas:*\n• " . implode("\n• ", $updatedDiffs) . "\n\n"
+            : "";
+
+        $replyMsg = "✅ *PriceXP — Lançamento Atualizado*\n\n"
+                  . "O lançamento #{$lastTx['id']} foi alterado com sucesso!\n\n"
+                  . $diffsSummary
+                  . "📋 *Dados Atuais do Lançamento:*\n"
                   . "• Tipo: {$tipoIcon}\n"
                   . "• Descrição: {$finalDesc}\n"
-                  . "• Novo Valor: R$ {$fmtVal}\n"
-                  . "• Novo Banco: {$finalBank}\n"
+                  . "• Valor: R$ {$fmtVal}\n"
+                  . "• Banco: {$finalBank}\n"
                   . "• Categoria: {$finalCat}\n"
                   . "• Data: {$fmtDate}\n\n"
                   . "🚀 _Seu saldo e relatórios foram atualizados automaticamente._";
@@ -1291,8 +1477,8 @@ if (count($batchItems) >= 2) {
               . "📅 *Data:* " . date('d/m/Y') . "\n\n"
               . "🚀 _Todos os lançamentos foram salvos instantaneamente no seu painel PriceXP._\n\n"
               . "🔘 *Opções Rápidas:*\n"
-              . "1️⃣ Responda *1* ou *\"Editar\"* ➔ Alterar o último lançamento\n"
-              . "2️⃣ Responda *2* ou *\"Excluir\"* ➔ Excluir os {$insertedCount} lançamentos deste lote";
+              . "1️⃣ Responda *1* ou *\"Editar\"* ➔ Escolher um lançamento deste lote para alterar\n"
+              . "2️⃣ Responda *2* ou *\"Excluir\"* ➔ Excluir todos os lançamentos deste lote";
 
     echo json_encode(['success' => true, 'reply' => $replyMsg]);
     exit;
@@ -1301,7 +1487,7 @@ if (count($batchItems) >= 2) {
 // ------------------------------------------------------------------
 // --- BUSCA SESSÃO PENDENTE DO USUÁRIO (RASCUNHOS APENAS) ---
 // ------------------------------------------------------------------
-$stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type NOT IN ('last_created_tx', 'last_created_batch', 'edit_mode') ORDER BY id DESC LIMIT 1");
+$stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type NOT IN ('last_created_tx', 'last_created_batch', 'waiting_batch_edit_selection', 'edit_mode') ORDER BY id DESC LIMIT 1");
 $stmtPending->execute([$user_id]);
 $pending = $stmtPending->fetch();
 
