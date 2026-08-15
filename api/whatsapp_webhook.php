@@ -76,23 +76,60 @@ if (empty($senderPhone)) {
     $senderPhone = $data['phone'] ?? $data['sender'] ?? $data['from'] ?? '';
 }
 
-if (!empty($data['body'])) {
-    $rawText = is_array($data['body']) ? ($data['body']['text'] ?? '') : $data['body'];
-} elseif (!empty($data['text'])) {
-    $rawText = is_array($data['text']) ? ($data['text']['message'] ?? '') : $data['text'];
-} elseif (!empty($data['message'])) {
-    $rawText = is_array($data['message']) ? ($data['message']['conversation'] ?? $data['message']['text'] ?? '') : $data['message'];
-} elseif (!empty($data['data']['message']['conversation'])) {
-    $rawText = $data['data']['message']['conversation'];
-} elseif (!empty($data['entry'][0]['changes'][0]['value']['messages'][0]['text']['body'])) {
-    $rawText = $data['entry'][0]['changes'][0]['value']['messages'][0]['text']['body'];
+// Extrator Universal de Texto / Legenda de Mensagens (Texto, Imagem, Vídeo, Áudio, Documento)
+$isMediaMessage = false;
+
+$possibleTexts = [
+    // Captions de imagem e mídia (Evolution API / Baileys v1 e v2)
+    $data['data']['message']['imageMessage']['caption'] ?? '',
+    $data['data']['message']['videoMessage']['caption'] ?? '',
+    $data['data']['message']['documentMessage']['caption'] ?? '',
+    $data['data']['message']['extendedTextMessage']['text'] ?? '',
+    $data['message']['imageMessage']['caption'] ?? '',
+    $data['message']['videoMessage']['caption'] ?? '',
+    $data['message']['extendedTextMessage']['text'] ?? '',
+    $data['message']['caption'] ?? '',
+    $data['caption'] ?? '',
+    
+    // Meta Cloud API Official
+    $data['entry'][0]['changes'][0]['value']['messages'][0]['image']['caption'] ?? '',
+    $data['entry'][0]['changes'][0]['value']['messages'][0]['video']['caption'] ?? '',
+    $data['entry'][0]['changes'][0]['value']['messages'][0]['text']['body'] ?? '',
+    
+    // Mensagens de texto puras
+    $data['data']['message']['conversation'] ?? '',
+    is_array($data['body'] ?? null) ? ($data['body']['text'] ?? '') : ($data['body'] ?? ''),
+    is_array($data['text'] ?? null) ? ($data['text']['message'] ?? '') : ($data['text'] ?? ''),
+    is_array($data['message'] ?? null) ? ($data['message']['conversation'] ?? $data['message']['text'] ?? '') : ($data['message'] ?? ''),
+];
+
+foreach ($possibleTexts as $t) {
+    if (!empty($t) && is_string($t) && trim($t) !== '') {
+        $rawText = trim($t);
+        break;
+    }
+}
+
+// Verifica se é uma mensagem de mídia (Imagem, Documento, etc.)
+if (!empty($data['data']['message']['imageMessage']) || !empty($data['message']['imageMessage']) || !empty($data['entry'][0]['changes'][0]['value']['messages'][0]['image']) || (!empty($data['mediaType']) && $data['mediaType'] === 'image')) {
+    $isMediaMessage = true;
 }
 
 $cleanPhone = preg_replace('/\D/', '', $senderPhone);
 $remoteJid  = $data['remoteJid'] ?? $senderPhone;
 
-if (empty($senderPhone) || empty($rawText)) {
-    echo json_encode(['success' => false, 'error' => 'Payload inválido']);
+if (empty($senderPhone)) {
+    echo json_encode(['success' => false, 'error' => 'Payload inválido: telefone ausente']);
+    exit;
+}
+
+if (empty($rawText)) {
+    if ($isMediaMessage) {
+        $replyMsg = "📸 *PriceXP — Foto Recebida!*\n\nRecebi a sua imagem! Por favor, responda a esta foto informando o *valor, banco e descrição* para eu registrar (ex: *92.70 Mercado Pago crédito*).";
+        echo json_encode(['success' => true, 'reply' => $replyMsg]);
+        exit;
+    }
+    echo json_encode(['success' => false, 'error' => 'Payload inválido: texto ausente']);
     exit;
 }
 
