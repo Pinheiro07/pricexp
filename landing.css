@@ -1401,6 +1401,123 @@ section {
     }
 }
 
+/* ==========================================================================
+   HERO SEQUENTIAL ANIMATION & SCROLL REVEAL SYSTEM
+   ========================================================================== */
+
+/* Hero Headline Line-by-Line Entrance */
+.hero-line {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(28px);
+    filter: blur(6px);
+    animation: heroLineFadeIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-line-1 { animation-delay: 0.05s; }
+.hero-line-2 { animation-delay: 0.20s; }
+.hero-line-3 { animation-delay: 0.35s; }
+
+@keyframes heroLineFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(28px);
+        filter: blur(6px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+/* Subtitle, CTAs & Microcopy Stagger Items */
+.hero-stagger-item {
+    opacity: 0;
+    transform: translateY(22px);
+    filter: blur(4px);
+    animation: heroItemFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-delay-sub   { animation-delay: 0.50s; }
+.hero-delay-cta   { animation-delay: 0.68s; }
+.hero-delay-micro { animation-delay: 0.85s; }
+
+@keyframes heroItemFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(22px);
+        filter: blur(4px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+/* Hero Right Side Mockup Cards Entrance */
+.hero-mockup-wa {
+    opacity: 0;
+    transform: translateX(30px);
+    animation: heroWaCardSlide 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.45s forwards;
+}
+
+.hero-mockup-dash {
+    opacity: 0;
+    transform: translateX(45px);
+    animation: heroDashCardSlide 0.95s cubic-bezier(0.16, 1, 0.3, 1) 0.60s forwards;
+}
+
+@keyframes heroWaCardSlide {
+    0% {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes heroDashCardSlide {
+    0% {
+        opacity: 0;
+        transform: translateX(45px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Style 1: Universal Title Scroll Reveal (.reveal-title) */
+.reveal-title {
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(5px);
+    transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+                filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform, filter;
+}
+
+.reveal-title.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+}
+
+@media (max-width: 768px) {
+    .hero-line, .hero-stagger-item, .reveal-title {
+        filter: none !important;
+        animation-duration: 0.65s !important;
+    }
+    .hero-mockup-wa, .hero-mockup-dash {
+        transform: translateY(20px) !important;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .aurora-gradient-text {
         animation: none !important;
@@ -1416,6 +1533,13 @@ section {
     }
     .dynamic-weight-banner .dw-char {
         font-weight: 700 !important;
+        transition: none !important;
+    }
+    .hero-line, .hero-stagger-item, .hero-mockup-wa, .hero-mockup-dash, .reveal-title {
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+        animation: none !important;
         transition: none !important;
     }
 }

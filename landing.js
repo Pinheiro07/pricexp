@@ -267,12 +267,13 @@ function initScrollAnimations() {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('animate-in');
+                entry.target.classList.add('is-visible');
                 observer.unobserve(entry.target);
             }
         });
     }, { threshold: 0.1 });
 
-    document.querySelectorAll('.glass-card, .comp-card, .price-card').forEach(el => {
+    document.querySelectorAll('.glass-card, .comp-card, .price-card, .reveal-title').forEach(el => {
         observer.observe(el);
     });
 }
