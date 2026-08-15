@@ -2123,3 +2123,92 @@ section {
 .morph-card:hover .dashboard-print-img {
     transform: scale(1.015);
 }
+
+/* ==========================================================================
+   UIVERSE JAVIERROCADEV SMARTPHONE MOCKUP CARD SYSTEM
+   ========================================================================== */
+.phone-mockup-card {
+    position: relative !important;
+    isolation: isolate !important;
+    overflow: hidden !important;
+    border-radius: 2rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.2), 0 20px 45px rgba(0, 0, 0, 0.55) !important;
+    background: #0d121f !important;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.5s ease,
+                border-color 0.5s ease !important;
+    cursor: pointer;
+}
+
+/* 3D Skew Transformation on Hover (Javierrocadev Effect) */
+.phone-mockup-card:hover {
+    transform: skewX(-4deg) skewY(4deg) translateY(-8px) scale(1.02) !important;
+    border-color: rgba(16, 185, 129, 0.5) !important;
+    box-shadow: inset 0 2px 12px rgba(255, 255, 255, 0.3), 0 30px 65px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Phone Top Speaker Notch */
+.phone-mockup-notch {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 65px;
+    height: 6px;
+    background: #000;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 25;
+}
+
+/* Background Glowing Blurs (Before & After Javierrocadev) */
+.phone-mockup-card::before,
+.phone-mockup-card::after {
+    content: " ";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(25px);
+    z-index: 1;
+    pointer-events: none;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+}
+
+/* Top Right Glowing Orb */
+.phone-mockup-card::before {
+    width: 110px;
+    height: 110px;
+    background: #3b82f6;
+    top: 25px;
+    right: -20px;
+    opacity: 0.45;
+}
+
+/* Bottom Left Glowing Orb */
+.phone-mockup-card::after {
+    width: 100px;
+    height: 100px;
+    background: #10b981;
+    bottom: 35px;
+    right: 25px;
+    opacity: 0.45;
+}
+
+/* Hover Glowing Orbs Translation (Javierrocadev Effect) */
+.phone-mockup-card:hover::before {
+    transform: translate(35px, -35px) scale(1.25);
+    opacity: 0.75;
+}
+
+.phone-mockup-card:hover::after {
+    transform: translate(35px, 50px) scale(1.3);
+    opacity: 0.75;
+}
+
+/* Inner Phone Content */
+.phone-mockup-content {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+}
