@@ -2125,90 +2125,121 @@ section {
 }
 
 /* ==========================================================================
-   UIVERSE JAVIERROCADEV SMARTPHONE MOCKUP CARD SYSTEM
+   UIVERSE RODRYPALADIN REALISTIC SMARTPHONE PHONE CARDS
    ========================================================================== */
-.phone-mockup-card {
+.phone-rodry-card {
     position: relative !important;
-    isolation: isolate !important;
-    overflow: hidden !important;
-    border-radius: 2rem !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.2), 0 20px 45px rgba(0, 0, 0, 0.55) !important;
-    background: #0d121f !important;
-    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width: 290px;
+    height: 480px;
+    background: #000000 !important;
+    border-radius: 38px !important;
+    border: 2px solid rgb(40, 40, 40) !important;
+    padding: 7px !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75), inset 0 0 10px rgba(255, 255, 255, 0.05) !important;
+    isolation: isolate;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
                 box-shadow 0.5s ease,
                 border-color 0.5s ease !important;
     cursor: pointer;
 }
 
-/* 3D Skew Transformation on Hover (Javierrocadev Effect) */
-.phone-mockup-card:hover {
-    transform: skewX(-4deg) skewY(4deg) translateY(-8px) scale(1.02) !important;
-    border-color: rgba(16, 185, 129, 0.5) !important;
-    box-shadow: inset 0 2px 12px rgba(255, 255, 255, 0.3), 0 30px 65px rgba(16, 185, 129, 0.3) !important;
+.phone-rodry-card:hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    border-color: rgba(16, 185, 129, 0.6) !important;
+    box-shadow: 0 30px 60px rgba(16, 185, 129, 0.25), inset 0 0 15px rgba(16, 185, 129, 0.15) !important;
 }
 
-/* Phone Top Speaker Notch */
-.phone-mockup-notch {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 65px;
-    height: 6px;
-    background: #000;
-    border-radius: 99px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    z-index: 25;
-}
-
-/* Background Glowing Blurs (Before & After Javierrocadev) */
-.phone-mockup-card::before,
-.phone-mockup-card::after {
-    content: " ";
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(25px);
-    z-index: 1;
-    pointer-events: none;
-    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
-}
-
-/* Top Right Glowing Orb */
-.phone-mockup-card::before {
-    width: 110px;
-    height: 110px;
-    background: #3b82f6;
-    top: 25px;
-    right: -20px;
-    opacity: 0.45;
-}
-
-/* Bottom Left Glowing Orb */
-.phone-mockup-card::after {
-    width: 100px;
-    height: 100px;
-    background: #10b981;
-    bottom: 35px;
-    right: 25px;
-    opacity: 0.45;
-}
-
-/* Hover Glowing Orbs Translation (Javierrocadev Effect) */
-.phone-mockup-card:hover::before {
-    transform: translate(35px, -35px) scale(1.25);
-    opacity: 0.75;
-}
-
-.phone-mockup-card:hover::after {
-    transform: translate(35px, 50px) scale(1.3);
-    opacity: 0.75;
-}
-
-/* Inner Phone Content */
-.phone-mockup-content {
-    position: relative;
-    z-index: 10;
-    width: 100%;
+/* Inner Display Screen with Animated Gradient Flow */
+.phone-rodry-card .card-int {
+    background-image: linear-gradient(135deg, #0d1424 0%, #0f1c30 35%, #102e3c 70%, #08111e 100%);
+    background-size: 200% 200%;
+    background-position: 0% 0%;
     height: 100%;
+    border-radius: 30px;
+    transition: all 0.6s ease-out;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.phone-rodry-card:hover .card-int {
+    background-position: 100% 100%;
+}
+
+/* Top Speaker Notch Notch Array */
+.phone-rodry-card .top {
+    position: absolute;
+    top: 0px;
+    right: 50%;
+    transform: translate(50%, 0%);
+    width: 38%;
+    height: 18px;
+    background-color: #000000;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    z-index: 30;
+}
+
+.phone-rodry-card .speaker {
+    position: absolute;
+    top: 3px;
+    right: 50%;
+    transform: translate(50%, 0%);
+    width: 42%;
+    height: 3px;
+    border-radius: 3px;
+    background-color: rgb(35, 35, 35);
+}
+
+.phone-rodry-card .camera {
+    position: absolute;
+    top: 5px;
+    right: 82%;
+    transform: translate(50%, 0%);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.phone-rodry-card .int {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    top: 50%;
+    right: 50%;
+    transform: translate(50%, -50%);
+    background-color: rgba(59, 130, 246, 0.6);
+}
+
+/* Side Hardware Buttons */
+.phone-rodry-card .btn1, 
+.phone-rodry-card .btn2, 
+.phone-rodry-card .btn3 {
+    position: absolute;
+    width: 3px;
+    z-index: 10;
+}
+
+.phone-rodry-card .btn1 {
+    height: 48px;
+    top: 28%;
+    right: -4px;
+    background-image: linear-gradient(to right, #111111, #222222, #333333, #464646, #595959);
+}
+
+.phone-rodry-card .btn2 {
+    height: 34px;
+    top: 24%;
+    left: -4px;
+    background-image: linear-gradient(to left, #111111, #222222, #333333, #464646, #595959);
+}
+
+.phone-rodry-card .btn3 {
+    height: 34px;
+    top: 35%;
+    left: -4px;
+    background-image: linear-gradient(to left, #111111, #222222, #333333, #464646, #595959);
 }

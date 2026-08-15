@@ -24,7 +24,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <!-- Custom Landing Page Styles -->
-    <link rel="stylesheet" href="landing.css?v=1700">
+    <link rel="stylesheet" href="landing.css?v=1800">
     <style>
         /* Force Hide All Scrollbars on Live Demo Cards */
         #wa-demo-body::-webkit-scrollbar,
@@ -119,60 +119,80 @@
             <div class="hero-demo-wrapper">
                 <div class="hero-demo-container">
                     
-                    <!-- 1. Simulated WhatsApp Chat (Smartphone Mockup Card) -->
-                    <div class="wa-sim-card hero-mockup-wa phone-mockup-card">
-                        <div class="phone-mockup-notch"></div>
-                        <div class="phone-mockup-content">
-                            <div class="wa-sim-header">
-                                <div class="wa-sim-avatar">XP</div>
-                                <div class="wa-sim-user-info">
-                                    <span class="wa-sim-name">PriceXP Bot</span>
-                                    <span class="wa-sim-status">
-                                        <span style="width:7px; height:7px; background:#00a884; border-radius:50%; display:inline-block;"></span> online
-                                    </span>
-                                </div>
+                    <!-- 1. Simulated WhatsApp Chat (Rodrypaladin Smartphone Card) -->
+                    <div class="phone-rodry-card hero-mockup-wa">
+                        <div class="btn1"></div>
+                        <div class="btn2"></div>
+                        <div class="btn3"></div>
+
+                        <div class="card-int">
+                            <div class="top">
+                                <div class="speaker"></div>
+                                <div class="camera"><div class="int"></div></div>
                             </div>
-                            <div class="wa-sim-body" id="wa-demo-body" style="overflow-y: auto; overflow-x: hidden; scrollbar-width: none !important; -ms-overflow-style: none !important;">
-                                <!-- Messages generated dynamically by landing.js -->
+
+                            <div class="wa-sim-card">
+                                <div class="wa-sim-header">
+                                    <div class="wa-sim-avatar">XP</div>
+                                    <div class="wa-sim-user-info">
+                                        <span class="wa-sim-name">PriceXP Bot</span>
+                                        <span class="wa-sim-status">
+                                            <span style="width:7px; height:7px; background:#00a884; border-radius:50%; display:inline-block;"></span> online
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="wa-sim-body" id="wa-demo-body" style="overflow-y: auto; overflow-x: hidden; scrollbar-width: none !important; -ms-overflow-style: none !important;">
+                                    <!-- Messages generated dynamically by landing.js -->
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 2. Simulated Live Dashboard Panel Card (Smartphone Mockup Card) -->
-                    <div class="dash-mini-card hero-mockup-dash phone-mockup-card">
-                        <div class="phone-mockup-notch"></div>
-                        <div class="phone-mockup-content">
-                            <div class="dash-mini-header">
-                                <span class="dash-mini-title">
-                                    <i data-lucide="layout-dashboard" class="text-emerald"></i> Painel PriceXP
-                                </span>
-                                <span style="font-size:0.7rem; color:#10b981; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 8px; border-radius:99px;">Ao Vivo</span>
+                    <!-- 2. Simulated Live Dashboard Panel Card (Rodrypaladin Smartphone Card) -->
+                    <div class="phone-rodry-card hero-mockup-dash">
+                        <div class="btn1"></div>
+                        <div class="btn2"></div>
+                        <div class="btn3"></div>
+
+                        <div class="card-int">
+                            <div class="top">
+                                <div class="speaker"></div>
+                                <div class="camera"><div class="int"></div></div>
                             </div>
 
-                            <div class="dash-mini-balance">
-                                <span class="dash-mini-bal-label">Saldo Atual Consolidado</span>
-                                <div class="dash-mini-bal-val" id="dash-demo-val">R$ 3.450,00</div>
-                            </div>
-
-                            <div class="dash-mini-txs-title">
-                                <i data-lucide="clock" style="width:12px; height:12px;"></i> Últimos Lançamentos
-                            </div>
-
-                            <div class="dash-mini-tx-list" id="dash-demo-list" style="overflow-y: auto; overflow-x: hidden; scrollbar-width: none !important; -ms-overflow-style: none !important;">
-                                <!-- Transactions populated dynamically by landing.js -->
-                                <div class="dash-mini-tx-item">
-                                    <div style="display:flex; flex-direction:column; gap:2px;">
-                                        <span style="font-weight:600; color:var(--text-main);">Cinema com Família</span>
-                                        <span class="cat-badge" style="background:rgba(168,85,247,0.2); color:#c084fc; border:1px solid rgba(168,85,247,0.4);">Lazer</span>
-                                    </div>
-                                    <span style="font-weight:700; color:#ef4444;">- R$ 85,00</span>
+                            <div class="dash-mini-card">
+                                <div class="dash-mini-header">
+                                    <span class="dash-mini-title">
+                                        <i data-lucide="layout-dashboard" class="text-emerald"></i> Painel PriceXP
+                                    </span>
+                                    <span style="font-size:0.7rem; color:#10b981; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 8px; border-radius:99px;">Ao Vivo</span>
                                 </div>
-                                <div class="dash-mini-tx-item">
-                                    <div style="display:flex; flex-direction:column; gap:2px;">
-                                        <span style="font-weight:600; color:var(--text-main);">Farmácia Santander</span>
-                                        <span class="cat-badge" style="background:rgba(236,72,153,0.2); color:#f472b6; border:1px solid rgba(236,72,153,0.4);">Saúde</span>
+
+                                <div class="dash-mini-balance">
+                                    <span class="dash-mini-bal-label">Saldo Atual Consolidado</span>
+                                    <div class="dash-mini-bal-val" id="dash-demo-val">R$ 3.450,00</div>
+                                </div>
+
+                                <div class="dash-mini-txs-title">
+                                    <i data-lucide="clock" style="width:12px; height:12px;"></i> Últimos Lançamentos
+                                </div>
+
+                                <div class="dash-mini-tx-list" id="dash-demo-list" style="overflow-y: auto; overflow-x: hidden; scrollbar-width: none !important; -ms-overflow-style: none !important;">
+                                    <!-- Transactions populated dynamically by landing.js -->
+                                    <div class="dash-mini-tx-item">
+                                        <div style="display:flex; flex-direction:column; gap:2px;">
+                                            <span style="font-weight:600; color:var(--text-main);">Cinema com Família</span>
+                                            <span class="cat-badge" style="background:rgba(168,85,247,0.2); color:#c084fc; border:1px solid rgba(168,85,247,0.4);">Lazer</span>
+                                        </div>
+                                        <span style="font-weight:700; color:#ef4444;">- R$ 85,00</span>
                                     </div>
-                                    <span style="font-weight:700; color:#ef4444;">- R$ 122,00</span>
+                                    <div class="dash-mini-tx-item">
+                                        <div style="display:flex; flex-direction:column; gap:2px;">
+                                            <span style="font-weight:600; color:var(--text-main);">Farmácia Santander</span>
+                                            <span class="cat-badge" style="background:rgba(236,72,153,0.2); color:#f472b6; border:1px solid rgba(236,72,153,0.4);">Saúde</span>
+                                        </div>
+                                        <span style="font-weight:700; color:#ef4444;">- R$ 122,00</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -868,7 +888,7 @@
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
     <!-- Custom Landing Page Script -->
-    <script src="landing.js?v=1700"></script>
+    <script src="landing.js?v=1800"></script>
 
     <script>
         // Initialize Lucide icons
