@@ -3,799 +3,774 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PriceXP - Controle Financeiro Inteligente</title>
-    <!-- Favicon (Oficial Max Zoom v=400) -->
+    <title>PriceXP | Controle Financeiro pelo WhatsApp</title>
+    <meta name="description" content="Registre despesas e receitas pelo WhatsApp e acompanhe suas finanças em um painel inteligente com o PriceXP.">
+    <meta name="theme-color" content="#0b0f19">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PriceXP | Controle Financeiro pelo WhatsApp">
+    <meta property="og:description" content="Registre despesas e receitas conversando naturalmente no WhatsApp. O PriceXP organiza tudo automaticamente em um painel completo.">
+    <meta property="og:image" content="logo_horizontal_dark_theme.png">
+
+    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=400">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon.png?v=400">
-    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?v=400">
     <link rel="icon" type="image/x-icon" href="favicon.ico?v=400">
-    <link rel="apple-touch-icon" sizes="180x180" href="favicon.png?v=400">
-    <script>
-        (function() {
-            var ts = Date.now();
-            var l1 = document.createElement('link');
-            l1.rel = 'icon';
-            l1.type = 'image/png';
-            l1.href = 'favicon.png?v=' + ts;
-            document.head.appendChild(l1);
-            var l2 = document.createElement('link');
-            l2.rel = 'shortcut icon';
-            l2.href = 'favicon.ico?v=' + ts;
-            document.head.appendChild(l2);
-        })();
-    </script>
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Icons (Lucide) -->
+
+    <!-- Fonts (Google Fonts Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=400">
+
+    <!-- Custom Landing Page Styles -->
+    <link rel="stylesheet" href="landing.css?v=100">
 </head>
-<body class="light-theme">
-    
-    <!-- LOGIN/REGISTER SCREEN -->
-    <div id="auth-screen" class="auth-container">
-        <div id="particles-js" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;"></div>
-        <div class="auth-card" style="position: relative; z-index: 1;">
-            <!-- Botão de Alternar Tema (Tela de Login) -->
-            <button type="button" id="btn-toggle-theme-auth" class="btn-secondary" style="position: absolute; top: 1rem; right: 1rem; padding: 0.5rem; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; z-index: 10;">
-                <i data-lucide="sun"></i>
-            </button>
-            
-            <div class="logo justify-center mb-4" style="margin-bottom: 1rem !important;">
-                <img src="logo_login.png" alt="PriceXP Logo" class="auth-logo" style="height: 85px; max-width: 100%; object-fit: contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" onload="this.style.display='block'; this.nextElementSibling.style.display='none';">
-                <span style="display: none; align-items: center; gap: 0.5rem;"><i data-lucide="wallet"></i>PriceXP</span>
-            </div>
-            <h2 id="auth-title">Entrar na sua conta</h2>
-            <p class="text-muted text-center mb-4" id="auth-subtitle">Acesse seus dados financeiros com segurança</p>
-            
-            <form id="auth-form" method="POST" onsubmit="event.preventDefault();" enctype="multipart/form-data">
-                
-                <!-- Campos apenas para Cadastro -->
-                <div id="register-fields" style="display: none;">
-                    <div class="form-group row">
-                        <div class="col">
-                            <label>Nome</label>
-                            <input type="text" id="auth-firstname" name="first_name">
-                        </div>
-                        <div class="col">
-                            <label>Sobrenome</label>
-                            <input type="text" id="auth-lastname" name="last_name">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>WhatsApp (com DDD)</label>
-                        <input type="tel" id="auth-whatsapp" name="whatsapp" placeholder="Ex: 11999998888">
-                    </div>
-                </div>
-                <input type="hidden" id="auth-invite-token" name="invite_token">
+<body>
 
-                <!-- Campos Comuns -->
-                <div class="form-group">
-                    <label>E-mail</label>
-                    <input type="email" id="auth-email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label>Senha</label>
-                    <div style="position: relative;">
-                        <input type="password" id="auth-password" name="password" required style="padding-right: 2.5rem; width: 100%;">
-                        <button type="button" onclick="togglePassword('auth-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" tabindex="-1" title="Mostrar/Ocultar Senha">
-                            <i data-lucide="eye" style="width: 20px; height: 20px;"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="form-group" id="confirm-password-group" style="display: none;">
-                    <label>Confirmar Senha</label>
-                    <div style="position: relative;">
-                        <input type="password" id="auth-confirm-password" name="confirm_password" style="padding-right: 2.5rem; width: 100%;">
-                        <button type="button" onclick="togglePassword('auth-confirm-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" tabindex="-1" title="Mostrar/Ocultar Senha">
-                            <i data-lucide="eye" style="width: 20px; height: 20px;"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="form-group checkbox-group" id="remember-me-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: -0.5rem; margin-bottom: 1.5rem;">
-                    <input type="checkbox" id="auth-remember" name="remember" style="width: auto; cursor: pointer;">
-                    <label for="auth-remember" style="margin: 0; font-size: 0.85rem; cursor: pointer; user-select: none; color: var(--text-muted);">Manter conectado por 30 dias</label>
-                </div>
+    <!-- Particles.js Background Container -->
+    <div id="particles-js"></div>
 
-                <!-- Captcha Interno Removido -->
+    <!-- ==========================================================================
+         Header / Navbar
+         ========================================================================== -->
+    <header class="header-nav">
+        <div class="container nav-wrapper">
+            <a href="#" class="nav-logo">
+                <img src="logo_horizontal_dark_theme.png" alt="PriceXP Logo" onerror="this.onerror=null; this.src='logo.png';">
+            </a>
 
-                <button type="submit" class="btn-primary" id="auth-btn">Entrar</button>
-                <div id="auth-error" class="text-danger mt-2 text-center" style="display:none; font-size: 0.9rem;"></div>
-            </form>
-            
-            <!-- Formulário de Verificação de Código -->
-            <form id="verification-form" style="display: none;" onsubmit="event.preventDefault();">
-                <p class="text-center text-muted mb-4" style="font-size: 0.9rem;">
-                    Enviamos um código de confirmação de 6 dígitos para o seu e-mail. Por favor, digite-o abaixo:
-                </p>
-                <input type="hidden" id="verify-email">
-                <div class="form-group">
-                    <label for="verify-code">Código de 6 dígitos</label>
-                    <input type="text" id="verify-code" placeholder="000000" maxlength="6" style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem; font-weight: bold;" required>
-                </div>
-                <button type="submit" class="btn-primary" id="verify-btn">Confirmar Código</button>
-                <div id="verify-error" class="text-danger mt-2 text-center" style="display:none; font-size: 0.9rem;"></div>
-                <p class="text-center mt-4">
-                    <a href="#" id="verify-back-link" class="text-accent" style="font-size: 0.9rem;">Voltar para o Login</a>
-                </p>
-            </form>
-            
-            <p class="text-center mt-4 text-muted" id="auth-switch-wrapper">
-                <span id="auth-switch-text">Não tem uma conta?</span>
-                <a href="#" id="auth-switch-link" class="text-accent">Cadastre-se</a>
-            </p>
-        </div>
-    </div>
-
-    <!-- MAIN APP (HIDDEN BY DEFAULT) -->
-    <div id="app-container" class="app-container" style="display: none;">
-        <!-- Mobile Top Header Bar -->
-        <div class="mobile-header-bar">
-            <!-- Centered Logo -->
-            <div class="mobile-logo-container" data-mobile-tab="dashboard" style="cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <img src="logo_horizontal_dark_theme.png" alt="PriceXP Logo" style="height: 46px; max-width: 170px; object-fit: contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" onload="this.style.display='block'; this.nextElementSibling.style.display='none';">
-                <span style="display: none; align-items: center; gap: 0.5rem; color: #fff; font-weight: 700; font-size: 1.3rem;"><i data-lucide="wallet"></i>PriceXP</span>
-            </div>
-        </div>
-        
-        <!-- Sidebar Backdrop for Mobile Drawer -->
-        <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
-
-        <!-- Mobile Bottom Navigation Bar -->
-        <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-            <button class="mob-nav-btn active" data-mobile-tab="dashboard" id="mob-btn-dashboard">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
-                <span>Dashboard</span>
-            </button>
-            <button class="mob-nav-btn" data-mobile-tab="lancamentos" id="mob-btn-lancamentos">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                <span>Lançamentos</span>
-            </button>
-            <button class="mob-nav-btn" data-mobile-tab="cartoes" id="mob-btn-cartoes">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                <span>Cartões</span>
-            </button>
-            <button class="mob-nav-btn" data-mobile-tab="shared" id="mob-btn-shared">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                <span>Conjunta</span>
-            </button>
-            <button class="mob-nav-btn" data-mobile-tab="config" id="mob-btn-config">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                <span>Minha Conta</span>
-            </button>
-        </nav>
-
-        <!-- Sidebar / Navigation -->
-        <nav class="sidebar">
-            <div class="logo" style="background: none; -webkit-text-fill-color: initial; justify-content: center; padding: 0 1rem; margin-bottom: 2rem;">
-                <img src="logo.png" alt="PriceXP Logo" class="sidebar-logo" style="height: 110px; max-width: 100%; object-fit: contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" onload="this.style.display='block'; this.nextElementSibling.style.display='none';">
-                <span style="display: none; align-items: center; gap: 0.5rem;"><i data-lucide="wallet"></i>PriceXP</span>
-            </div>
-            
-            <div class="user-info">
-                <img src="" alt="Perfil" id="sidebar-photo" class="profile-avatar">
-                <div class="user-details">
-                    <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
-                        <span id="user-name-display" class="user-name">Carregando...</span>
-                        <span id="user-lastname-display" class="user-name"></span>
-                        <span id="user-sidebar-id-display" style="font-size: 0.75rem; font-weight: 700; color: #3b82f6; background: rgba(59, 130, 246, 0.15); padding: 0.15rem 0.45rem; border-radius: 0.35rem; white-space: nowrap;"></span>
-                    </div>
-                </div>
-            </div>
-
-            <ul class="nav-links">
-                <li class="active" data-tab="dashboard">
-                    <i data-lucide="layout-dashboard"></i> Dashboard
-                </li>
-                <li data-tab="lancamentos">
-                    <i data-lucide="arrow-right-left"></i> Lançamentos
-                </li>
-                <li data-tab="cartoes">
-                    <i data-lucide="credit-card"></i> Cartões
-                </li>
-                <li data-tab="shared">
-                    <i data-lucide="users"></i> Conta Conjunta
-                </li>
-                <li data-tab="config">
-                    <i data-lucide="settings"></i> Minha Conta
-                </li>
+            <ul class="nav-menu">
+                <li><a href="#como-funciona" class="nav-link">Como funciona</a></li>
+                <li><a href="#recursos" class="nav-link">Recursos</a></li>
+                <li><a href="#whatsapp" class="nav-link">WhatsApp</a></li>
+                <li><a href="#painel" class="nav-link">Painel</a></li>
+                <li><a href="#planos" class="nav-link">Planos</a></li>
+                <li><a href="#faq" class="nav-link">FAQ</a></li>
             </ul>
-            
-            <div class="logout-container" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.5rem;">
-                <a id="btn-admin-panel" href="api/admin_users.php" class="btn-secondary" style="display: none; justify-content: center; width: 100%; font-size: 0.9rem; padding: 0.5rem 1rem; text-decoration: none; color: #60a5fa; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 600;"><i data-lucide="shield-check"></i> <span>Painel Admin</span></a>
-                <button id="btn-start-tour" class="btn-secondary" style="justify-content: center; width: 100%; font-size: 0.9rem; padding: 0.5rem 1rem;"><i data-lucide="help-circle"></i> <span>Ver Tutorial</span></button>
-                <button id="btn-toggle-theme" class="btn-secondary" style="justify-content: center; width: 100%; font-size: 0.9rem; padding: 0.5rem 1rem;"><i data-lucide="sun"></i> <span>Tema Claro</span></button>
-                <button id="btn-logout" class="btn-secondary" style="justify-content: center; width: 100%; font-size: 0.9rem; padding: 0.5rem 1rem;"><i data-lucide="log-out"></i> Sair</button>
+
+            <div class="nav-actions">
+                <a href="app.html" class="btn-login">
+                    <i data-lucide="user"></i> Acessar conta
+                </a>
+                <button class="mobile-nav-toggle" aria-label="Abrir menu">
+                    <i data-lucide="menu"></i>
+                </button>
             </div>
-        </nav>
+        </div>
+    </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- DASHBOARD TAB -->
-            <section id="tab-dashboard" class="tab-content active">
-                <header class="top-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                    <div>
-                        <!-- Logo Horizontal do Cabeçalho com Fallback automático -->
-                        <img src="logo_horizontal.png" alt="PriceXP Logo" class="dashboard-logo" style="height: 115px; max-width: 100%; object-fit: contain; margin-bottom: 0.4rem; display: block;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" onload="this.style.display='block'; this.nextElementSibling.style.display='none';">
-                        <h2 id="dashboard-welcome" style="display: none; margin: 0; font-size: 2rem; font-weight: 700;">Bem-vindo de volta! 👋</h2>
-                        <p style="font-size: 1.15rem; font-weight: 500; color: var(--text-muted); margin-top: 0.25rem;">Aqui está o resumo das suas finanças.</p>
-                    </div>
-                    <div class="dashboard-filter" style="display: flex; gap: 0.5rem; align-items: center;">
-                        <select id="dashboard-bank" class="form-control" style="width: auto; min-width: 140px; font-weight: 500; cursor: pointer;">
-                            <option value="all" selected>Todos os Bancos</option>
-                        </select>
-                        <select id="dashboard-period" class="form-control" style="width: auto; min-width: 120px; font-weight: 500; cursor: pointer;">
-                            <option value="month" selected>Mensal</option>
-                            <option value="year">Anual</option>
-                            <option value="all">Todos os Tempos</option>
-                        </select>
-                        <input type="month" id="dashboard-month-picker" class="form-control" style="width: auto;">
-                        <input type="number" id="dashboard-year-picker" class="form-control" style="width: 100px; display: none;" min="2000" max="2100" step="1">
-                    </div>
-                </header>
-
-                <div class="summary-cards">
-                    <div class="card stat-card" id="card-receitas" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
-                        <div class="stat-icon receitas-icon"><i data-lucide="trending-up"></i></div>
-                        <div class="stat-info">
-                            <h3 id="label-receitas">Receitas</h3>
-                            <p class="text-success" id="val-receitas">R$ 0,00</p>
-                        </div>
-                    </div>
-                    <div class="card stat-card" id="card-despesas" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
-                        <div class="stat-icon despesas-icon"><i data-lucide="trending-down"></i></div>
-                        <div class="stat-info">
-                            <h3>Despesas e Inv.</h3>
-                            <p class="text-danger" id="val-despesas">R$ 0,00</p>
-                        </div>
-                    </div>
-                    <div class="card stat-card" id="card-saldo">
-                        <div class="stat-icon saldo-icon"><i data-lucide="wallet"></i></div>
-                        <div class="stat-info">
-                            <h3>Saldo Atual</h3>
-                            <p class="text-accent" id="val-saldo">R$ 0,00</p>
-                        </div>
-                    </div>
+    <!-- ==========================================================================
+         Hero Section
+         ========================================================================== -->
+    <section class="hero-section">
+        <div class="container hero-grid">
+            
+            <!-- Left Hero Text Content -->
+            <div class="hero-content">
+                <div class="badge-pill">
+                    <i data-lucide="bot"></i> Controle Financeiro com IA + WhatsApp
                 </div>
 
-                <div class="charts-grid">
-                    <div class="card chart-container">
-                        <h3 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="bar-chart-2"></i> Receitas vs Despesas Mensal</h3>
-                        <div class="canvas-wrapper"><canvas id="barChart"></canvas></div>
-                    </div>
-                    <div class="card chart-container">
-                        <h3 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="pie-chart"></i> Despesas por Categoria</h3>
-                        <div class="canvas-wrapper"><canvas id="pieChart"></canvas></div>
-                    </div>
-                    <div class="card chart-container full-width">
-                        <h3 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="trending-up"></i> Evolução do Saldo</h3>
-                        <div class="canvas-wrapper"><canvas id="lineChart"></canvas></div>
-                    </div>
+                <h1 class="hero-title">
+                    Suas finanças organizadas em uma <span class="text-gradient">simples conversa.</span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    Registre despesas e receitas pelo WhatsApp. O PriceXP entende a mensagem, organiza seus lançamentos e atualiza seu painel automaticamente em tempo real.
+                </p>
+
+                <div class="hero-ctas">
+                    <a href="app.html" class="btn-primary">
+                        <i data-lucide="zap"></i> Começar agora
+                    </a>
+                    <a href="#como-funciona" class="btn-secondary">
+                        <i data-lucide="play-circle"></i> Ver como funciona
+                    </a>
                 </div>
-            </section>
 
-            <!-- LANÇAMENTOS TAB -->
-            <section id="tab-lancamentos" class="tab-content">
-                <header class="top-header">
-                    <div>
-                        <h2><i data-lucide="list"></i> Lançamentos</h2>
-                        <p>Adicione e gerencie suas despesas e receitas</p>
-                    </div>
-                    <div>
-                        <input type="file" id="ofx-upload" accept=".ofx, .csv" style="display: none;">
-                        <button class="btn-secondary" onclick="document.getElementById('ofx-upload').click()">
-                            <i data-lucide="upload"></i> Importar Extrato (OFX / CSV)
-                        </button>
-                    </div>
-                </header>
-                
-                <div class="transactions-layout">
-                    <!-- Formulário -->
-                    <div class="card form-container">
-                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;"><i data-lucide="plus-circle"></i> Novo Lançamento</h3>
-                        <form id="transaction-form">
-                            <div class="form-group">
-                                <label>Tipo de Lançamento</label>
-                                <div class="type-selector">
-                                    <label class="radio-card">
-                                        <input type="radio" name="type" value="receita" checked>
-                                        <span class="card-content">
-                                            <i data-lucide="arrow-up-circle" class="text-success"></i> Receita
-                                        </span>
-                                    </label>
-                                    <label class="radio-card">
-                                        <input type="radio" name="type" value="despesa">
-                                        <span class="card-content">
-                                            <i data-lucide="arrow-down-circle" class="text-danger"></i> Saída (Despesa/Inv.)
-                                        </span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="form-group" id="payment-method-group" style="display: none;">
-                                <label for="tx-payment-method">Forma de Pagamento / Tipo de Saída</label>
-                                <select id="tx-payment-method">
-                                    <option value="cash">Dinheiro / Pix / Débito (Conta)</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="category">Categoria</label>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <select id="category" required style="flex: 1;"></select>
-                                    <button type="button" id="btn-add-category" title="Adicionar nova categoria" style="flex-shrink: 0; height: 44px; width: 44px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1e3a8a, #10b981); color: #fff; border: none; border-radius: 0.5rem; cursor: pointer; font-size: 1.25rem; font-weight: 700; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">+</button>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="description">Descrição / Subcategoria</label>
-                                <input type="text" id="description" placeholder="Ex: Salário, Aluguel, Mercado" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="bank-name">Banco / Instituição</label>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <select id="bank-name" style="flex: 1;">
-                                        <option value="Geral">Conta Geral / Dinheiro</option>
-                                        <option value="Nubank">Nubank</option>
-                                        <option value="Itaú">Itaú</option>
-                                        <option value="Bradesco">Bradesco</option>
-                                        <option value="Banco do Brasil">Banco do Brasil</option>
-                                        <option value="Inter">Banco Inter</option>
-                                        <option value="Santander">Santander</option>
-                                        <option value="C6 Bank">C6 Bank</option>
-                                        <option value="Sicredi">Sicredi</option>
-                                        <option value="Caixa">Caixa Econômica</option>
-                                        <option value="Outro">Outro / Carteira</option>
-                                    </select>
-                                    <button type="button" id="btn-add-bank" title="Adicionar novo banco" style="flex-shrink: 0; height: 44px; width: 44px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1e3a8a, #10b981); color: #fff; border: none; border-radius: 0.5rem; cursor: pointer; font-size: 1.25rem; font-weight: 700; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">+</button>
-                                </div>
-                            </div>
-
-                            <div class="form-group row">
-                                <div class="col">
-                                    <label for="amount">Valor (R$)</label>
-                                    <input type="number" id="amount" step="0.01" min="0.01" placeholder="0.00" required>
-                                </div>
-                                <div class="col">
-                                    <label for="date">Data</label>
-                                    <input type="date" id="date" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group row" style="margin-top: -0.5rem; margin-bottom: 1.5rem;">
-                                <div class="col">
-                                    <label>Tipo de Repetição</label>
-                                    <select id="repeat-type">
-                                        <option value="none">Único (Não repetir)</option>
-                                        <option value="fixed">Fixo Mensal (ex: Aluguel)</option>
-                                        <option value="installment">Parcelado (ex: Empréstimo)</option>
-                                    </select>
-                                </div>
-                                <div class="col" id="installments-group" style="display: none;">
-                                    <label>Quantos Meses?</label>
-                                    <input type="number" id="installments" min="2" max="120" value="12">
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn-primary" id="btn-save-tx">Salvar Lançamento</button>
-                        </form>
-                    </div>
-
-                    <!-- Lista Recentes -->
-                    <div class="card list-container">
-                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;"><i data-lucide="history"></i> Lançamentos Recentes</h3>
-                        <div class="transaction-list" id="transaction-list">
-                            <p class="text-muted text-center" style="padding: 2rem;">Carregando...</p>
-                        </div>
-                    </div>
+                <div class="hero-microcopy">
+                    <i data-lucide="shield-check" class="text-emerald"></i>
+                    <span>Comece em poucos minutos. Sem burocracia.</span>
                 </div>
-            </section>
+            </div>
 
-            <!-- CARTOES TAB -->
-            <section id="tab-cartoes" class="tab-content">
-                <header class="top-header">
-                    <div>
-                        <h2><i data-lucide="credit-card"></i> Meus Cartões de Crédito</h2>
-                        <p>Cadastre e gerencie seus cartões e acompanhe faturas</p>
-                    </div>
-                </header>
-                
-                <div class="transactions-layout">
-                    <!-- Cadastro de Cartão -->
-                    <div class="card form-container">
-                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;"><i data-lucide="plus-circle"></i> Cadastrar Novo Cartão</h3>
-                        <form id="card-form">
-                            <div class="form-group">
-                                <label for="card-name">Nome do Cartão</label>
-                                <input type="text" id="card-name" placeholder="Ex: Nubank, Visa XP" required>
-                            </div>
-                            <div class="form-group row">
-                                <div class="col">
-                                    <label for="card-limit">Limite Total (R$)</label>
-                                    <input type="number" id="card-limit" step="0.01" min="0.01" placeholder="0.00" required>
-                                </div>
-                            </div>
-                            <div class="form-group row">
-                                <div class="col">
-                                    <label for="card-closing-day">Dia do Fechamento</label>
-                                    <input type="number" id="card-closing-day" min="1" max="31" placeholder="Ex: 5" required>
-                                </div>
-                                <div class="col">
-                                    <label for="card-due-day">Dia do Vencimento</label>
-                                    <input type="number" id="card-due-day" min="1" max="31" placeholder="Ex: 15" required>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn-primary">Cadastrar Cartão</button>
-                        </form>
-                    </div>
-
-                    <!-- Lista de Cartões e Faturas -->
-                    <div class="card list-container">
-                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;"><i data-lucide="wallet"></i> Cartões Ativos</h3>
-                        <div id="cards-list" style="display: flex; flex-direction: column; gap: 1rem;">
-                            <!-- Dinamicamente gerado -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- CONFIG TAB -->
-            <section id="tab-config" class="tab-content">
-                <header class="top-header">
-                    <div>
-                        <h2><i data-lucide="user"></i> Minha Conta</h2>
-                        <p>Gerencie seus dados pessoais, foto de perfil e segurança</p>
-                    </div>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <button class="btn-secondary" data-mobile-tab="shared" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; font-weight: 600; font-size: 0.88rem;">
-                            <i data-lucide="users"></i> Conta Conjunta
-                        </button>
-                        <button class="btn-secondary btn-start-tour-page" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; font-weight: 600; font-size: 0.88rem;">
-                            <i data-lucide="help-circle"></i> Ver Tutorial Guia
-                        </button>
-                    </div>
-                </header>
-                
-                <div class="transactions-layout">
-                    <!-- Profile Form -->
-                    <div class="card form-container">
-                        <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;"><i data-lucide="user-check"></i> Dados Pessoais</h3>
-                        <form id="profile-form" enctype="multipart/form-data">
-                            
-                            <div class="form-group" style="text-align: center; margin-bottom: 2rem;">
-                                <div class="file-upload-wrapper" style="width: 120px; height: 120px; display: inline-block; border-radius: 50%;">
-                                    <input type="file" id="profile-photo" name="profile_picture" accept="image/*" style="z-index: 10;">
-                                    <img src="" id="profile-photo-preview" class="profile-avatar" style="width: 100%; height: 100%; object-fit: cover; border: 4px solid var(--accent-color);">
-                                    <div class="file-upload-overlay" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); color: white; font-size: 0.75rem; padding: 4px; border-bottom-left-radius: 60px; border-bottom-right-radius: 60px;">
-                                        Alterar
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group row">
-                                <div class="col">
-                                    <label>Nome</label>
-                                    <input type="text" id="profile-firstname" name="first_name" required>
-                                </div>
-                                <div class="col">
-                                    <label>Sobrenome</label>
-                                    <input type="text" id="profile-lastname" name="last_name">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>E-mail</label>
-                                <input type="email" id="profile-email" name="email" required>
-                            </div>
-
-                            <!-- ===== PATRICK WHATSAPP IA INTEGRATION CARD ===== -->
-                            <div id="whatsapp-integration-card" style="margin: 1.5rem 0; padding: 1.5rem; background: linear-gradient(135deg, rgba(37, 211, 102, 0.08), rgba(18, 140, 126, 0.12)); border: 1.5px solid rgba(37, 211, 102, 0.35); border-radius: 1.25rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                        <div style="width: 44px; height: 44px; border-radius: 12px; background: #25D366; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                                        </div>
-                                        <div>
-                                            <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-main);">Assistente Virtual IA no WhatsApp</h4>
-                                            <p style="margin: 0.2rem 0 0; font-size: 0.82rem; color: var(--text-muted);">Lance movimentações por Áudio de Voz, Fotos de Comprovantes ou Texto com a IA PriceXP.</p>
-                                        </div>
-                                    </div>
-                                    <span style="background: rgba(37, 211, 102, 0.18); border: 1px solid rgba(37, 211, 102, 0.4); color: #10b981; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
-                                        Ativo
-                                    </span>
-                                </div>
-
-                                <!-- Feature Pills -->
-                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
-                                    <span style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 6px; font-size: 0.76rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
-                                        🎙️ Áudios de Voz
-                                    </span>
-                                    <span style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 6px; font-size: 0.76rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
-                                        📸 Fotos / OCR Recibos
-                                    </span>
-                                    <span style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 6px; font-size: 0.76rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
-                                        📊 Relatórios em 1 Clique
-                                    </span>
-                                </div>
-
-                                <!-- Form Input Group -->
-                                <div class="form-group" style="margin-bottom: 1.25rem;">
-                                    <label for="profile-whatsapp" style="font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; display: block; color: var(--text-main);">
-                                        Seu Número de WhatsApp (com DDD)
-                                    </label>
-                                    <div style="position: relative; width: 100%;">
-                                        <input type="tel" id="profile-whatsapp" name="whatsapp" placeholder="(28) 99937-6500" style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem 0.85rem 2.8rem; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 0.75rem; font-size: 1rem; color: var(--text-main); font-weight: 600; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#25D366'" onblur="this.style.borderColor='var(--border-color)'">
-                                        <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.1rem; pointer-events: none;">
-                                            🇧🇷
-                                        </span>
-                                    </div>
-                                <!-- Account ID Badge -->
-                                <div id="account-id-badge" style="display: inline-block; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); color: #3b82f6; font-weight: 700; font-size: 0.88rem; padding: 0.4rem 0.85rem; border-radius: 0.5rem; margin-bottom: 0.85rem;">
-                                    🔑 ID da sua Conta no PriceXP: <span id="user-account-id-span">#1</span>
-                                </div>
-
-                                <!-- Action Button -->
-                                <a href="https://wa.me/552833441530?text=Ol%C3%A1%2C%20gostaria%20de%20ativar%20a%20conta%20PriceXP%2C%20meu%20ID%20%C3%A9%201" target="_blank" id="btn-open-whatsapp" style="display: flex; align-items: center; justify-content: center; gap: 0.65rem; width: 100%; box-sizing: border-box; padding: 0.85rem 1.25rem; background: linear-gradient(135deg, #25D366, #128C7E); color: #ffffff; border-radius: 0.75rem; font-weight: 700; font-size: 0.95rem; text-decoration: none; box-shadow: 0 8px 24px rgba(37, 211, 102, 0.3); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 28px rgba(37, 211, 102, 0.45)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(37, 211, 102, 0.3)'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                                    Abrir Assistente Financeiro no WhatsApp
-                                </a>
-                            </div>
-                            
-                            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0;">
-                            
-                            <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;"><i data-lucide="shield-check"></i> Segurança</h3>
-                            <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1rem;">Preencha a senha atual apenas se for alterar o E-mail ou a Nova Senha.</p>
-
-                            <div class="form-group row">
-                                <div class="col">
-                                    <label>Senha Atual</label>
-                                    <input type="password" id="profile-current-password" name="current_password" placeholder="Digite para autorizar mudanças sensíveis">
-                                </div>
-                                <div class="col">
-                                    <label>Nova Senha</label>
-                                    <input type="password" id="profile-new-password" name="password" placeholder="Deixe em branco para manter a atual">
-                                </div>
-                            </div>
-
-                            <div id="profile-msg" class="mt-2 text-center" style="display:none; font-size: 0.9rem;"></div>
-                            
-                            <button type="submit" class="btn-primary" id="btn-save-profile" style="margin-top: 1.25rem;">Salvar Alterações</button>
-                        </form>
-                    </div>
-
-                    <!-- Danger Zone -->
-                    <div class="card danger-zone" style="padding: 2.25rem; border: 1px solid rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.02); border-radius: 1rem; align-self: start; height: auto;">
-                        <h3 class="text-danger" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem; font-size: 1.15rem; font-weight: 600;"><i data-lucide="alert-triangle"></i> Zona de Perigo</h3>
-                        <p class="text-muted" style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.75rem;">
-                            Ao excluir sua conta, todos os seus lançamentos, receitas, despesas e configurações serão apagados <strong>permanentemente</strong>. Essa ação não pode ser desfeita.
-                        </p>
-                        
-                        <button type="button" class="btn-secondary" id="btn-delete-account" style="background-color: transparent; color: var(--danger-color); border: 1.5px solid var(--danger-color); padding: 0.75rem 1.25rem; width: 100%; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 8px;">
-                            <i data-lucide="trash-2"></i> Excluir Minha Conta
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ===== ABA: CONTA CONJUNTA ===== -->
-            <section id="tab-shared" class="tab-content">
-                <header class="top-header">
-                    <div>
-                        <h2><i data-lucide="users"></i> Conta Conjunta</h2>
-                        <p>Compartilhe o controle financeiro, cartões e lançamentos com seu parceiro(a)</p>
-                    </div>
-                </header>
-
-                <div style="display: flex; flex-direction: column; gap: 2.25rem; max-width: 850px;">
-                    <!-- Status: NÃO CONECTADO -->
-                    <div class="card form-container" id="shared-unconnected-card" style="padding: 2.25rem;">
-                        <h3 style="margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="user-plus"></i> Conectar com Parceiro(a)</h3>
-                        <p class="text-muted" style="font-size: 0.92rem; margin-bottom: 1.75rem; line-height: 1.6;">
-                            Ao conectar com seu parceiro(a), ambos passarão a visualizar e gerenciar o mesmo ambiente financeiro (lançamentos, cartões, categorias e saldo), mantendo logins e senhas individuais.
-                        </p>
-
-                        <form id="shared-connect-form">
-                            <div class="form-group" style="margin-bottom: 1.25rem;">
-                                <label for="shared-partner-email">E-mail do Parceiro(a)</label>
-                                <input type="email" id="shared-partner-email" placeholder="parceiro@exemplo.com" required style="padding: 0.85rem 1rem; width: 100%;">
-                            </div>
-                            <div id="shared-msg" class="mt-2 text-center" style="display:none; font-size: 0.9rem; margin-bottom: 1rem;"></div>
-                            <button type="submit" class="btn-primary" id="btn-shared-connect" style="width: 100%; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600;">
-                                <i data-lucide="link"></i> Conectar Conta Conjunta
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Status: CONECTADO -->
-                    <div class="card form-container" id="shared-connected-card" style="display: none; padding: 2.25rem; border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.02); border-radius: 1rem; margin-bottom: 1rem;">
-                        <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.75rem; flex-wrap: wrap;">
-                            <img src="" id="shared-partner-avatar" class="profile-avatar" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-color);" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=P&background=10b981&color=fff';">
-                            <div style="flex: 1; min-width: 200px;">
-                                <h3 id="shared-partner-name" style="margin: 0; font-size: 1.25rem; color: var(--text-main); font-weight: 600;">...</h3>
-                                <p id="shared-partner-email-display" class="text-muted" style="margin: 0.35rem 0 0.65rem; font-size: 0.92rem;"></p>
-                                <span class="badge text-success" style="background: rgba(16, 185, 129, 0.15); font-weight: 600; font-size: 0.82rem; padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 0.4rem;">
-                                    ✓ Conta Conjunta Ativa
+            <!-- Right Hero Interactive Demo Simulator -->
+            <div class="hero-demo-wrapper">
+                <div class="hero-demo-container">
+                    
+                    <!-- 1. Simulated WhatsApp Chat -->
+                    <div class="wa-sim-card">
+                        <div class="wa-sim-header">
+                            <div class="wa-sim-avatar">XP</div>
+                            <div class="wa-sim-user-info">
+                                <span class="wa-sim-name">PriceXP Bot</span>
+                                <span class="wa-sim-status">
+                                    <span style="width:7px; height:7px; background:#00a884; border-radius:50%; display:inline-block;"></span> online
                                 </span>
                             </div>
-                            <button type="button" class="btn-secondary" id="btn-shared-disconnect" style="background-color: transparent; color: var(--danger-color); border: 1.5px solid var(--danger-color); padding: 0.65rem 1.25rem; font-size: 0.88rem; display: flex; align-items: center; gap: 0.5rem; border-radius: 8px;">
-                                <i data-lucide="unlink"></i> Desconectar
-                            </button>
+                        </div>
+                        <div class="wa-sim-body" id="wa-demo-body">
+                            <!-- Messages generated dynamically by landing.js -->
+                        </div>
+                    </div>
+
+                    <!-- 2. Simulated Live Dashboard Panel Card -->
+                    <div class="dash-mini-card">
+                        <div class="dash-mini-header">
+                            <span class="dash-mini-title">
+                                <i data-lucide="layout-dashboard" class="text-emerald"></i> Painel PriceXP
+                            </span>
+                            <span style="font-size:0.7rem; color:#10b981; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 8px; border-radius:99px;">Ao Vivo</span>
                         </div>
 
-                        <p class="text-muted" style="font-size: 0.92rem; line-height: 1.65; margin: 0; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                            Vocês compartilham o mesmo espaço financeiro. Todos os lançamentos criados por qualquer um de vocês aparecem sincronizados automaticamente.
+                        <div class="dash-mini-balance">
+                            <span class="dash-mini-bal-label">Saldo Atual Consolidado</span>
+                            <div class="dash-mini-bal-val" id="dash-demo-val">R$ 3.450,00</div>
+                        </div>
+
+                        <div class="dash-mini-txs-title">
+                            <i data-lucide="clock" style="width:12px; height:12px;"></i> Últimos Lançamentos
+                        </div>
+
+                        <div class="dash-mini-tx-list" id="dash-demo-list">
+                            <!-- Transactions populated dynamically by landing.js -->
+                            <div class="dash-mini-tx-item">
+                                <div style="display:flex; flex-direction:column; gap:2px;">
+                                    <span style="font-weight:600; color:var(--text-main);">Cinema com Família</span>
+                                    <span class="cat-badge" style="background:rgba(168,85,247,0.2); color:#c084fc; border:1px solid rgba(168,85,247,0.4);">Lazer</span>
+                                </div>
+                                <span style="font-weight:700; color:#ef4444;">- R$ 85,00</span>
+                            </div>
+                            <div class="dash-mini-tx-item">
+                                <div style="display:flex; flex-direction:column; gap:2px;">
+                                    <span style="font-weight:600; color:var(--text-main);">Farmácia Santander</span>
+                                    <span class="cat-badge" style="background:rgba(236,72,153,0.2); color:#f472b6; border:1px solid rgba(236,72,153,0.4);">Saúde</span>
+                                </div>
+                                <span style="font-weight:700; color:#ef4444;">- R$ 122,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: How It Works (3 Steps)
+         ========================================================================== -->
+    <section id="como-funciona">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="sparkles"></i> Simplicidade Absoluta
+                </div>
+                <h2 class="section-title">
+                    Você fala. <span class="text-gradient">O PriceXP organiza.</span>
+                </h2>
+                <p class="section-subtitle">
+                    Sem formulários gigantescos ou menus confusos. Em apenas 3 passos o seu controle financeiro é atualizado.
+                </p>
+            </div>
+
+            <div class="steps-grid">
+                
+                <!-- Step 1 -->
+                <div class="glass-card step-card">
+                    <div class="step-number">1</div>
+                    <h3 class="step-card-title">Envie no WhatsApp</h3>
+                    <p class="step-card-desc">Fale naturalmente por texto ou áudio como se estivesse conversando com um amigo.</p>
+                    <div class="step-card-box text-emerald font-semibold">
+                        💬 "Gastei 45 reais no iFood pelo Nubank"
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="glass-card step-card">
+                    <div class="step-number">2</div>
+                    <h3 class="step-card-title">O PriceXP Entende</h3>
+                    <p class="step-card-desc">Nossa IA extrai valor, categoria, banco e forma de pagamento de forma inteligente.</p>
+                    <div class="step-card-box">
+                        🔴 <strong>Despesa:</strong> R$ 45,00<br>
+                        🍔 <strong>Alimentação</strong> • 🏦 <strong>Nubank</strong>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="glass-card step-card">
+                    <div class="step-number">3</div>
+                    <h3 class="step-card-title">Seu Painel Atualiza</h3>
+                    <p class="step-card-desc">Tudo fica pronto e visível no seu painel web com gráficos, relatórios e controle de saldo.</p>
+                    <div class="step-card-box text-emerald font-semibold">
+                        📊 Saldo, gráficos e relatórios sincronizados!
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: Natural Language Interactive Demo
+         ========================================================================== -->
+    <section>
+        <div class="container">
+            <div class="nl-container">
+                <div class="nl-grid">
+                    
+                    <div>
+                        <div class="badge-pill">
+                            <i data-lucide="message-square-code"></i> Sem Comandos Decorados
+                        </div>
+                        <h2 class="section-title" style="text-align:left;">
+                            Você não precisa aprender comandos robotizados.
+                        </h2>
+                        <p class="section-subtitle" style="text-align:left; margin-bottom: 1.5rem;">
+                            Clique nas mensagens abaixo para ver como o PriceXP interpreta qualquer forma de falar:
+                        </p>
+
+                        <div class="nl-examples">
+                            <div class="nl-item active" data-desc="Almoço" data-cat="Alimentação" data-bank="Banco Inter" data-pay="Débito / PIX">
+                                <span>"Gastei 37 no almoço pelo Inter"</span>
+                                <i data-lucide="chevron-right"></i>
+                            </div>
+                            <div class="nl-item" data-desc="Gasolina" data-cat="Transporte" data-bank="C6 Bank" data-pay="Crédito">
+                                <span>"Coloca 120 de gasolina no C6 Bank"</span>
+                                <i data-lucide="chevron-right"></i>
+                            </div>
+                            <div class="nl-item" data-desc="Serviço Cliente" data-cat="Receita / Renda Extra" data-bank="Nubank" data-pay="PIX">
+                                <span>"Recebi 2500 de um cliente no Nubank"</span>
+                                <i data-lucide="chevron-right"></i>
+                            </div>
+                            <div class="nl-item" data-desc="Internet" data-cat="Casa / Contas" data-bank="Sicredi" data-pay="Boleto / PIX">
+                                <span>"Paguei 89,90 de internet no Sicredi"</span>
+                                <i data-lucide="chevron-right"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parser Visualizer -->
+                    <div class="nl-parser-box">
+                        <div class="nl-parser-header">
+                            <i data-lucide="cpu"></i> Interpretação em Tempo Real
+                        </div>
+                        <div class="nl-parser-fields">
+                            <div class="nl-field-tag">
+                                <div class="nl-field-label">Descrição / Item</div>
+                                <div class="nl-field-val" id="nlp-val-desc">Almoço</div>
+                            </div>
+                            <div class="nl-field-tag">
+                                <div class="nl-field-label">Categoria Automática</div>
+                                <div class="nl-field-val text-emerald" id="nlp-val-cat">Alimentação</div>
+                            </div>
+                            <div class="nl-field-tag">
+                                <div class="nl-field-label">Banco / Conta</div>
+                                <div class="nl-field-val" id="nlp-val-bank">Banco Inter</div>
+                            </div>
+                            <div class="nl-field-tag">
+                                <div class="nl-field-label">Forma de Pagamento</div>
+                                <div class="nl-field-val" id="nlp-val-pay">Débito / PIX</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: WhatsApp Spotlight vs Traditional Apps
+         ========================================================================== -->
+    <section id="whatsapp">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="arrow-right-left"></i> Comparativo Prático
+                </div>
+                <h2 class="section-title">
+                    Seu controle financeiro já está <span class="text-gradient">onde você conversa.</span>
+                </h2>
+                <p class="section-subtitle">
+                    Por que abrir aplicativos pesados e preencher telas inteiras se você pode mandar uma única mensagem?
+                </p>
+            </div>
+
+            <div class="comp-grid">
+                
+                <!-- Traditional App Card -->
+                <div class="comp-card comp-card-trad">
+                    <div class="comp-badge comp-badge-trad">O Modo Tradicional (Cansativo)</div>
+                    <h3 class="comp-title">Aplicativos Comuns</h3>
+                    <div class="comp-steps-list">
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 1. Desbloquear o celular e procurar o app</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 2. Aguardar o aplicativo carregar</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 3. Procurar e clicar no botão "+ Novo Gastos"</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 4. Digitar o valor no teclado numérico</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 5. Escrever a descrição do item</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 6. Selecionar a categoria em uma lista gigante</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 7. Escolher o banco e o tipo de conta</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 8. Clicar em salvar e fechar o app</div>
+                    </div>
+                </div>
+
+                <!-- PriceXP Card -->
+                <div class="comp-card comp-card-pricexp">
+                    <div class="comp-badge comp-badge-pricexp">O Jeito PriceXP (Instantâneo)</div>
+                    <h3 class="comp-title">Com o PriceXP</h3>
+                    <div class="comp-steps-list">
+                        <div class="comp-step-item" style="margin-bottom: 1.5rem;">
+                            <i data-lucide="check-circle-2" class="comp-step-icon-good"></i>
+                            <div>
+                                <strong style="color:var(--text-main); font-size:1.05rem;">1. Abra o WhatsApp e envie:</strong>
+                                <div style="background:rgba(0,0,0,0.4); padding:0.75rem; border-radius:8px; margin-top:6px; color:#10b981; font-weight:600;">
+                                    "Gastei 89 no mercado pelo Nubank"
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comp-step-item" style="margin-top:auto; padding-top:1rem; border-top:1px solid rgba(16,185,129,0.2);">
+                            <i data-lucide="zap" class="text-emerald" style="font-size:1.5rem;"></i>
+                            <span style="font-weight:700; color:var(--text-main); font-size:1.1rem;">Pronto. O PriceXP fez todo o resto por você em 2 segundos.</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: Dashboard Spotlight
+         ========================================================================== -->
+    <section id="painel">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="layout"></i> Visão Completa
+                </div>
+                <h2 class="section-title">
+                    Converse pelo WhatsApp. <span class="text-gradient">Analise tudo no painel.</span>
+                </h2>
+                <p class="section-subtitle">
+                    O WhatsApp garante a rapidez do dia a dia. O painel web garante a inteligência financeira para tomada de decisões.
+                </p>
+            </div>
+
+            <!-- Dashboard Representation Card -->
+            <div class="glass-card" style="padding:2rem; border-color:var(--border-glass-light); box-shadow:var(--shadow-glow-blue);">
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1.5rem; margin-bottom:2rem;">
+                    <div style="background:rgba(11,15,25,0.7); border:1px solid var(--border-glass); padding:1.25rem; border-radius:12px;">
+                        <span style="font-size:0.8rem; color:var(--text-muted);">Saldo Consolidado</span>
+                        <div style="font-size:1.6rem; font-weight:800; color:var(--text-main); margin-top:4px;">R$ 8.450,20</div>
+                    </div>
+                    <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); padding:1.25rem; border-radius:12px;">
+                        <span style="font-size:0.8rem; color:#10b981;">Receitas do Mês</span>
+                        <div style="font-size:1.6rem; font-weight:800; color:#10b981; margin-top:4px;">+ R$ 6.200,00</div>
+                    </div>
+                    <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); padding:1.25rem; border-radius:12px;">
+                        <span style="font-size:0.8rem; color:#ef4444;">Despesas do Mês</span>
+                        <div style="font-size:1.6rem; font-weight:800; color:#ef4444; margin-top:4px;">- R$ 2.749,80</div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:1.5rem;">
+                    <div style="background:rgba(11,15,25,0.7); border:1px solid var(--border-glass); padding:1.25rem; border-radius:12px;">
+                        <div style="font-weight:700; font-size:0.95rem; margin-bottom:1rem;">Lançamentos Recentes</div>
+                        
+                        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.02); border-radius:8px;">
+                                <div>
+                                    <div style="font-weight:600;">Supermercado Carrefour</div>
+                                    <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
+                                        <span class="cat-badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid rgba(245,158,11,0.4);">Alimentação</span>
+                                        <span style="font-size:0.75rem; color:var(--text-dim);">• Nubank • 14/08/2026</span>
+                                    </div>
+                                </div>
+                                <span style="font-weight:700; color:#ef4444;">- R$ 214,50</span>
+                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.02); border-radius:8px;">
+                                <div>
+                                    <div style="font-weight:600;">Abastecimento Shell</div>
+                                    <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
+                                        <span class="cat-badge" style="background:rgba(6,182,212,0.2); color:#22d3ee; border:1px solid rgba(6,182,212,0.4);">Transporte</span>
+                                        <span style="font-size:0.75rem; color:var(--text-dim);">• Sicredi • 13/08/2026</span>
+                                    </div>
+                                </div>
+                                <span style="font-weight:700; color:#ef4444;">- R$ 150,00</span>
+                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.02); border-radius:8px;">
+                                <div>
+                                    <div style="font-weight:600;">Projeto Freelance Web</div>
+                                    <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
+                                        <span class="cat-badge" style="background:rgba(16,185,129,0.2); color:#34d399; border:1px solid rgba(16,185,129,0.4);">Receita</span>
+                                        <span style="font-size:0.75rem; color:var(--text-dim);">• Inter • 12/08/2026</span>
+                                    </div>
+                                </div>
+                                <span style="font-weight:700; color:#10b981;">+ R$ 2.500,00</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div style="background:rgba(11,15,25,0.7); border:1px solid var(--border-glass); padding:1.25rem; border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+                        <i data-lucide="pie-chart" class="text-emerald" style="width:48px; height:48px; margin-bottom:1rem;"></i>
+                        <h4 style="font-size:1.1rem; font-weight:700; margin-bottom:0.4rem;">Relatórios Automáticos</h4>
+                        <p style="font-size:0.85rem; color:var(--text-muted); max-width:260px;">
+                            Entenda exatamente onde seu dinheiro está sendo gasto com gráficos limpos e separação por categorias.
                         </p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                    <!-- ATIVIDADE DO PARCEIRO(A) -->
-                    <div class="card list-container" id="shared-partner-activity-card" style="display: none; padding: 2.25rem; margin-top: 1.5rem;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
-                            <h3 id="shared-partner-activity-title" style="margin: 0; font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-                                <i data-lucide="activity"></i> Lançamentos Realizados pelo Parceiro(a)
-                            </h3>
+    <!-- ==========================================================================
+         Section: Real Features Grid
+         ========================================================================== -->
+    <section id="recursos">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="layers"></i> Funcionalidades Reais
+                </div>
+                <h2 class="section-title">
+                    Tudo o que você precisa em <span class="text-gradient">um só lugar.</span>
+                </h2>
+                <p class="section-subtitle">
+                    Construído com base nas necessidades reais de quem busca controle sem complicação.
+                </p>
+            </div>
+
+            <div class="features-grid">
+                
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box"><i data-lucide="message-circle"></i></div>
+                    <h3 class="feature-title">Lançamentos por WhatsApp</h3>
+                    <p class="feature-desc">Registre receitas e despesas conversando normalmente como se estivesse trocando mensagens com um amigo.</p>
+                </div>
+
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box" style="color:#10b981; background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.25);"><i data-lucide="tags"></i></div>
+                    <h3 class="feature-title">Categorização Automática</h3>
+                    <p class="feature-desc">O PriceXP entende automaticamente se o seu gasto foi com Alimentação, Casa, Transporte, Saúde, Lazer ou Educação.</p>
+                </div>
+
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box" style="color:#c084fc; background:rgba(168,85,247,0.12); border-color:rgba(168,85,247,0.25);"><i data-lucide="landmark"></i></div>
+                    <h3 class="feature-title">Múltiplas Contas e Bancos</h3>
+                    <p class="feature-desc">Associe seus lançamentos ao Nubank, Inter, Sicredi, C6, Itaú, Bradesco, Santander ou carteira física de dinheiro.</p>
+                </div>
+
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box" style="color:#fbbf24; background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.25);"><i data-lucide="credit-card"></i></div>
+                    <h3 class="feature-title">Forma de Pagamento</h3>
+                    <p class="feature-desc">Reconhecimento automático de compras no Crédito, Débito, PIX ou Dinheiro sem precisar selecionar caixas de opção.</p>
+                </div>
+
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box" style="color:#f472b6; background:rgba(236,72,153,0.12); border-color:rgba(236,72,153,0.25);"><i data-lucide="list-checks"></i></div>
+                    <h3 class="feature-title">Lançamentos em Lote</h3>
+                    <p class="feature-desc">Envie uma lista completa com múltiplos gastos em uma única mensagem e o PriceXP registra cada item individualmente.</p>
+                </div>
+
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box" style="color:#22d3ee; background:rgba(6,182,212,0.12); border-color:rgba(6,182,212,0.25);"><i data-lucide="users"></i></div>
+                    <h3 class="feature-title">Conta Conjunta / Casais</h3>
+                    <p class="feature-desc">Conecte a conta com seu parceiro(a) e visualize no painel web todas as despesas da casa unificadas e organizadas.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: Pain vs Solution
+         ========================================================================== -->
+    <section>
+        <div class="container">
+            <div class="glass-card" style="padding:4rem 2rem; text-align:center; max-width:850px; margin:0 auto; background:linear-gradient(135deg, rgba(19,27,47,0.9) 0%, rgba(30,58,138,0.2) 100%);">
+                <h2 style="font-size:2.2rem; font-weight:800; margin-bottom:1rem;">
+                    O problema nunca foi gastar. <br><span class="text-gradient">Foi lembrar de anotar.</span>
+                </h2>
+                <p style="font-size:1.1rem; color:var(--text-muted); max-width:600px; margin:0 auto 2.5rem auto;">
+                    Planilhas exigem que você sente na frente do computador. Aplicativos tradicionais exigem dezenas de cliques. Com o PriceXP, você anota no exato segundo em que o gasto acontece.
+                </p>
+                <a href="app.html" class="btn-primary" style="font-size:1.05rem; padding:1rem 2.25rem;">
+                    <i data-lucide="sparkles"></i> Experimentar o PriceXP Agora
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: Pricing Cards
+         ========================================================================== -->
+    <section id="planos">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="tag"></i> Transparência Total
+                </div>
+                <h2 class="section-title">
+                    Escolha o plano ideal para a sua <span class="text-gradient">liberdade financeira.</span>
+                </h2>
+                <p class="section-subtitle">
+                    Sem taxas escondidas. Cancele ou altere o seu plano quando quiser.
+                </p>
+            </div>
+
+            <div class="pricing-grid">
+                
+                <!-- 1. Standard Monthly Card -->
+                <div class="glass-card price-card">
+                    <div>
+                        <div class="price-plan-name">PriceXP Standard</div>
+                        <p style="font-size:0.85rem; color:var(--text-muted);">Para quem prefere a flexibilidade da assinatura mensal.</p>
+
+                        <div class="price-val-box">
+                            <span class="price-currency">R$</span>
+                            <span class="price-amount">29,90</span>
+                            <span class="price-period">/ mês</span>
+                        </div>
+                        <div style="font-size:0.82rem; color:var(--text-dim); margin-bottom:1.5rem;">Cobrança mensal recorrente</div>
+
+                        <ul class="price-features-list">
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Registro ilimitado via WhatsApp</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Categorização inteligente por IA</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Reconhecimento de bancos e cartões</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Lançamentos múltiplos em lote</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Edição e exclusão via WhatsApp</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Acesso total ao Painel Web completo</li>
+                        </ul>
+                    </div>
+
+                    <a href="app.html" class="btn-secondary" style="width:100%;">
+                        Começar agora
+                    </a>
+                </div>
+
+                <!-- 2. Featured Annual Card (30% OFF) -->
+                <div class="glass-card price-card price-card-anual">
+                    <div class="price-top-badge">⭐ MELHOR ESCOLHA</div>
+
+                    <div>
+                        <div style="display:flex; align-items:center;">
+                            <div class="price-plan-name">PriceXP Anual</div>
+                            <span class="price-off-badge">30% OFF</span>
+                        </div>
+                        <p style="font-size:0.85rem; color:var(--text-muted);">Máxima economia para quem quer resultado no longo prazo.</p>
+
+                        <div style="margin-top:0.75rem;">
+                            <span class="price-old-val">De R$ 358,80</span>
                         </div>
 
-                        <div id="shared-partner-transactions-list" style="display: flex; flex-direction: column; gap: 0.85rem;">
-                            <!-- Preenchido via JS -->
+                        <div class="price-val-box">
+                            <span class="price-currency">R$</span>
+                            <span class="price-amount" style="color:#10b981;">251,16</span>
+                            <span class="price-period">/ ano</span>
                         </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
 
-    <!-- Modal de Detalhes dos Lançamentos do Dashboard -->
-    <div id="details-modal" class="modal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); justify-content: center; align-items: center;">
-        <div class="modal-content card" style="background: #1e293b; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; width: 90%; max-width: 550px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); position: relative; max-height: 80vh; display: flex; flex-direction: column;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h3 id="details-modal-title" style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #fff;">Lançamentos</h3>
-                <button id="btn-close-details" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center;">
-                    <i data-lucide="x" style="width: 1.5rem; height: 1.5rem;"></i>
-                </button>
-            </div>
-            <div id="details-modal-body" style="overflow-y: auto; flex-grow: 1; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                <!-- Lista de Lançamentos preenchida por JS -->
+                        <div class="price-equiv">
+                            ⚡ Equivale a apenas <strong>R$ 20,93/mês</strong> (Economize R$ 107,64 por ano)
+                        </div>
+
+                        <ul class="price-features-list">
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> <strong>Todos os recursos do plano Standard</strong></li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> <strong>30% de desconto garantido</strong></li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Economia direta de R$ 107,64/ano</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Registro ilimitado via WhatsApp</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Suporte a Conta Conjunta / Casais</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Acesso prioritário a novas atualizações</li>
+                        </ul>
+                    </div>
+
+                    <a href="app.html" class="btn-primary" style="width:100%; font-size:1.05rem;">
+                        <i data-lucide="shield-check"></i> Quero economizar 30%
+                    </a>
+                </div>
+
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- ===== MODAL: REVISÃO DE EXTRATO IMPORTADO ===== -->
-    <div id="ofx-preview-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); justify-content:center; align-items:center; padding:1rem; box-sizing:border-box;">
-        <div style="background:var(--bg-card); border-radius:1rem; width:100%; max-width:860px; max-height:90vh; display:flex; flex-direction:column; box-shadow:var(--card-shadow); border:1px solid var(--border-color);">
-            <!-- Header -->
-            <div style="padding:1.5rem 1.5rem 1rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color);">
-                <div>
-                    <h3 style="margin:0; font-size:1.2rem; font-weight:700; color:var(--text-main);">Revisar Extrato Importado</h3>
-                    <p style="margin:0.25rem 0 0; font-size:0.85rem; color:var(--text-muted);">Edite a descrição, categoria e tipo de cada lançamento antes de confirmar.</p>
+    <!-- ==========================================================================
+         Section: FAQ Accordion
+         ========================================================================== -->
+    <section id="faq">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="help-circle"></i> Tira-Dúvidas
                 </div>
-                <button id="btn-close-ofx-preview" style="background:transparent; border:none; color:var(--text-muted); width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center;">✕</button>
+                <h2 class="section-title">
+                    Perguntas <span class="text-gradient">Frequentes</span>
+                </h2>
+                <p class="section-subtitle">
+                    Tudo o que você precisa saber antes de começar a usar o PriceXP.
+                </p>
             </div>
-            <!-- Summary bar -->
-            <div id="ofx-preview-summary" style="padding:0.75rem 1.5rem; background:rgba(16,185,129,0.06); border-bottom:1px solid var(--border-color); font-size:0.85rem; color:var(--text-muted); display:flex; gap:1.5rem; flex-wrap:wrap;"></div>
-            <!-- Table -->
-            <div style="overflow-y:auto; flex:1; padding:1rem 1.5rem;">
-                <table id="ofx-preview-table" style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead>
-                        <tr style="border-bottom:1px solid var(--border-color);">
-                            <th style="text-align:left; padding:0.5rem 0.5rem; color:var(--text-muted); font-weight:600; white-space:nowrap;">Data</th>
-                            <th style="text-align:left; padding:0.5rem 0.5rem; color:var(--text-muted); font-weight:600;">Descrição</th>
-                            <th style="text-align:left; padding:0.5rem 0.5rem; color:var(--text-muted); font-weight:600;">Categoria</th>
-                            <th style="text-align:left; padding:0.5rem 0.5rem; color:var(--text-muted); font-weight:600;">Tipo</th>
-                            <th style="text-align:right; padding:0.5rem 0.5rem; color:var(--text-muted); font-weight:600;">Valor</th>
-                            <th style="padding:0.5rem 0.25rem;"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="ofx-preview-body"></tbody>
-                </table>
-            </div>
-            <!-- Footer actions -->
-            <div style="padding:1rem 1.5rem; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
-                <button id="btn-ofx-cancel" style="padding:0.65rem 1.5rem; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-main); border-radius:0.5rem; cursor:pointer; font-size:0.9rem; font-family:inherit;">Cancelar</button>
-                <button id="btn-ofx-confirm" style="padding:0.65rem 1.75rem; background:linear-gradient(135deg,#1e3a8a,#10b981); border:none; color:#fff; border-radius:0.5rem; cursor:pointer; font-size:0.9rem; font-weight:600; font-family:inherit;">
-                    ✓ Confirmar Importação (<span id="ofx-confirm-count">0</span>)
-                </button>
+
+            <div class="faq-list">
+                
+                <div class="faq-item active">
+                    <button class="faq-question">
+                        <span>Como funciona o PriceXP?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        O PriceXP combina a praticidade do WhatsApp com a inteligência de um painel financeiro web. Você envia suas despesas ou receitas por mensagem (texto ou áudio) no WhatsApp, nosso sistema entende o valor, a categoria e o banco automaticamente e atualiza seu painel em tempo real.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Preciso instalar alguma coisa no meu celular?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Não! Você não precisa instalar nenhum aplicativo extra. O controle diário é feito dentro do próprio WhatsApp que você já utiliza, e o painel pode ser acessado pelo navegador de qualquer computador, tablet ou celular.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Como registro um gasto no WhatsApp?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Basta mandar uma mensagem natural como se estivesse conversando. Exemplos: "Gastei 45 no iFood no Nubank", "32 mercado pix", "Coloca 120 de gasolina no C6 Bank". O PriceXP processa e confirma o lançamento na hora.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Posso usar vários bancos e cartões?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Sim! O PriceXP reconhece bancos como Nubank, Inter, Sicredi, C6 Bank, Itaú, Bradesco, Santander, Caju, Mercado Pago e contas físicas. Basta citar o nome do banco na mensagem.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>O PriceXP identifica a categoria automaticamente?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Sim. Nossa Inteligência Artificial categoriza automaticamente seus gastos em Alimentação, Casa, Transporte, Saúde, Lazer, Educação, Investimentos ou Receitas.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Consigo alterar ou excluir um lançamento pelo WhatsApp?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Sim! Após cada lançamento, o bot exibe as opções rápidas. Respondendo `1` você entra no modo de edição do lançamento e respondendo `2` você cancela/exclui a transação instantaneamente.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Posso registrar várias despesas de uma vez só?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Com certeza! Você pode mandar uma lista de lançamentos em uma única mensagem (ex: "32 mercado nubank pix \n 19 farmácia inter débito \n 45 gasolina sicredi crédito"). O PriceXP lê cada linha e registra todos individualmente.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Meus dados ficam sincronizados no painel em tempo real?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Sim. No exato instante em que o bot confirma o lançamento no WhatsApp, seu painel web é atualizado com o novo saldo, categoria e histórico.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Qual a diferença do plano mensal para o plano anual?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        No plano mensal (R$ 29,90/mês), você paga mês a mês com flexibilidade total. No plano anual (R$ 251,16/ano), você garante 30% de desconto em relação a 12 mensalidades, economizando R$ 107,64 por ano (o equivalente a apenas R$ 20,93 por mês).
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Já tenho conta. Como faço para entrar?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Basta clicar no botão "Acessar conta" no topo da página ou no menu principal para ir diretamente para a sua tela de login do PriceXP.
+                    </div>
+                </div>
+
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- ===== MODAL: EDITAR LANÇAMENTO ===== -->
-    <div id="edit-tx-modal" style="display:none; position:fixed; z-index:3500; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); justify-content:center; align-items:center; padding:1rem; box-sizing:border-box;">
-        <div style="background:var(--bg-card); border-radius:1rem; width:100%; max-width:520px; max-height:92vh; overflow-y:auto; box-shadow:var(--card-shadow); border:1px solid var(--border-color);">
-            <!-- Header -->
-            <div style="padding:1.5rem 1.5rem 1rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); position:sticky; top:0; background:var(--bg-card); z-index:1;">
-                <div>
-                    <h3 style="margin:0; font-size:1.2rem; font-weight:700; color:var(--text-main);">✏️ Editar Lançamento</h3>
-                    <p style="margin:0.25rem 0 0; font-size:0.82rem; color:var(--text-muted);">Altere os dados e salve.</p>
+    <!-- ==========================================================================
+         Section: Final CTA & Footer
+         ========================================================================== -->
+    <section>
+        <div class="container">
+            <div class="cta-final-box">
+                <h2 style="font-size:2.5rem; font-weight:800; margin-bottom:1rem;">
+                    Organizar suas finanças pode ser tão simples quanto <span class="text-gradient">mandar uma mensagem.</span>
+                </h2>
+                <p style="font-size:1.15rem; color:var(--text-muted); max-width:620px; margin:0 auto 2rem auto;">
+                    Comece agora mesmo com o PriceXP e transforme suas conversas diárias em um controle financeiro completo e sem esforço.
+                </p>
+                <div style="display:flex; justify-content:center; gap:1rem; flex-wrap:wrap;">
+                    <a href="app.html" class="btn-primary" style="font-size:1.1rem; padding:1rem 2.25rem;">
+                        <i data-lucide="zap"></i> Começar agora com PriceXP
+                    </a>
                 </div>
-                <button id="btn-close-edit-tx" style="background:transparent; border:none; color:var(--text-muted); width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:1.3rem; display:flex; align-items:center; justify-content:center;">✕</button>
+                <div style="margin-top:1.5rem; font-size:0.9rem; color:var(--text-dim);">
+                    Já possui uma conta? <a href="app.html" style="color:var(--accent-emerald); font-weight:600; text-decoration:none;">Acessar minha conta</a>
+                </div>
             </div>
-            <!-- Form -->
-            <form id="edit-tx-form" style="padding:1.5rem; display:flex; flex-direction:column; gap:1rem;">
-                <input type="hidden" id="edit-tx-id">
-
-                <!-- Tipo -->
-                <div class="form-group">
-                    <label>Tipo</label>
-                    <div style="display:flex; gap:1rem;">
-                        <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:500;">
-                            <input type="radio" name="edit-type" value="receita" id="edit-type-receita"> Receita
-                        </label>
-                        <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:500;">
-                            <input type="radio" name="edit-type" value="despesa" id="edit-type-despesa"> Despesa
-                        </label>
-                        <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-weight:500;">
-                            <input type="radio" name="edit-type" value="investimento" id="edit-type-investimento"> Investimento
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Categoria -->
-                <div class="form-group">
-                    <label for="edit-tx-category">Categoria</label>
-                    <select id="edit-tx-category"></select>
-                </div>
-
-                <!-- Descrição -->
-                <div class="form-group">
-                    <label for="edit-tx-description">Descrição</label>
-                    <input type="text" id="edit-tx-description" placeholder="Ex: Salário, Aluguel..." required>
-                </div>
-
-                <!-- Banco -->
-                <div class="form-group">
-                    <label for="edit-tx-bank">Banco / Instituição</label>
-                    <select id="edit-tx-bank">
-                        <option value="Geral">Conta Geral / Dinheiro</option>
-                        <option value="Nubank">Nubank</option>
-                        <option value="Itaú">Itaú</option>
-                        <option value="Bradesco">Bradesco</option>
-                        <option value="Banco do Brasil">Banco do Brasil</option>
-                        <option value="Inter">Banco Inter</option>
-                        <option value="Santander">Santander</option>
-                        <option value="C6 Bank">C6 Bank</option>
-                        <option value="Sicredi">Sicredi</option>
-                        <option value="Caixa">Caixa Econômica</option>
-                        <option value="Outro">Outro / Carteira</option>
-                    </select>
-                </div>
-
-                <!-- Valor e Data -->
-                <div class="form-group row">
-                    <div class="col">
-                        <label for="edit-tx-amount">Valor (R$)</label>
-                        <input type="number" id="edit-tx-amount" min="0.01" step="0.01" required>
-                    </div>
-                    <div class="col">
-                        <label for="edit-tx-date">Data</label>
-                        <input type="date" id="edit-tx-date" required>
-                    </div>
-                </div>
-
-                <!-- Mensagem de erro -->
-                <div id="edit-tx-msg" style="display:none; font-size:0.85rem; color:var(--danger-color); text-align:center;"></div>
-
-                <!-- Ações -->
-                <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
-                    <button type="button" id="btn-cancel-edit-tx" style="flex:1; padding:0.75rem; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-main); border-radius:0.5rem; cursor:pointer; font-family:inherit; font-size:0.95rem;">Cancelar</button>
-                    <button type="submit" id="btn-save-edit-tx" style="flex:2; padding:0.75rem; background:linear-gradient(135deg,#1e3a8a,#10b981); border:none; color:#fff; border-radius:0.5rem; cursor:pointer; font-family:inherit; font-size:0.95rem; font-weight:600;">💾 Salvar Alterações</button>
-                </div>
-            </form>
         </div>
-    </div>
+    </section>
 
-    <!-- Interactive Onboarding Tour Elements -->
-    <div id="tour-overlay" style="display: none;"></div>
-    <div id="tour-tooltip" class="tour-tooltip-card" style="display: none;"></div>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-wrapper">
+            <div class="footer-logo">
+                <img src="logo_horizontal_dark_theme.png" alt="PriceXP Logo" onerror="this.onerror=null; this.src='logo.png';">
+                <span>© 2026 PriceXP. Todos os direitos reservados.</span>
+            </div>
 
-    <!-- External Scripts -->
+            <ul class="footer-links">
+                <li><a href="#como-funciona" class="footer-link">Como funciona</a></li>
+                <li><a href="#planos" class="footer-link">Planos</a></li>
+                <li><a href="app.html" class="footer-link">Acessar conta</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Particles.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-    
-    <!-- Custom JS -->
-    <script src="app.js?v=400"></script>
+
+    <!-- Custom Landing Page Script -->
+    <script src="landing.js?v=100"></script>
+
+    <script>
+        // Initialize Lucide icons
+        if (window.lucide && window.lucide.createIcons) {
+            window.lucide.createIcons();
+        }
+    </script>
 </body>
 </html>

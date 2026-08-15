@@ -12,6 +12,10 @@ $files = [
     'api/transactions.php'     => 'https://raw.githubusercontent.com/Pinheiro07/pricexp/main/api/transactions.php',
     'api/shared_account.php'   => 'https://raw.githubusercontent.com/Pinheiro07/pricexp/main/api/shared_account.php',
     'index.html'               => 'https://raw.githubusercontent.com/Pinheiro07/pricexp/main/index.html',
+    'app.html'                 => 'https://raw.githubusercontent.com/Pinheiro07/pricexp/main/app.html',
+    'landing.html'             => 'https://raw.githubusercontent.com/Pinheiro07/pricexp/main/landing.html',
+    'landing.css'              => 'https://raw.githubusercontent.com/Pinheiro07/pricexp/main/landing.css',
+    'landing.js'               => 'https://raw.githubusercontent.com/Pinheiro07/pricexp/main/landing.js',
     'app.js'                   => 'https://raw.githubusercontent.com/Pinheiro07/pricexp/main/app.js',
     'style.css'                => 'https://raw.githubusercontent.com/Pinheiro07/pricexp/main/style.css'
 ];
