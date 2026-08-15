@@ -1951,7 +1951,7 @@ section {
     filter: url(#morphGoo);
     cursor: pointer;
     padding: 1.5rem;
-    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s ease;
+    transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1), filter 1.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Base Liquid Morph Blobs forming the gooey card base */
@@ -1959,7 +1959,11 @@ section {
     position: absolute;
     background: #0b0f19;
     border-radius: 50%;
-    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1),
+                border-radius 1.4s cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 1.4s cubic-bezier(0.22, 1, 0.36, 1),
+                width 1.4s cubic-bezier(0.22, 1, 0.36, 1),
+                height 1.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .morph-blob-1 {
@@ -2137,15 +2141,15 @@ section {
     padding: 7px !important;
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75), inset 0 0 10px rgba(255, 255, 255, 0.05) !important;
     isolation: isolate;
-    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.7s ease !important;
+    transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 1.2s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 1.2s cubic-bezier(0.22, 1, 0.36, 1) !important;
     cursor: pointer;
     will-change: transform;
 }
 
 .phone-rodry-card:hover {
-    transform: translateY(-6px) scale(1.015) !important;
+    transform: translateY(-4px) scale(1.01) !important;
     border-color: rgba(16, 185, 129, 0.6) !important;
     box-shadow: 0 25px 50px rgba(16, 185, 129, 0.2), inset 0 0 15px rgba(16, 185, 129, 0.12) !important;
 }
@@ -2157,7 +2161,7 @@ section {
     background-position: 0% 0%;
     height: 100%;
     border-radius: 30px;
-    transition: background-position 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background-position 1.5s cubic-bezier(0.22, 1, 0.36, 1);
     overflow: hidden;
     position: relative;
     display: flex;
