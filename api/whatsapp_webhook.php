@@ -51,11 +51,91 @@ try {
     $pdo->exec("UPDATE transactions SET bank_name = 'Caixa' WHERE bank_name LIKE 'Caixa (%'");
 } catch (Exception $e) {}
 
+// --- HELPER PARA DISPARO AUTOMÁTICO DE RESPOSTAS VIA EVOLUTION API ---
+function sendWhatsAppReply($recipient, $text) {
+    if (empty($recipient) || empty($text)) return false;
+
+    $api_key = 'pricexp_evo_api_key_2833441530';
+    $instance = 'pricexp-bot';
+
+    $possible_urls = [
+        'http://172.17.0.1:8085',
+        'http://172.18.0.1:8085',
+        'http://172.19.0.1:8085',
+        'http://172.20.0.1:8085',
+        'http://172.21.0.1:8085',
+        'http://172.22.0.1:8085',
+        'http://localhost:8085',
+        'http://127.0.0.1:8085',
+        'http://evolution-api:8080'
+    ];
+
+    $cleanNum = preg_replace('/\D/', '', $recipient);
+    if (empty($cleanNum)) return false;
+
+    $payload = [
+        'number' => $cleanNum,
+        'options' => [
+            'delay' => 800,
+            'presence' => 'composing'
+        ],
+        'text' => $text
+    ];
+
+    foreach ($possible_urls as $baseUrl) {
+        $endpoint = $baseUrl . '/message/sendText/' . $instance;
+        
+        $ch = curl_init($endpoint);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'apikey: ' . $api_key
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 4);
+        $res = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($http_code === 200 || $http_code === 201) {
+            return true;
+        }
+    }
+    return false;
+}
+
+$senderPhone = '';
+
+// Envia a resposta no WhatsApp automaticamente no encerramento da execução
+register_shutdown_function(function() use (&$senderPhone) {
+    $output = ob_get_contents();
+    if (!empty($output) && !empty($senderPhone)) {
+        $json = json_decode($output, true);
+        if (is_array($json) && !empty($json['reply'])) {
+            @sendWhatsAppReply($senderPhone, $json['reply']);
+        }
+    }
+});
+ob_start();
+
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true) ?? $_POST;
 
-$senderPhone = '';
-$rawText     = '';
+// Ignora mensagens enviadas pelo próprio robô (fromMe) e eventos que não são mensagens
+$fromMe = $data['data']['key']['fromMe'] ?? $data['key']['fromMe'] ?? $data['fromMe'] ?? false;
+if ($fromMe === true) {
+    echo json_encode(['success' => true, 'message' => 'Ignorando mensagem própria']);
+    exit;
+}
+
+$eventType = $data['event'] ?? '';
+if (!empty($eventType) && $eventType !== 'messages.upsert') {
+    echo json_encode(['success' => true, 'message' => 'Evento ignorado']);
+    exit;
+}
+
+$rawText = '';
 
 $possiblePhones = [
     $data['phone'] ?? '',
