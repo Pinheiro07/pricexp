@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PriceXP | Controle Financeiro pelo WhatsApp</title>
+    <meta name="description" content="Registre despesas e receitas pelo WhatsApp e acompanhe suas finanças em um painel inteligente com o PriceXP.">
+    <meta name="theme-color" content="#0b0f19">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PriceXP | Controle Financeiro pelo WhatsApp">
+    <meta property="og:description" content="Registre despesas e receitas conversando naturalmente no WhatsApp. O PriceXP organiza tudo automaticamente em um painel completo.">
+    <meta property="og:image" content="logo_horizontal_dark_theme.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=400">
+    <link rel="icon" type="image/x-icon" href="favicon.ico?v=400">
+
+    <!-- Fonts (Google Fonts Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom Landing Page Styles -->
+    <link rel="stylesheet" href="landing.css?v=100">
+</head>
+<body>
+
+    <!-- Particles.js Background Container -->
+    <div id="particles-js"></div>
+
+    <!-- ==========================================================================
+         Header / Navbar
+         ========================================================================== -->
+    <header class="header-nav">
+        <div class="container nav-wrapper">
+            <a href="#" class="nav-logo">
+                <img src="logo_horizontal_dark_theme.png" alt="PriceXP Logo" onerror="this.onerror=null; this.src='logo.png';">
+            </a>
+
+            <ul class="nav-menu">
+                <li><a href="#como-funciona" class="nav-link">Como funciona</a></li>
+                <li><a href="#recursos" class="nav-link">Recursos</a></li>
+                <li><a href="#whatsapp" class="nav-link">WhatsApp</a></li>
+                <li><a href="#painel" class="nav-link">Painel</a></li>
+                <li><a href="#planos" class="nav-link">Planos</a></li>
+                <li><a href="#faq" class="nav-link">FAQ</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <a href="index.html" class="btn-login">
+                    <i data-lucide="user"></i> Acessar conta
+                </a>
+                <button class="mobile-nav-toggle" aria-label="Abrir menu">
+                    <i data-lucide="menu"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==========================================================================
+         Hero Section
+         ========================================================================== -->
+    <section class="hero-section">
+        <div class="container hero-grid">
+            
+            <!-- Left Hero Text Content -->
+            <div class="hero-content">
+                <div class="badge-pill">
+                    <i data-lucide="bot"></i> Controle Financeiro com IA + WhatsApp
+                </div>
+
+                <h1 class="hero-title">
+                    Suas finanças organizadas em uma <span class="text-gradient">simples conversa.</span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    Registre despesas e receitas pelo WhatsApp. O PriceXP entende a mensagem, organiza seus lançamentos e atualiza seu painel automaticamente em tempo real.
+                </p>
+
+                <div class="hero-ctas">
+                    <a href="index.html" class="btn-primary">
+                        <i data-lucide="zap"></i> Começar agora
+                    </a>
+                    <a href="#como-funciona" class="btn-secondary">
+                        <i data-lucide="play-circle"></i> Ver como funciona
+                    </a>
+                </div>
+
+                <div class="hero-microcopy">
+                    <i data-lucide="shield-check" class="text-emerald"></i>
+                    <span>Comece em poucos minutos. Sem burocracia.</span>
+                </div>
+            </div>
+
+            <!-- Right Hero Interactive Demo Simulator -->
+            <div class="hero-demo-wrapper">
+                <div class="hero-demo-container">
+                    
+                    <!-- 1. Simulated WhatsApp Chat -->
+                    <div class="wa-sim-card">
+                        <div class="wa-sim-header">
+                            <div class="wa-sim-avatar">XP</div>
+                            <div class="wa-sim-user-info">
+                                <span class="wa-sim-name">PriceXP Bot</span>
+                                <span class="wa-sim-status">
+                                    <span style="width:7px; height:7px; background:#00a884; border-radius:50%; display:inline-block;"></span> online
+                                </span>
+                            </div>
+                        </div>
+                        <div class="wa-sim-body" id="wa-demo-body">
+                            <!-- Messages generated dynamically by landing.js -->
+                        </div>
+                    </div>
+
+                    <!-- 2. Simulated Live Dashboard Panel Card -->
+                    <div class="dash-mini-card">
+                        <div class="dash-mini-header">
+                            <span class="dash-mini-title">
+                                <i data-lucide="layout-dashboard" class="text-emerald"></i> Painel PriceXP
+                            </span>
+                            <span style="font-size:0.7rem; color:#10b981; font-weight:700; background:rgba(16,185,129,0.15); padding:2px 8px; border-radius:99px;">Ao Vivo</span>
+                        </div>
+
+                        <div class="dash-mini-balance">
+                            <span class="dash-mini-bal-label">Saldo Atual Consolidado</span>
+                            <div class="dash-mini-bal-val" id="dash-demo-val">R$ 3.450,00</div>
+                        </div>
+
+                        <div class="dash-mini-txs-title">
+                            <i data-lucide="clock" style="width:12px; height:12px;"></i> Últimos Lançamentos
+                        </div>
+
+                        <div class="dash-mini-tx-list" id="dash-demo-list">
+                            <!-- Transactions populated dynamically by landing.js -->
+                            <div class="dash-mini-tx-item">
+                                <div style="display:flex; flex-direction:column; gap:2px;">
+                                    <span style="font-weight:600; color:var(--text-main);">Cinema com Família</span>
+                                    <span class="cat-badge" style="background:rgba(168,85,247,0.2); color:#c084fc; border:1px solid rgba(168,85,247,0.4);">Lazer</span>
+                                </div>
+                                <span style="font-weight:700; color:#ef4444;">- R$ 85,00</span>
+                            </div>
+                            <div class="dash-mini-tx-item">
+                                <div style="display:flex; flex-direction:column; gap:2px;">
+                                    <span style="font-weight:600; color:var(--text-main);">Farmácia Santander</span>
+                                    <span class="cat-badge" style="background:rgba(236,72,153,0.2); color:#f472b6; border:1px solid rgba(236,72,153,0.4);">Saúde</span>
+                                </div>
+                                <span style="font-weight:700; color:#ef4444;">- R$ 122,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: How It Works (3 Steps)
+         ========================================================================== -->
+    <section id="como-funciona">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="sparkles"></i> Simplicidade Absoluta
+                </div>
+                <h2 class="section-title">
+                    Você fala. <span class="text-gradient">O PriceXP organiza.</span>
+                </h2>
+                <p class="section-subtitle">
+                    Sem formulários gigantescos ou menus confusos. Em apenas 3 passos o seu controle financeiro é atualizado.
+                </p>
+            </div>
+
+            <div class="steps-grid">
+                
+                <!-- Step 1 -->
+                <div class="glass-card step-card">
+                    <div class="step-number">1</div>
+                    <h3 class="step-card-title">Envie no WhatsApp</h3>
+                    <p class="step-card-desc">Fale naturalmente por texto ou áudio como se estivesse conversando com um amigo.</p>
+                    <div class="step-card-box text-emerald font-semibold">
+                        💬 "Gastei 45 reais no iFood pelo Nubank"
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="glass-card step-card">
+                    <div class="step-number">2</div>
+                    <h3 class="step-card-title">O PriceXP Entende</h3>
+                    <p class="step-card-desc">Nossa IA extrai valor, categoria, banco e forma de pagamento de forma inteligente.</p>
+                    <div class="step-card-box">
+                        🔴 <strong>Despesa:</strong> R$ 45,00<br>
+                        🍔 <strong>Alimentação</strong> • 🏦 <strong>Nubank</strong>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="glass-card step-card">
+                    <div class="step-number">3</div>
+                    <h3 class="step-card-title">Seu Painel Atualiza</h3>
+                    <p class="step-card-desc">Tudo fica pronto e visível no seu painel web com gráficos, relatórios e controle de saldo.</p>
+                    <div class="step-card-box text-emerald font-semibold">
+                        📊 Saldo, gráficos e relatórios sincronizados!
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: Natural Language Interactive Demo
+         ========================================================================== -->
+    <section>
+        <div class="container">
+            <div class="nl-container">
+                <div class="nl-grid">
+                    
+                    <div>
+                        <div class="badge-pill">
+                            <i data-lucide="message-square-code"></i> Sem Comandos Decorados
+                        </div>
+                        <h2 class="section-title" style="text-align:left;">
+                            Você não precisa aprender comandos robotizados.
+                        </h2>
+                        <p class="section-subtitle" style="text-align:left; margin-bottom: 1.5rem;">
+                            Clique nas mensagens abaixo para ver como o PriceXP interpreta qualquer forma de falar:
+                        </p>
+
+                        <div class="nl-examples">
+                            <div class="nl-item active" data-desc="Almoço" data-cat="Alimentação" data-bank="Banco Inter" data-pay="Débito / PIX">
+                                <span>"Gastei 37 no almoço pelo Inter"</span>
+                                <i data-lucide="chevron-right"></i>
+                            </div>
+                            <div class="nl-item" data-desc="Gasolina" data-cat="Transporte" data-bank="C6 Bank" data-pay="Crédito">
+                                <span>"Coloca 120 de gasolina no C6 Bank"</span>
+                                <i data-lucide="chevron-right"></i>
+                            </div>
+                            <div class="nl-item" data-desc="Serviço Cliente" data-cat="Receita / Renda Extra" data-bank="Nubank" data-pay="PIX">
+                                <span>"Recebi 2500 de um cliente no Nubank"</span>
+                                <i data-lucide="chevron-right"></i>
+                            </div>
+                            <div class="nl-item" data-desc="Internet" data-cat="Casa / Contas" data-bank="Sicredi" data-pay="Boleto / PIX">
+                                <span>"Paguei 89,90 de internet no Sicredi"</span>
+                                <i data-lucide="chevron-right"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parser Visualizer -->
+                    <div class="nl-parser-box">
+                        <div class="nl-parser-header">
+                            <i data-lucide="cpu"></i> Interpretação em Tempo Real
+                        </div>
+                        <div class="nl-parser-fields">
+                            <div class="nl-field-tag">
+                                <div class="nl-field-label">Descrição / Item</div>
+                                <div class="nl-field-val" id="nlp-val-desc">Almoço</div>
+                            </div>
+                            <div class="nl-field-tag">
+                                <div class="nl-field-label">Categoria Automática</div>
+                                <div class="nl-field-val text-emerald" id="nlp-val-cat">Alimentação</div>
+                            </div>
+                            <div class="nl-field-tag">
+                                <div class="nl-field-label">Banco / Conta</div>
+                                <div class="nl-field-val" id="nlp-val-bank">Banco Inter</div>
+                            </div>
+                            <div class="nl-field-tag">
+                                <div class="nl-field-label">Forma de Pagamento</div>
+                                <div class="nl-field-val" id="nlp-val-pay">Débito / PIX</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: WhatsApp Spotlight vs Traditional Apps
+         ========================================================================== -->
+    <section id="whatsapp">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="arrow-right-left"></i> Comparativo Prático
+                </div>
+                <h2 class="section-title">
+                    Seu controle financeiro já está <span class="text-gradient">onde você conversa.</span>
+                </h2>
+                <p class="section-subtitle">
+                    Por que abrir aplicativos pesados e preencher telas inteiras se você pode mandar uma única mensagem?
+                </p>
+            </div>
+
+            <div class="comp-grid">
+                
+                <!-- Traditional App Card -->
+                <div class="comp-card comp-card-trad">
+                    <div class="comp-badge comp-badge-trad">O Modo Tradicional (Cansativo)</div>
+                    <h3 class="comp-title">Aplicativos Comuns</h3>
+                    <div class="comp-steps-list">
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 1. Desbloquear o celular e procurar o app</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 2. Aguardar o aplicativo carregar</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 3. Procurar e clicar no botão "+ Novo Gastos"</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 4. Digitar o valor no teclado numérico</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 5. Escrever a descrição do item</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 6. Selecionar a categoria em uma lista gigante</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 7. Escolher o banco e o tipo de conta</div>
+                        <div class="comp-step-item"><i data-lucide="x-circle" class="comp-step-icon-bad"></i> 8. Clicar em salvar e fechar o app</div>
+                    </div>
+                </div>
+
+                <!-- PriceXP Card -->
+                <div class="comp-card comp-card-pricexp">
+                    <div class="comp-badge comp-badge-pricexp">O Jeito PriceXP (Instantâneo)</div>
+                    <h3 class="comp-title">Com o PriceXP</h3>
+                    <div class="comp-steps-list">
+                        <div class="comp-step-item" style="margin-bottom: 1.5rem;">
+                            <i data-lucide="check-circle-2" class="comp-step-icon-good"></i>
+                            <div>
+                                <strong style="color:var(--text-main); font-size:1.05rem;">1. Abra o WhatsApp e envie:</strong>
+                                <div style="background:rgba(0,0,0,0.4); padding:0.75rem; border-radius:8px; margin-top:6px; color:#10b981; font-weight:600;">
+                                    "Gastei 89 no mercado pelo Nubank"
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comp-step-item" style="margin-top:auto; padding-top:1rem; border-top:1px solid rgba(16,185,129,0.2);">
+                            <i data-lucide="zap" class="text-emerald" style="font-size:1.5rem;"></i>
+                            <span style="font-weight:700; color:var(--text-main); font-size:1.1rem;">Pronto. O PriceXP fez todo o resto por você em 2 segundos.</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: Dashboard Spotlight
+         ========================================================================== -->
+    <section id="painel">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="layout"></i> Visão Completa
+                </div>
+                <h2 class="section-title">
+                    Converse pelo WhatsApp. <span class="text-gradient">Analise tudo no painel.</span>
+                </h2>
+                <p class="section-subtitle">
+                    O WhatsApp garante a rapidez do dia a dia. O painel web garante a inteligência financeira para tomada de decisões.
+                </p>
+            </div>
+
+            <!-- Dashboard Representation Card -->
+            <div class="glass-card" style="padding:2rem; border-color:var(--border-glass-light); box-shadow:var(--shadow-glow-blue);">
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1.5rem; margin-bottom:2rem;">
+                    <div style="background:rgba(11,15,25,0.7); border:1px solid var(--border-glass); padding:1.25rem; border-radius:12px;">
+                        <span style="font-size:0.8rem; color:var(--text-muted);">Saldo Consolidado</span>
+                        <div style="font-size:1.6rem; font-weight:800; color:var(--text-main); margin-top:4px;">R$ 8.450,20</div>
+                    </div>
+                    <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); padding:1.25rem; border-radius:12px;">
+                        <span style="font-size:0.8rem; color:#10b981;">Receitas do Mês</span>
+                        <div style="font-size:1.6rem; font-weight:800; color:#10b981; margin-top:4px;">+ R$ 6.200,00</div>
+                    </div>
+                    <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); padding:1.25rem; border-radius:12px;">
+                        <span style="font-size:0.8rem; color:#ef4444;">Despesas do Mês</span>
+                        <div style="font-size:1.6rem; font-weight:800; color:#ef4444; margin-top:4px;">- R$ 2.749,80</div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:1.5rem;">
+                    <div style="background:rgba(11,15,25,0.7); border:1px solid var(--border-glass); padding:1.25rem; border-radius:12px;">
+                        <div style="font-weight:700; font-size:0.95rem; margin-bottom:1rem;">Lançamentos Recentes</div>
+                        
+                        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.02); border-radius:8px;">
+                                <div>
+                                    <div style="font-weight:600;">Supermercado Carrefour</div>
+                                    <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
+                                        <span class="cat-badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid rgba(245,158,11,0.4);">Alimentação</span>
+                                        <span style="font-size:0.75rem; color:var(--text-dim);">• Nubank • 14/08/2026</span>
+                                    </div>
+                                </div>
+                                <span style="font-weight:700; color:#ef4444;">- R$ 214,50</span>
+                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.02); border-radius:8px;">
+                                <div>
+                                    <div style="font-weight:600;">Abastecimento Shell</div>
+                                    <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
+                                        <span class="cat-badge" style="background:rgba(6,182,212,0.2); color:#22d3ee; border:1px solid rgba(6,182,212,0.4);">Transporte</span>
+                                        <span style="font-size:0.75rem; color:var(--text-dim);">• Sicredi • 13/08/2026</span>
+                                    </div>
+                                </div>
+                                <span style="font-weight:700; color:#ef4444;">- R$ 150,00</span>
+                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.02); border-radius:8px;">
+                                <div>
+                                    <div style="font-weight:600;">Projeto Freelance Web</div>
+                                    <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
+                                        <span class="cat-badge" style="background:rgba(16,185,129,0.2); color:#34d399; border:1px solid rgba(16,185,129,0.4);">Receita</span>
+                                        <span style="font-size:0.75rem; color:var(--text-dim);">• Inter • 12/08/2026</span>
+                                    </div>
+                                </div>
+                                <span style="font-weight:700; color:#10b981;">+ R$ 2.500,00</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div style="background:rgba(11,15,25,0.7); border:1px solid var(--border-glass); padding:1.25rem; border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+                        <i data-lucide="pie-chart" class="text-emerald" style="width:48px; height:48px; margin-bottom:1rem;"></i>
+                        <h4 style="font-size:1.1rem; font-weight:700; margin-bottom:0.4rem;">Relatórios Automáticos</h4>
+                        <p style="font-size:0.85rem; color:var(--text-muted); max-width:260px;">
+                            Entenda exatamente onde seu dinheiro está sendo gasto com gráficos limpos e separação por categorias.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: Real Features Grid
+         ========================================================================== -->
+    <section id="recursos">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="layers"></i> Funcionalidades Reais
+                </div>
+                <h2 class="section-title">
+                    Tudo o que você precisa em <span class="text-gradient">um só lugar.</span>
+                </h2>
+                <p class="section-subtitle">
+                    Construído com base nas necessidades reais de quem busca controle sem complicação.
+                </p>
+            </div>
+
+            <div class="features-grid">
+                
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box"><i data-lucide="message-circle"></i></div>
+                    <h3 class="feature-title">Lançamentos por WhatsApp</h3>
+                    <p class="feature-desc">Registre receitas e despesas conversando normalmente como se estivesse trocando mensagens com um amigo.</p>
+                </div>
+
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box" style="color:#10b981; background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.25);"><i data-lucide="tags"></i></div>
+                    <h3 class="feature-title">Categorização Automática</h3>
+                    <p class="feature-desc">O PriceXP entende automaticamente se o seu gasto foi com Alimentação, Casa, Transporte, Saúde, Lazer ou Educação.</p>
+                </div>
+
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box" style="color:#c084fc; background:rgba(168,85,247,0.12); border-color:rgba(168,85,247,0.25);"><i data-lucide="landmark"></i></div>
+                    <h3 class="feature-title">Múltiplas Contas e Bancos</h3>
+                    <p class="feature-desc">Associe seus lançamentos ao Nubank, Inter, Sicredi, C6, Itaú, Bradesco, Santander ou carteira física de dinheiro.</p>
+                </div>
+
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box" style="color:#fbbf24; background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.25);"><i data-lucide="credit-card"></i></div>
+                    <h3 class="feature-title">Forma de Pagamento</h3>
+                    <p class="feature-desc">Reconhecimento automático de compras no Crédito, Débito, PIX ou Dinheiro sem precisar selecionar caixas de opção.</p>
+                </div>
+
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box" style="color:#f472b6; background:rgba(236,72,153,0.12); border-color:rgba(236,72,153,0.25);"><i data-lucide="list-checks"></i></div>
+                    <h3 class="feature-title">Lançamentos em Lote</h3>
+                    <p class="feature-desc">Envie uma lista completa com múltiplos gastos em uma única mensagem e o PriceXP registra cada item individualmente.</p>
+                </div>
+
+                <div class="glass-card feature-card">
+                    <div class="feature-icon-box" style="color:#22d3ee; background:rgba(6,182,212,0.12); border-color:rgba(6,182,212,0.25);"><i data-lucide="users"></i></div>
+                    <h3 class="feature-title">Conta Conjunta / Casais</h3>
+                    <p class="feature-desc">Conecte a conta com seu parceiro(a) e visualize no painel web todas as despesas da casa unificadas e organizadas.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: Pain vs Solution
+         ========================================================================== -->
+    <section>
+        <div class="container">
+            <div class="glass-card" style="padding:4rem 2rem; text-align:center; max-width:850px; margin:0 auto; background:linear-gradient(135deg, rgba(19,27,47,0.9) 0%, rgba(30,58,138,0.2) 100%);">
+                <h2 style="font-size:2.2rem; font-weight:800; margin-bottom:1rem;">
+                    O problema nunca foi gastar. <br><span class="text-gradient">Foi lembrar de anotar.</span>
+                </h2>
+                <p style="font-size:1.1rem; color:var(--text-muted); max-width:600px; margin:0 auto 2.5rem auto;">
+                    Planilhas exigem que você sente na frente do computador. Aplicativos tradicionais exigem dezenas de cliques. Com o PriceXP, você anota no exato segundo em que o gasto acontece.
+                </p>
+                <a href="index.html" class="btn-primary" style="font-size:1.05rem; padding:1rem 2.25rem;">
+                    <i data-lucide="sparkles"></i> Experimentar o PriceXP Agora
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: Pricing Cards
+         ========================================================================== -->
+    <section id="planos">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="tag"></i> Transparência Total
+                </div>
+                <h2 class="section-title">
+                    Escolha o plano ideal para a sua <span class="text-gradient">liberdade financeira.</span>
+                </h2>
+                <p class="section-subtitle">
+                    Sem taxas escondidas. Cancele ou altere o seu plano quando quiser.
+                </p>
+            </div>
+
+            <div class="pricing-grid">
+                
+                <!-- 1. Standard Monthly Card -->
+                <div class="glass-card price-card">
+                    <div>
+                        <div class="price-plan-name">PriceXP Standard</div>
+                        <p style="font-size:0.85rem; color:var(--text-muted);">Para quem prefere a flexibilidade da assinatura mensal.</p>
+
+                        <div class="price-val-box">
+                            <span class="price-currency">R$</span>
+                            <span class="price-amount">29,90</span>
+                            <span class="price-period">/ mês</span>
+                        </div>
+                        <div style="font-size:0.82rem; color:var(--text-dim); margin-bottom:1.5rem;">Cobrança mensal recorrente</div>
+
+                        <ul class="price-features-list">
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Registro ilimitado via WhatsApp</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Categorização inteligente por IA</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Reconhecimento de bancos e cartões</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Lançamentos múltiplos em lote</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Edição e exclusão via WhatsApp</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Acesso total ao Painel Web completo</li>
+                        </ul>
+                    </div>
+
+                    <a href="index.html" class="btn-secondary" style="width:100%;">
+                        Começar agora
+                    </a>
+                </div>
+
+                <!-- 2. Featured Annual Card (30% OFF) -->
+                <div class="glass-card price-card price-card-anual">
+                    <div class="price-top-badge">⭐ MELHOR ESCOLHA</div>
+
+                    <div>
+                        <div style="display:flex; align-items:center;">
+                            <div class="price-plan-name">PriceXP Anual</div>
+                            <span class="price-off-badge">30% OFF</span>
+                        </div>
+                        <p style="font-size:0.85rem; color:var(--text-muted);">Máxima economia para quem quer resultado no longo prazo.</p>
+
+                        <div style="margin-top:0.75rem;">
+                            <span class="price-old-val">De R$ 358,80</span>
+                        </div>
+
+                        <div class="price-val-box">
+                            <span class="price-currency">R$</span>
+                            <span class="price-amount" style="color:#10b981;">251,16</span>
+                            <span class="price-period">/ ano</span>
+                        </div>
+
+                        <div class="price-equiv">
+                            ⚡ Equivale a apenas <strong>R$ 20,93/mês</strong> (Economize R$ 107,64 por ano)
+                        </div>
+
+                        <ul class="price-features-list">
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> <strong>Todos os recursos do plano Standard</strong></li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> <strong>30% de desconto garantido</strong></li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Economia direta de R$ 107,64/ano</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Registro ilimitado via WhatsApp</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Suporte a Conta Conjunta / Casais</li>
+                            <li class="price-feature-item"><i data-lucide="check-circle-2"></i> Acesso prioritário a novas atualizações</li>
+                        </ul>
+                    </div>
+
+                    <a href="index.html" class="btn-primary" style="width:100%; font-size:1.05rem;">
+                        <i data-lucide="shield-check"></i> Quero economizar 30%
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: FAQ Accordion
+         ========================================================================== -->
+    <section id="faq">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge-pill">
+                    <i data-lucide="help-circle"></i> Tira-Dúvidas
+                </div>
+                <h2 class="section-title">
+                    Perguntas <span class="text-gradient">Frequentes</span>
+                </h2>
+                <p class="section-subtitle">
+                    Tudo o que você precisa saber antes de começar a usar o PriceXP.
+                </p>
+            </div>
+
+            <div class="faq-list">
+                
+                <div class="faq-item active">
+                    <button class="faq-question">
+                        <span>Como funciona o PriceXP?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        O PriceXP combina a praticidade do WhatsApp com a inteligência de um painel financeiro web. Você envia suas despesas ou receitas por mensagem (texto ou áudio) no WhatsApp, nosso sistema entende o valor, a categoria e o banco automaticamente e atualiza seu painel em tempo real.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Preciso instalar alguma coisa no meu celular?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Não! Você não precisa instalar nenhum aplicativo extra. O controle diário é feito dentro do próprio WhatsApp que você já utiliza, e o painel pode ser acessado pelo navegador de qualquer computador, tablet ou celular.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Como registro um gasto no WhatsApp?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Basta mandar uma mensagem natural como se estivesse conversando. Exemplos: "Gastei 45 no iFood no Nubank", "32 mercado pix", "Coloca 120 de gasolina no C6 Bank". O PriceXP processa e confirma o lançamento na hora.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Posso usar vários bancos e cartões?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Sim! O PriceXP reconhece bancos como Nubank, Inter, Sicredi, C6 Bank, Itaú, Bradesco, Santander, Caju, Mercado Pago e contas físicas. Basta citar o nome do banco na mensagem.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>O PriceXP identifica a categoria automaticamente?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Sim. Nossa Inteligência Artificial categoriza automaticamente seus gastos em Alimentação, Casa, Transporte, Saúde, Lazer, Educação, Investimentos ou Receitas.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Consigo alterar ou excluir um lançamento pelo WhatsApp?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Sim! Após cada lançamento, o bot exibe as opções rápidas. Respondendo `1` você entra no modo de edição do lançamento e respondendo `2` você cancela/exclui a transação instantaneamente.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Posso registrar várias despesas de uma vez só?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Com certeza! Você pode mandar uma lista de lançamentos em uma única mensagem (ex: "32 mercado nubank pix \n 19 farmácia inter débito \n 45 gasolina sicredi crédito"). O PriceXP lê cada linha e registra todos individualmente.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Meus dados ficam sincronizados no painel em tempo real?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Sim. No exato instante em que o bot confirma o lançamento no WhatsApp, seu painel web é atualizado com o novo saldo, categoria e histórico.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Qual a diferença do plano mensal para o plano anual?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        No plano mensal (R$ 29,90/mês), você paga mês a mês com flexibilidade total. No plano anual (R$ 251,16/ano), você garante 30% de desconto em relação a 12 mensalidades, economizando R$ 107,64 por ano (o equivalente a apenas R$ 20,93 por mês).
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Já tenho conta. Como faço para entrar?</span>
+                        <i data-lucide="chevron-down" class="faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Basta clicar no botão "Acessar conta" no topo da página ou no menu principal para ir diretamente para a sua tela de login do PriceXP.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: Final CTA & Footer
+         ========================================================================== -->
+    <section>
+        <div class="container">
+            <div class="cta-final-box">
+                <h2 style="font-size:2.5rem; font-weight:800; margin-bottom:1rem;">
+                    Organizar suas finanças pode ser tão simples quanto <span class="text-gradient">mandar uma mensagem.</span>
+                </h2>
+                <p style="font-size:1.15rem; color:var(--text-muted); max-width:620px; margin:0 auto 2rem auto;">
+                    Comece agora mesmo com o PriceXP e transforme suas conversas diárias em um controle financeiro completo e sem esforço.
+                </p>
+                <div style="display:flex; justify-content:center; gap:1rem; flex-wrap:wrap;">
+                    <a href="index.html" class="btn-primary" style="font-size:1.1rem; padding:1rem 2.25rem;">
+                        <i data-lucide="zap"></i> Começar agora com PriceXP
+                    </a>
+                </div>
+                <div style="margin-top:1.5rem; font-size:0.9rem; color:var(--text-dim);">
+                    Já possui uma conta? <a href="index.html" style="color:var(--accent-emerald); font-weight:600; text-decoration:none;">Acessar minha conta</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-wrapper">
+            <div class="footer-logo">
+                <img src="logo_horizontal_dark_theme.png" alt="PriceXP Logo" onerror="this.onerror=null; this.src='logo.png';">
+                <span>© 2026 PriceXP. Todos os direitos reservados.</span>
+            </div>
+
+            <ul class="footer-links">
+                <li><a href="#como-funciona" class="footer-link">Como funciona</a></li>
+                <li><a href="#planos" class="footer-link">Planos</a></li>
+                <li><a href="index.html" class="footer-link">Acessar conta</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Particles.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+    <!-- Custom Landing Page Script -->
+    <script src="landing.js?v=100"></script>
+
+    <script>
+        // Initialize Lucide icons
+        if (window.lucide && window.lucide.createIcons) {
+            window.lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
