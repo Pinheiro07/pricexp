@@ -2592,3 +2592,16 @@ document.querySelectorAll('.btn-start-tour-page').forEach(btn => {
         startTour(true);
     });
 });
+
+// --- ORIGINKIT NEON BORDER FALLBACK ANIMATOR ---
+if (typeof CSS !== 'undefined' && !CSS.supports('@property', '--neon-angle')) {
+    let neonAngle = 0;
+    function animateNeonAngle() {
+        neonAngle = (neonAngle + 1.2) % 360;
+        document.querySelectorAll('.btn-neon, .btn-primary, .btn-cta-glow, #auth-btn').forEach(btn => {
+            btn.style.setProperty('--neon-angle', neonAngle + 'deg');
+        });
+        requestAnimationFrame(animateNeonAngle);
+    }
+    requestAnimationFrame(animateNeonAngle);
+}
