@@ -911,6 +911,42 @@ button {
    MOBILE RESPONSIVENESS (SMARTPHONES)
    ========================================================================== */
 @media (max-width: 768px) {
+    html, body {
+        overflow-x: hidden !important;
+        width: 100vw !important;
+        max-width: 100% !important;
+    }
+
+    .app-container, .main-content, .tab-content, .transactions-layout, .card, .form-container {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Prevent Select & Flex children from overflowing mobile viewport */
+    .form-group div[style*="display: flex"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .form-group select {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    /* Type selector radio cards stack neatly on narrow screens */
+    .type-selector {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+    }
+
+    .radio-card {
+        width: 100% !important;
+    }
+
     .mobile-logout-card {
         display: block !important;
     }
