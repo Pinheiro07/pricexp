@@ -1756,31 +1756,148 @@ section {
 }
 
 /* ==========================================================================
-   UIVERSE SOLID-METAL GLASS & SHINE CARDS SYSTEM (FOR STEP CARDS)
+   UIVERSE ADAMGIEBL DYNAMIC 4-BLOB ANIMATED GLASS CARDS (FOR STEP CARDS)
    ========================================================================== */
 .step-card {
     position: relative !important;
     isolation: isolate !important;
-    background: rgba(15, 23, 42, 0.7) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-radius: 20px !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    box-shadow: inset 2px 1px 8px rgba(255, 255, 255, 0.15), 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+    background: rgba(15, 23, 42, 0.65) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 21px !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    box-shadow: 12px 12px 25px -12px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(255, 255, 255, 0.15) !important;
     overflow: hidden !important;
-    z-index: 0;
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
-                border-color 0.3s ease,
-                box-shadow 0.3s ease !important;
+    z-index: 1;
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+                border-color 0.4s ease,
+                box-shadow 0.4s ease !important;
 }
+
+.step-card-1 { transform: rotate(-1.5deg); }
+.step-card-2 { transform: rotate(1deg); }
+.step-card-3 { transform: rotate(-1deg); }
 
 .step-card:hover {
-    transform: translateY(-4px) !important;
-    border-color: rgba(16, 185, 129, 0.45) !important;
-    box-shadow: inset 2px 1px 12px rgba(255, 255, 255, 0.25), 0 15px 35px rgba(16, 185, 129, 0.25) !important;
+    transform: translateY(-6px) rotate(0deg) scale(1.02) !important;
+    border-color: rgba(16, 185, 129, 0.5) !important;
+    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.25) !important;
 }
 
-/* Sweeping Diagonal Shine Beam */
+.step-card-content {
+    position: relative;
+    z-index: 2;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(15, 23, 42, 0.45));
+    border-radius: 21px;
+    padding: 2.25rem 1.75rem;
+    height: 100%;
+}
+
+/* 4 Liquid Dynamic Blobs (Animated) */
+.blob {
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+    width: 160px;
+    height: 160px;
+    filter: blur(18px);
+    opacity: 0.65;
+    transition: all 0.5s ease;
+    pointer-events: none;
+    will-change: transform;
+}
+
+.step-card:hover .blob {
+    opacity: 0.85;
+    filter: blur(12px);
+}
+
+/* Blob 1: Top-Left (Emerald & Cyan Gradient) */
+.blob-1 {
+    left: -55px;
+    top: -45px;
+    background: linear-gradient(135deg, #10b981, #34d399, #059669);
+    transform: rotate(12deg);
+    animation: blobFloat1 12s ease-in-out infinite alternate;
+}
+
+/* Blob 2: Middle-Left (Electric Blue & Indigo Gradient) */
+.blob-2 {
+    left: -35px;
+    top: 110px;
+    background: linear-gradient(135deg, #3b82f6, #60a5fa, #1d4ed8);
+    transform: rotate(20deg);
+    animation: blobFloat2 15s ease-in-out infinite alternate;
+}
+
+/* Blob 3: Bottom-Right (Purple & Magenta Gradient) */
+.blob-3 {
+    right: -55px;
+    bottom: -20px;
+    background: linear-gradient(135deg, #a855f7, #c084fc, #7e22ce);
+    transform: rotate(-10deg);
+    animation: blobFloat3 14s ease-in-out infinite alternate;
+}
+
+/* Blob 4: Top-Right (Amber & Mint Golden Gradient) */
+.blob-4 {
+    right: -65px;
+    top: 15px;
+    background: linear-gradient(135deg, #f59e0b, #fbbf24, #10b981);
+    transform: rotate(-25deg);
+    animation: blobFloat4 16s ease-in-out infinite alternate;
+}
+
+/* Blob Keyframe Animations */
+@keyframes blobFloat1 {
+    0% {
+        transform: translate(0, 0) rotate(12deg) scale(1);
+    }
+    50% {
+        transform: translate(35px, 40px) rotate(45deg) scale(1.2);
+    }
+    100% {
+        transform: translate(0, 0) rotate(12deg) scale(1);
+    }
+}
+
+@keyframes blobFloat2 {
+    0% {
+        transform: translate(0, 0) rotate(20deg) scale(1);
+    }
+    50% {
+        transform: translate(-30px, -35px) rotate(-35deg) scale(0.85);
+    }
+    100% {
+        transform: translate(0, 0) rotate(20deg) scale(1);
+    }
+}
+
+@keyframes blobFloat3 {
+    0% {
+        transform: translate(0, 0) rotate(-10deg) scale(1);
+    }
+    50% {
+        transform: translate(-40px, -30px) rotate(50deg) scale(1.18);
+    }
+    100% {
+        transform: translate(0, 0) rotate(-10deg) scale(1);
+    }
+}
+
+@keyframes blobFloat4 {
+    0% {
+        transform: translate(0, 0) rotate(-25deg) scale(1);
+    }
+    50% {
+        transform: translate(25px, -35px) rotate(-60deg) scale(0.9);
+    }
+    100% {
+        transform: translate(0, 0) rotate(-25deg) scale(1);
+    }
+}
+
+/* Sweeping Diagonal Shine Overlay */
 .step-card::after {
     content: " ";
     position: absolute;
@@ -1789,83 +1906,25 @@ section {
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(255, 255, 255, 0.6),
+        rgba(255, 255, 255, 0.7),
         rgba(16, 185, 129, 0.8),
-        rgba(255, 255, 255, 0.6),
+        rgba(255, 255, 255, 0.7),
         transparent
     );
     transform: rotateZ(45deg);
-    filter: blur(20px);
+    filter: blur(18px);
     animation: shineSweep 8s ease infinite;
     pointer-events: none;
-    z-index: 2;
+    z-index: 3;
 }
 
 @keyframes shineSweep {
     0% {
-        top: 120%;
-        left: -120%;
+        top: 130%;
+        left: -130%;
     }
     40%, 100% {
         top: -40%;
-        left: 100%;
-    }
-}
-
-/* Floating Orb Background Element 1 */
-.step-card .orb-1 {
-    content: " ";
-    position: absolute;
-    height: 130px;
-    width: 130px;
-    right: -20px;
-    top: -20px;
-    background-image: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(59, 130, 246, 0.35));
-    border-radius: 50%;
-    z-index: -1;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    box-shadow: inset 8px 0px 16px rgba(255, 255, 255, 0.3), 0 0 25px rgba(16, 185, 129, 0.3);
-    animation: orbMove1 22s ease-in-out infinite alternate;
-    pointer-events: none;
-}
-
-/* Floating Orb Background Element 2 */
-.step-card .orb-2 {
-    content: " ";
-    position: absolute;
-    height: 90px;
-    width: 90px;
-    left: -20px;
-    bottom: -20px;
-    background-image: linear-gradient(90deg, rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3));
-    border-radius: 50%;
-    z-index: -1;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: inset 6px 0px 12px rgba(255, 255, 255, 0.25), 0 0 20px rgba(59, 130, 246, 0.25);
-    animation: orbMove2 18s ease-in-out infinite alternate;
-    pointer-events: none;
-}
-
-@keyframes orbMove1 {
-    0% {
-        transform: translate(0, 0) scale(1);
-    }
-    50% {
-        transform: translate(-30px, 35px) scale(0.85);
-    }
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
-}
-
-@keyframes orbMove2 {
-    0% {
-        transform: translate(0, 0) scale(1);
-    }
-    50% {
-        transform: translate(25px, -25px) scale(1.15);
-    }
-    100% {
-        transform: translate(0, 0) scale(1);
+        left: 110%;
     }
 }
