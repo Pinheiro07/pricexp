@@ -1409,20 +1409,21 @@ section {
 .hero-line {
     display: inline-block;
     opacity: 0;
-    transform: translateY(28px);
-    filter: blur(6px);
-    animation: heroLineFadeIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform: translateY(32px);
+    filter: blur(8px);
+    animation: heroLineFadeIn 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    will-change: transform, opacity, filter;
 }
 
 .hero-line-1 { animation-delay: 0.05s; }
-.hero-line-2 { animation-delay: 0.20s; }
-.hero-line-3 { animation-delay: 0.35s; }
+.hero-line-2 { animation-delay: 0.19s; }
+.hero-line-3 { animation-delay: 0.33s; }
 
 @keyframes heroLineFadeIn {
     0% {
         opacity: 0;
-        transform: translateY(28px);
-        filter: blur(6px);
+        transform: translateY(32px);
+        filter: blur(8px);
     }
     100% {
         opacity: 1;
@@ -1434,20 +1435,20 @@ section {
 /* Subtitle, CTAs & Microcopy Stagger Items */
 .hero-stagger-item {
     opacity: 0;
-    transform: translateY(22px);
-    filter: blur(4px);
-    animation: heroItemFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform: translateY(24px);
+    filter: blur(5px);
+    animation: heroItemFadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .hero-delay-sub   { animation-delay: 0.50s; }
-.hero-delay-cta   { animation-delay: 0.68s; }
+.hero-delay-cta   { animation-delay: 0.70s; }
 .hero-delay-micro { animation-delay: 0.85s; }
 
 @keyframes heroItemFadeIn {
     0% {
         opacity: 0;
-        transform: translateY(22px);
-        filter: blur(4px);
+        transform: translateY(24px);
+        filter: blur(5px);
     }
     100% {
         opacity: 1;
@@ -1459,46 +1460,78 @@ section {
 /* Hero Right Side Mockup Cards Entrance */
 .hero-mockup-wa {
     opacity: 0;
-    transform: translateX(30px);
-    animation: heroWaCardSlide 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.45s forwards;
+    transform: translateX(35px) scale(0.98);
+    animation: heroWaCardSlide 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.45s forwards;
 }
 
 .hero-mockup-dash {
     opacity: 0;
-    transform: translateX(45px);
-    animation: heroDashCardSlide 0.95s cubic-bezier(0.16, 1, 0.3, 1) 0.60s forwards;
+    transform: translateX(45px) scale(0.98);
+    animation: heroDashCardSlide 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) 0.60s forwards;
 }
 
 @keyframes heroWaCardSlide {
     0% {
         opacity: 0;
-        transform: translateX(30px);
+        transform: translateX(35px) scale(0.98);
     }
     100% {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(0) scale(1);
     }
 }
 
 @keyframes heroDashCardSlide {
     0% {
         opacity: 0;
-        transform: translateX(45px);
+        transform: translateX(45px) scale(0.98);
     }
     100% {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(0) scale(1);
     }
+}
+
+/* 3D Stagger Flip Word-by-Word */
+.stagger-line-base {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.stagger-flip-trigger.is-visible .stagger-line-base {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.stagger-flip-target {
+    display: inline-block;
+    perspective: 1000px;
+}
+
+.stagger-flip-target .stagger-word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(20px) rotateX(45deg);
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease;
+    will-change: transform, opacity;
+}
+
+.stagger-flip-trigger.is-visible .stagger-word,
+.stagger-flip-target.animated .stagger-word {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
 }
 
 /* Style 1: Universal Title Scroll Reveal (.reveal-title) */
 .reveal-title {
     opacity: 0;
-    transform: translateY(30px);
-    filter: blur(5px);
-    transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
-                filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(35px);
+    filter: blur(6px);
+    transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+                transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+                filter 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
     will-change: opacity, transform, filter;
 }
 
@@ -1523,7 +1556,7 @@ section {
         animation: none !important;
         background-position: 0% 50% !important;
     }
-    .stagger-flip-target .stagger-char {
+    .stagger-flip-target .stagger-word {
         opacity: 1 !important;
         transform: none !important;
         transition: none !important;
@@ -1535,7 +1568,7 @@ section {
         font-weight: 700 !important;
         transition: none !important;
     }
-    .hero-line, .hero-stagger-item, .hero-mockup-wa, .hero-mockup-dash, .reveal-title {
+    .hero-line, .hero-stagger-item, .hero-mockup-wa, .hero-mockup-dash, .reveal-title, .stagger-line-base {
         opacity: 1 !important;
         transform: none !important;
         filter: none !important;

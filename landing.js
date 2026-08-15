@@ -1,7 +1,7 @@
-/* ==========================================================================
-   PriceXP SaaS Landing Page Script
-   Handles Particles.js, Live Demos, NLP Simulator, FAQ Accordion, Pricing Config
-   ========================================================================== */
+// Progressive Enhancement: Flag JS capability on document root
+if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.classList.add('js');
+}
 
 // 1. Centralized Pricing Constants (Official Business Rules)
 const CONFIG_PRICING = {
@@ -282,27 +282,29 @@ function initScrollAnimations() {
    8. Premium Typographic Animations System (3D Stagger Flip, Kinetic Grid, Dynamic Weight)
    -------------------------------------------------------------------------- */
 function initTypographicAnimations() {
-    // A. 3D Stagger Flip Text Initialization (Single Trigger)
+    // A. 3D Stagger Flip Word-by-Word Initialization (Single Trigger)
     const flipTarget = document.querySelector('.stagger-flip-target');
     if (flipTarget) {
         const text = flipTarget.getAttribute('data-text') || flipTarget.textContent;
+        const words = text.trim().split(/\s+/);
         flipTarget.innerHTML = '';
-        [...text].forEach((char, index) => {
+        words.forEach((word, index) => {
             const span = document.createElement('span');
-            span.className = 'stagger-char';
-            span.textContent = char === ' ' ? '\u00A0' : char;
-            span.style.transitionDelay = `${index * 35}ms`;
+            span.className = 'stagger-word';
+            span.textContent = word + (index < words.length - 1 ? '\u00A0' : '');
+            span.style.transitionDelay = `${index * 120}ms`;
             flipTarget.appendChild(span);
         });
 
         const flipObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
                     entry.target.classList.add('animated');
                     flipObserver.unobserve(entry.target);
                 }
             });
-        }, { threshold: 0.3 });
+        }, { threshold: 0.2 });
 
         const trigger = document.querySelector('.stagger-flip-trigger') || flipTarget;
         flipObserver.observe(trigger);
