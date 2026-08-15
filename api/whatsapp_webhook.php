@@ -37,10 +37,12 @@ try {
     @$pdo->exec("ALTER TABLE whatsapp_pending_sessions MODIFY COLUMN type VARCHAR(50) DEFAULT 'despesa'");
     @$pdo->exec("ALTER TABLE whatsapp_pending_sessions MODIFY COLUMN description TEXT");
     @$pdo->exec("ALTER TABLE whatsapp_pending_sessions ADD COLUMN payment_method VARCHAR(50) DEFAULT ''");
+    @$pdo->exec("ALTER TABLE transactions MODIFY COLUMN description TEXT");
 } catch (Exception $e) {}
 
 // Limpeza automática de bancos legados poluídos no banco de dados
 try {
+    $pdo->exec("ALTER TABLE transactions MODIFY COLUMN description TEXT");
     $pdo->exec("UPDATE transactions SET bank_name = 'Nubank' WHERE bank_name LIKE 'Nubank (%'");
     $pdo->exec("UPDATE transactions SET bank_name = 'Banco Inter' WHERE bank_name LIKE 'Banco Inter (%' OR bank_name LIKE 'Inter (%'");
     $pdo->exec("UPDATE transactions SET bank_name = 'C6 Bank' WHERE bank_name LIKE 'C6 Bank (%' OR bank_name LIKE 'C6 (%'");
@@ -530,10 +532,14 @@ function parseDescription($text, $type, $amount = null, $bankName = null, $payme
         return 'Lançamento Geral';
     }
 
-    // Preserva acentuação e capitaliza a primeira letra
+    // Preserva acentuação, capitaliza a primeira letra e limita o tamanho com segurança
     $firstChar = mb_strtoupper(mb_substr($clean, 0, 1, 'UTF-8'), 'UTF-8');
     $restChar  = mb_substr($clean, 1, mb_strlen($clean, 'UTF-8'), 'UTF-8');
-    return $firstChar . $restChar;
+    $resStr    = $firstChar . $restChar;
+    if (mb_strlen($resStr, 'UTF-8') > 200) {
+        $resStr = mb_substr($resStr, 0, 195, 'UTF-8') . '...';
+    }
+    return $resStr;
 }
 
 // --- HELPER DE NORMALIZAÇÃO DE TEXTO PARA CATEGORIZAÇÃO ---
