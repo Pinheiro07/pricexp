@@ -1754,3 +1754,118 @@ section {
 .feature-card:hover .card-glare {
     opacity: 1;
 }
+
+/* ==========================================================================
+   UIVERSE SOLID-METAL GLASS & SHINE CARDS SYSTEM (FOR STEP CARDS)
+   ========================================================================== */
+.step-card {
+    position: relative !important;
+    isolation: isolate !important;
+    background: rgba(15, 23, 42, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 20px !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: inset 2px 1px 8px rgba(255, 255, 255, 0.15), 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+    overflow: hidden !important;
+    z-index: 0;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                border-color 0.3s ease,
+                box-shadow 0.3s ease !important;
+}
+
+.step-card:hover {
+    transform: translateY(-4px) !important;
+    border-color: rgba(16, 185, 129, 0.45) !important;
+    box-shadow: inset 2px 1px 12px rgba(255, 255, 255, 0.25), 0 15px 35px rgba(16, 185, 129, 0.25) !important;
+}
+
+/* Sweeping Diagonal Shine Beam */
+.step-card::after {
+    content: " ";
+    position: absolute;
+    width: 160%;
+    height: 12px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.6),
+        rgba(16, 185, 129, 0.8),
+        rgba(255, 255, 255, 0.6),
+        transparent
+    );
+    transform: rotateZ(45deg);
+    filter: blur(20px);
+    animation: shineSweep 8s ease infinite;
+    pointer-events: none;
+    z-index: 2;
+}
+
+@keyframes shineSweep {
+    0% {
+        top: 120%;
+        left: -120%;
+    }
+    40%, 100% {
+        top: -40%;
+        left: 100%;
+    }
+}
+
+/* Floating Orb Background Element 1 */
+.step-card .orb-1 {
+    content: " ";
+    position: absolute;
+    height: 130px;
+    width: 130px;
+    right: -20px;
+    top: -20px;
+    background-image: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(59, 130, 246, 0.35));
+    border-radius: 50%;
+    z-index: -1;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: inset 8px 0px 16px rgba(255, 255, 255, 0.3), 0 0 25px rgba(16, 185, 129, 0.3);
+    animation: orbMove1 22s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+/* Floating Orb Background Element 2 */
+.step-card .orb-2 {
+    content: " ";
+    position: absolute;
+    height: 90px;
+    width: 90px;
+    left: -20px;
+    bottom: -20px;
+    background-image: linear-gradient(90deg, rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3));
+    border-radius: 50%;
+    z-index: -1;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: inset 6px 0px 12px rgba(255, 255, 255, 0.25), 0 0 20px rgba(59, 130, 246, 0.25);
+    animation: orbMove2 18s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes orbMove1 {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+    50% {
+        transform: translate(-30px, 35px) scale(0.85);
+    }
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+}
+
+@keyframes orbMove2 {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+    50% {
+        transform: translate(25px, -25px) scale(1.15);
+    }
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+}
