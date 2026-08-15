@@ -24,7 +24,25 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <!-- Custom Landing Page Styles -->
-    <link rel="stylesheet" href="landing.css?v=100">
+    <link rel="stylesheet" href="landing.css?v=500">
+    <style>
+        /* Force Hide All Scrollbars on Live Demo Cards */
+        #wa-demo-body::-webkit-scrollbar,
+        #dash-demo-list::-webkit-scrollbar,
+        .wa-sim-body::-webkit-scrollbar,
+        .dash-mini-tx-list::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        #wa-demo-body,
+        #dash-demo-list,
+        .wa-sim-body,
+        .dash-mini-tx-list {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -110,7 +128,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="wa-sim-body" id="wa-demo-body">
+                        <div class="wa-sim-body" id="wa-demo-body" style="overflow-y: auto; overflow-x: hidden; scrollbar-width: none !important; -ms-overflow-style: none !important;">
                             <!-- Messages generated dynamically by landing.js -->
                         </div>
                     </div>
@@ -133,7 +151,7 @@
                             <i data-lucide="clock" style="width:12px; height:12px;"></i> Últimos Lançamentos
                         </div>
 
-                        <div class="dash-mini-tx-list" id="dash-demo-list">
+                        <div class="dash-mini-tx-list" id="dash-demo-list" style="overflow-y: auto; overflow-x: hidden; scrollbar-width: none !important; -ms-overflow-style: none !important;">
                             <!-- Transactions populated dynamically by landing.js -->
                             <div class="dash-mini-tx-item">
                                 <div style="display:flex; flex-direction:column; gap:2px;">
