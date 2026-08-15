@@ -405,6 +405,15 @@ section {
     flex-direction: column;
     gap: 0.75rem;
     overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.wa-sim-body::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 .wa-bubble {
@@ -501,6 +510,15 @@ section {
     gap: 0.5rem;
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.dash-mini-tx-list::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 .dash-mini-tx-item {
