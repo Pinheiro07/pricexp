@@ -497,6 +497,9 @@ function showAuth() {
     if (inviteInput) inviteInput.value = '';
 
     checkInviteLink();
+    if (typeof initLoginParticles === 'function') {
+        initLoginParticles();
+    }
 }
 
 async function checkInviteLink() {
@@ -1834,84 +1837,42 @@ if (btnDeleteAccount) {
 
 
 
-// --- PARTICLES JS (Login Background) ---
-try {
-    if (document.getElementById('particles-js') && typeof particlesJS !== 'undefined') {
-        particlesJS('particles-js',
-          {
-            "particles": {
-              "number": {
-                "value": 80,
-                "density": {
-                  "enable": true,
-                  "value_area": 800
-                }
-              },
-              "color": {
-                "value": "#3b82f6"
-              },
-              "shape": {
-                "type": "circle"
-              },
-              "opacity": {
-                "value": 0.5,
-                "random": false
-              },
-              "size": {
-                "value": 3,
-                "random": true
-              },
-              "line_linked": {
-                "enable": true,
-                "distance": 150,
-                "color": "#3b82f6",
-                "opacity": 0.4,
-                "width": 1
-              },
-              "move": {
-                "enable": true,
-                "speed": 2,
-                "direction": "none",
-                "random": false,
-                "straight": false,
-                "out_mode": "out",
-                "bounce": false
-              }
-            },
-            "interactivity": {
-              "detect_on": "canvas",
-              "events": {
-                "onhover": {
-                  "enable": true,
-                  "mode": "grab"
-                },
-                "onclick": {
-                  "enable": true,
-                  "mode": "push"
-                },
-                "resize": true
-              },
-              "modes": {
-                "grab": {
-                  "distance": 140,
-                  "line_linked": {
-                    "opacity": 1
-                  }
-                },
-                "push": {
-                  "particles_nb": 4
-                }
-              }
-            },
-            "retina_detect": true
-          }
-        );
-    } else {
-        console.warn("Particles.js library not loaded or particles-js container missing.");
+// --- PARTICLES JS (Login Background Initializer) ---
+function initLoginParticles() {
+    try {
+        const container = document.getElementById('particles-js');
+        if (container && typeof particlesJS !== 'undefined') {
+            // Re-initialize particles if canvas is missing or empty
+            if (!container.querySelector('canvas')) {
+                particlesJS('particles-js', {
+                    "particles": {
+                        "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                        "color": { "value": "#3b82f6" },
+                        "shape": { "type": "circle" },
+                        "opacity": { "value": 0.5, "random": false },
+                        "size": { "value": 3, "random": true },
+                        "line_linked": { "enable": true, "distance": 150, "color": "#3b82f6", "opacity": 0.4, "width": 1 },
+                        "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+                    },
+                    "interactivity": {
+                        "detect_on": "canvas",
+                        "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
+                        "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "push": { "particles_nb": 4 } }
+                    },
+                    "retina_detect": true
+                });
+            }
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
+        }
+    } catch (e) {
+        console.error("Error initializing particles.js:", e);
     }
-} catch (e) {
-    console.error("Error initializing particles.js:", e);
 }
+
+// Auto-run on script load
+initLoginParticles();
 
 
 // --- CARDS API & LOGIC ---
