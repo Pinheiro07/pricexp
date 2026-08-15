@@ -1818,7 +1818,7 @@ section {
     top: -45px;
     background: linear-gradient(135deg, #10b981, #34d399, #059669);
     transform: rotate(12deg);
-    animation: blobFloat1 12s ease-in-out infinite alternate;
+    animation: blobFloat1 18s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
 }
 
 /* Blob 2: Middle-Left (Electric Blue & Indigo Gradient) */
@@ -1827,7 +1827,7 @@ section {
     top: 110px;
     background: linear-gradient(135deg, #3b82f6, #60a5fa, #1d4ed8);
     transform: rotate(20deg);
-    animation: blobFloat2 15s ease-in-out infinite alternate;
+    animation: blobFloat2 22s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
 }
 
 /* Blob 3: Bottom-Right (Purple & Magenta Gradient) */
@@ -1836,7 +1836,7 @@ section {
     bottom: -20px;
     background: linear-gradient(135deg, #a855f7, #c084fc, #7e22ce);
     transform: rotate(-10deg);
-    animation: blobFloat3 14s ease-in-out infinite alternate;
+    animation: blobFloat3 20s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
 }
 
 /* Blob 4: Top-Right (Amber & Mint Golden Gradient) */
@@ -1845,7 +1845,7 @@ section {
     top: 15px;
     background: linear-gradient(135deg, #f59e0b, #fbbf24, #10b981);
     transform: rotate(-25deg);
-    animation: blobFloat4 16s ease-in-out infinite alternate;
+    animation: blobFloat4 24s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
 }
 
 /* Blob Keyframe Animations */
@@ -1854,7 +1854,7 @@ section {
         transform: translate(0, 0) rotate(12deg) scale(1);
     }
     50% {
-        transform: translate(35px, 40px) rotate(45deg) scale(1.2);
+        transform: translate(25px, 30px) rotate(35deg) scale(1.12);
     }
     100% {
         transform: translate(0, 0) rotate(12deg) scale(1);
@@ -1866,7 +1866,7 @@ section {
         transform: translate(0, 0) rotate(20deg) scale(1);
     }
     50% {
-        transform: translate(-30px, -35px) rotate(-35deg) scale(0.85);
+        transform: translate(-20px, -25px) rotate(-25deg) scale(0.9);
     }
     100% {
         transform: translate(0, 0) rotate(20deg) scale(1);
@@ -1878,7 +1878,7 @@ section {
         transform: translate(0, 0) rotate(-10deg) scale(1);
     }
     50% {
-        transform: translate(-40px, -30px) rotate(50deg) scale(1.18);
+        transform: translate(-30px, -25px) rotate(35deg) scale(1.12);
     }
     100% {
         transform: translate(0, 0) rotate(-10deg) scale(1);
@@ -1890,7 +1890,7 @@ section {
         transform: translate(0, 0) rotate(-25deg) scale(1);
     }
     50% {
-        transform: translate(25px, -35px) rotate(-60deg) scale(0.9);
+        transform: translate(20px, -25px) rotate(-45deg) scale(0.92);
     }
     100% {
         transform: translate(0, 0) rotate(-25deg) scale(1);
@@ -1913,7 +1913,7 @@ section {
     );
     transform: rotateZ(45deg);
     filter: blur(18px);
-    animation: shineSweep 8s ease infinite;
+    animation: shineSweep 9.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     pointer-events: none;
     z-index: 3;
 }
@@ -1951,7 +1951,7 @@ section {
     filter: url(#morphGoo);
     cursor: pointer;
     padding: 1.5rem;
-    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s ease;
 }
 
 /* Base Liquid Morph Blobs forming the gooey card base */
@@ -1959,7 +1959,7 @@ section {
     position: absolute;
     background: #0b0f19;
     border-radius: 50%;
-    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .morph-blob-1 {
@@ -1968,7 +1968,7 @@ section {
     top: 0;
     left: 0;
     border-radius: 28px;
-    animation: morphPulse1 10s ease-in-out infinite alternate;
+    animation: morphPulse1 16s ease-in-out infinite alternate;
 }
 
 .morph-blob-2 {
@@ -1978,7 +1978,7 @@ section {
     left: 40px;
     background: linear-gradient(135deg, #10b981, #3b82f6);
     opacity: 0.35;
-    animation: morphPulse2 12s ease-in-out infinite alternate;
+    animation: morphPulse2 18s ease-in-out infinite alternate;
 }
 
 .morph-blob-3 {
@@ -1988,7 +1988,7 @@ section {
     right: 50px;
     background: linear-gradient(135deg, #3b82f6, #a855f7);
     opacity: 0.35;
-    animation: morphPulse3 14s ease-in-out infinite alternate;
+    animation: morphPulse3 20s ease-in-out infinite alternate;
 }
 
 /* Hover Gooey Transformation (anark_7616 re-shaping) */
@@ -2017,8 +2017,8 @@ section {
 
 /* Active State Compression */
 .morph-card:active .morph-blob {
-    transform: scale(0.96) !important;
-    transition-duration: 0.15s;
+    transform: scale(0.97) !important;
+    transition-duration: 0.2s;
 }
 
 /* Organic Morphing Pulse Keyframes */
@@ -2048,7 +2048,7 @@ section {
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: all 0.5s ease;
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dashboard-mockup-frame {
@@ -2058,7 +2058,7 @@ section {
     border-radius: 18px;
     overflow: hidden;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), inset 0 0 20px rgba(255, 255, 255, 0.05);
-    transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease, border-color 0.6s ease;
 }
 
 .morph-card:hover .dashboard-mockup-frame {
@@ -2117,11 +2117,11 @@ section {
     height: auto;
     display: block;
     object-fit: cover;
-    transition: transform 0.5s ease;
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .morph-card:hover .dashboard-print-img {
-    transform: scale(1.015);
+    transform: scale(1.012);
 }
 
 /* ==========================================================================
@@ -2137,16 +2137,17 @@ section {
     padding: 7px !important;
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75), inset 0 0 10px rgba(255, 255, 255, 0.05) !important;
     isolation: isolate;
-    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
-                box-shadow 0.5s ease,
-                border-color 0.5s ease !important;
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.7s ease !important;
     cursor: pointer;
+    will-change: transform;
 }
 
 .phone-rodry-card:hover {
-    transform: translateY(-8px) scale(1.02) !important;
+    transform: translateY(-6px) scale(1.015) !important;
     border-color: rgba(16, 185, 129, 0.6) !important;
-    box-shadow: 0 30px 60px rgba(16, 185, 129, 0.25), inset 0 0 15px rgba(16, 185, 129, 0.15) !important;
+    box-shadow: 0 25px 50px rgba(16, 185, 129, 0.2), inset 0 0 15px rgba(16, 185, 129, 0.12) !important;
 }
 
 /* Inner Display Screen with Animated Gradient Flow */
@@ -2156,7 +2157,7 @@ section {
     background-position: 0% 0%;
     height: 100%;
     border-radius: 30px;
-    transition: all 0.6s ease-out;
+    transition: background-position 0.9s cubic-bezier(0.16, 1, 0.3, 1);
     overflow: hidden;
     position: relative;
     display: flex;
