@@ -1576,3 +1576,181 @@ section {
         transition: none !important;
     }
 }
+
+/* ==========================================================================
+   UIVERSE 00KUBI CYBER GLOW FEATURE CARDS SYSTEM
+   ========================================================================== */
+.feature-card {
+    position: relative !important;
+    isolation: isolate !important;
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 20px !important;
+    padding: 2.25rem 1.75rem !important;
+    overflow: hidden !important;
+    perspective: 1000px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.2) !important;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+                border-color 0.35s ease,
+                box-shadow 0.35s ease,
+                filter 0.35s ease !important;
+    will-change: transform;
+}
+
+.feature-card:hover {
+    border-color: rgba(16, 185, 129, 0.5) !important;
+    box-shadow: 0 15px 40px rgba(16, 185, 129, 0.25), inset 0 0 25px rgba(16, 185, 129, 0.12) !important;
+    filter: brightness(1.08);
+}
+
+.feature-card-inner {
+    position: relative;
+    z-index: 10;
+}
+
+/* Corner Bracket Elements */
+.corner-elements span {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(59, 130, 246, 0.25);
+    pointer-events: none;
+    z-index: 5;
+    transition: all 0.3s ease;
+}
+
+.corner-elements span:nth-child(1) { top: 10px; left: 10px; border-right: 0; border-bottom: 0; }
+.corner-elements span:nth-child(2) { top: 10px; right: 10px; border-left: 0; border-bottom: 0; }
+.corner-elements span:nth-child(3) { bottom: 10px; left: 10px; border-right: 0; border-top: 0; }
+.corner-elements span:nth-child(4) { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
+
+.feature-card:hover .corner-elements span {
+    border-color: rgba(16, 185, 129, 0.8);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+}
+
+/* Scan Line Animation */
+.scan-line {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba(16, 185, 129, 0.12),
+        transparent
+    );
+    transform: translateY(-100%);
+    animation: scanMove 2.8s linear infinite;
+    pointer-events: none;
+    z-index: 4;
+}
+
+@keyframes scanMove {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+}
+
+/* Cyber Animated Horizon Lines */
+.cyber-lines span {
+    position: absolute;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(16, 185, 129, 0.25),
+        transparent
+    );
+    pointer-events: none;
+    z-index: 3;
+}
+
+.cyber-lines span:nth-child(1) { top: 25%; left: 0; width: 100%; height: 1px; transform: scaleX(0); transform-origin: left; animation: lineGrow 3s linear infinite; }
+.cyber-lines span:nth-child(2) { top: 50%; right: 0; width: 100%; height: 1px; transform: scaleX(0); transform-origin: right; animation: lineGrow 3s linear infinite 1s; }
+.cyber-lines span:nth-child(3) { top: 75%; left: 0; width: 100%; height: 1px; transform: scaleX(0); transform-origin: left; animation: lineGrow 3s linear infinite 2s; }
+
+@keyframes lineGrow {
+    0% { transform: scaleX(0); opacity: 0; }
+    50% { transform: scaleX(1); opacity: 1; }
+    100% { transform: scaleX(0); opacity: 0; }
+}
+
+/* Ambient Radial Glowing Elements */
+.glowing-elements {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.glow-1, .glow-2, .glow-3 {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle at center,
+        rgba(16, 185, 129, 0.25) 0%,
+        rgba(16, 185, 129, 0) 70%
+    );
+    filter: blur(16px);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.glow-1 { top: -25px; left: -25px; }
+.glow-2 { top: 50%; right: -30px; transform: translateY(-50%); }
+.glow-3 { bottom: -25px; left: 35%; }
+
+.feature-card:hover .glowing-elements div {
+    opacity: 1;
+}
+
+/* Floating Card Particles */
+.card-particles span {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #10b981;
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.feature-card:hover .card-particles span {
+    animation: particleFloat 2.2s infinite;
+}
+
+@keyframes particleFloat {
+    0% { transform: translate(0, 0); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(calc(var(--x, 0) * 35px), calc(var(--y, 0) * 35px)); opacity: 0; }
+}
+
+.card-particles span:nth-child(1) { --x: 1; --y: -1; top: 40%; left: 20%; }
+.card-particles span:nth-child(2) { --x: -1; --y: -1; top: 60%; right: 20%; }
+.card-particles span:nth-child(3) { --x: 0.5; --y: 1; top: 20%; left: 40%; }
+.card-particles span:nth-child(4) { --x: -0.5; --y: 1; top: 80%; right: 40%; }
+.card-particles span:nth-child(5) { --x: 1; --y: 0.5; top: 30%; left: 60%; }
+.card-particles span:nth-child(6) { --x: -1; --y: 0.5; top: 70%; right: 60%; }
+
+/* Card Glare Sweep */
+.card-glare {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        125deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.04) 45%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0.04) 55%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    opacity: 0;
+    transition: opacity 300ms ease;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.feature-card:hover .card-glare {
+    opacity: 1;
+}
