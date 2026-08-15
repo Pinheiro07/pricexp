@@ -17,14 +17,14 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=400">
     <link rel="icon" type="image/x-icon" href="favicon.ico?v=400">
 
-    <!-- Fonts (Google Fonts Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Fonts (Google Fonts Inter Variable) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <!-- Custom Landing Page Styles -->
-    <link rel="stylesheet" href="landing.css?v=900">
+    <link rel="stylesheet" href="landing.css?v=1000">
     <style>
         /* Force Hide All Scrollbars on Live Demo Cards */
         #wa-demo-body::-webkit-scrollbar,
@@ -91,7 +91,7 @@
                 </div>
 
                 <h1 class="hero-title">
-                    Suas finanças organizadas em uma <span class="text-gradient">simples conversa.</span>
+                    Suas finanças organizadas em uma <span class="aurora-gradient-text">simples conversa.</span>
                 </h1>
 
                 <p class="hero-subtitle">
@@ -185,8 +185,8 @@
                 <div class="badge-pill">
                     <i data-lucide="sparkles"></i> Simplicidade Absoluta
                 </div>
-                <h2 class="section-title">
-                    Você fala. <span class="text-gradient">O PriceXP organiza.</span>
+                <h2 class="section-title stagger-flip-trigger" aria-label="Você fala. O PriceXP organiza.">
+                    <span>Você fala. </span><span class="stagger-flip-target aurora-gradient-text" aria-hidden="true" data-text="O PriceXP organiza.">O PriceXP organiza.</span>
                 </h2>
                 <p class="section-subtitle">
                     Sem formulários gigantescos ou menus confusos. Em apenas 3 passos o seu controle financeiro é atualizado.
@@ -506,20 +506,47 @@
     </section>
 
     <!-- ==========================================================================
-         Section: Pain vs Solution
+         Section: Kinetic Text Converge (Planilhas, Apps -> WhatsApp)
          ========================================================================== -->
     <section>
         <div class="container">
-            <div class="glass-card" style="padding:4rem 2rem; text-align:center; max-width:850px; margin:0 auto; background:linear-gradient(135deg, rgba(19,27,47,0.9) 0%, rgba(30,58,138,0.2) 100%);">
-                <h2 style="font-size:2.2rem; font-weight:800; margin-bottom:1rem;">
-                    O problema nunca foi gastar. <br><span class="text-gradient">Foi lembrar de anotar.</span>
+            <div class="glass-card kinetic-converge-card" style="padding:3.5rem 2rem; text-align:center; max-width:880px; margin:0 auto; background:linear-gradient(135deg, rgba(19,27,47,0.9) 0%, rgba(30,58,138,0.25) 100%); position:relative; overflow:hidden;">
+                
+                <!-- Kinetic Grid Fade Words -->
+                <div class="kinetic-words-fade-wrapper" aria-hidden="true">
+                    <span class="kw-fade-word">PLANILHAS</span>
+                    <span class="kw-dot">•</span>
+                    <span class="kw-fade-word">APLICATIVOS</span>
+                    <span class="kw-dot">•</span>
+                    <span class="kw-fade-word">FORMULÁRIOS</span>
+                </div>
+
+                <!-- Central Kinetic Target Word -->
+                <div class="kinetic-target-pill">
+                    <i data-lucide="message-square" style="width:20px; height:20px; color:#10b981;"></i>
+                    <span class="kinetic-target-word">WHATSAPP</span>
+                </div>
+
+                <h2 style="font-size:2.2rem; font-weight:800; margin-top:1.25rem; margin-bottom:1rem;">
+                    O problema nunca foi gastar. <br><span class="aurora-gradient-text">Foi lembrar de anotar.</span>
                 </h2>
-                <p style="font-size:1.1rem; color:var(--text-muted); max-width:600px; margin:0 auto 2.5rem auto;">
-                    Planilhas exigem que você sente na frente do computador. Aplicativos tradicionais exigem dezenas de cliques. Com o PriceXP, você anota no exato segundo em que o gasto acontece.
+                <p style="font-size:1.1rem; color:var(--text-muted); max-width:620px; margin:0 auto 2.5rem auto;">
+                    Você já conversa pelo WhatsApp todos os dias. Agora pode manter seu controle financeiro atualizado em tempo real, sem planilhas ou menus manuais.
                 </p>
-                <a href="app.html" class="btn-primary" style="font-size:1.05rem; padding:1rem 2.25rem;">
+                <a href="app.html" class="btn-primary btn-neon" style="font-size:1.05rem; padding:1rem 2.25rem;">
                     <i data-lucide="sparkles"></i> Experimentar o PriceXP Agora
                 </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Section: Dynamic Weight Proximity Banner (Desktop Cursor Interaction)
+         ========================================================================== -->
+    <section style="padding: 3rem 0; overflow: hidden;">
+        <div class="container text-center">
+            <div class="dynamic-weight-banner" id="dw-banner" aria-label="Seu dinheiro. Sua visão. Seu controle.">
+                Seu dinheiro. Sua visão. Seu controle.
             </div>
         </div>
     </section>
@@ -782,7 +809,7 @@
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
     <!-- Custom Landing Page Script -->
-    <script src="landing.js?v=100"></script>
+    <script src="landing.js?v=1000"></script>
 
     <script>
         // Initialize Lucide icons

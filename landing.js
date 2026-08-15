@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initFAQAccordion();
     initMobileNav();
     initScrollAnimations();
+    initTypographicAnimations();
 });
 
 /* --------------------------------------------------------------------------
@@ -276,15 +277,96 @@ function initScrollAnimations() {
     });
 }
 
-// --- ORIGINKIT NEON BORDER FALLBACK ANIMATOR ---
-if (typeof CSS !== 'undefined' && !CSS.supports('@property', '--neon-angle')) {
-    let neonAngle = 0;
-    function animateNeonAngle() {
-        neonAngle = (neonAngle + 1.2) % 360;
-        document.querySelectorAll('.btn-neon, .btn-primary, .btn-cta-glow, #auth-btn').forEach(btn => {
-            btn.style.setProperty('--neon-angle', neonAngle + 'deg');
+/* --------------------------------------------------------------------------
+   8. Premium Typographic Animations System (3D Stagger Flip, Kinetic Grid, Dynamic Weight)
+   -------------------------------------------------------------------------- */
+function initTypographicAnimations() {
+    // A. 3D Stagger Flip Text Initialization (Single Trigger)
+    const flipTarget = document.querySelector('.stagger-flip-target');
+    if (flipTarget) {
+        const text = flipTarget.getAttribute('data-text') || flipTarget.textContent;
+        flipTarget.innerHTML = '';
+        [...text].forEach((char, index) => {
+            const span = document.createElement('span');
+            span.className = 'stagger-char';
+            span.textContent = char === ' ' ? '\u00A0' : char;
+            span.style.transitionDelay = `${index * 35}ms`;
+            flipTarget.appendChild(span);
         });
-        requestAnimationFrame(animateNeonAngle);
+
+        const flipObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animated');
+                    flipObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.3 });
+
+        const trigger = document.querySelector('.stagger-flip-trigger') || flipTarget;
+        flipObserver.observe(trigger);
     }
-    requestAnimationFrame(animateNeonAngle);
+
+    // B. Kinetic Grid Converge (Single Trigger)
+    const kineticCard = document.querySelector('.kinetic-converge-card');
+    if (kineticCard) {
+        const kineticObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        kineticCard.classList.add('converged');
+                    }, 400);
+                    kineticObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.25 });
+        kineticObserver.observe(kineticCard);
+    }
+
+    // C. Dynamic Weight Banner (Cursor Proximity on Desktop)
+    const dwBanner = document.getElementById('dw-banner');
+    if (dwBanner && window.matchMedia('(min-width: 769px)').matches) {
+        const rawText = dwBanner.textContent.trim();
+        dwBanner.innerHTML = '';
+        const charSpans = [];
+
+        [...rawText].forEach(char => {
+            const span = document.createElement('span');
+            span.className = 'dw-char';
+            span.textContent = char === ' ' ? '\u00A0' : char;
+            dwBanner.appendChild(span);
+            charSpans.push(span);
+        });
+
+        let ticking = false;
+        dwBanner.addEventListener('mousemove', (e) => {
+            if (!ticking) {
+                requestAnimationFrame(() => {
+                    charSpans.forEach(span => {
+                        const rect = span.getBoundingClientRect();
+                        const charCenterX = rect.left + rect.width / 2;
+                        const charCenterY = rect.top + rect.height / 2;
+                        const dist = Math.hypot(e.clientX - charCenterX, e.clientY - charCenterY);
+                        
+                        const maxDist = 130;
+                        if (dist < maxDist) {
+                            const factor = 1 - (dist / maxDist);
+                            const weight = Math.round(400 + (factor * 400));
+                            span.style.setProperty('--char-weight', weight);
+                        } else {
+                            span.style.setProperty('--char-weight', '400');
+                        }
+                    });
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+
+        dwBanner.addEventListener('mouseleave', () => {
+            charSpans.forEach(span => {
+                span.style.setProperty('--char-weight', '400');
+            });
+        });
+    }
 }
