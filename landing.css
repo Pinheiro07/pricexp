@@ -1179,8 +1179,7 @@ section {
 
 .btn-neon,
 .btn-primary,
-.btn-cta-glow,
-#auth-btn {
+.btn-cta-glow {
     position: relative !important;
     isolation: isolate !important;
     overflow: visible !important;
@@ -1198,8 +1197,7 @@ section {
 /* Sharp Conic Gradient Outer Border (Originkit Continuous Movement) */
 .btn-neon::before,
 .btn-primary::before,
-.btn-cta-glow::before,
-#auth-btn::before {
+.btn-cta-glow::before {
     content: '';
     position: absolute;
     inset: -3px;
@@ -1229,8 +1227,7 @@ section {
 /* Multi-layer Ambient Glow (Originkit 3-Layer Blur Blend) */
 .btn-neon::after,
 .btn-primary::after,
-.btn-cta-glow::after,
-#auth-btn::after {
+.btn-cta-glow::after {
     content: '';
     position: absolute;
     inset: -4px;
@@ -1256,8 +1253,7 @@ section {
 /* Hover Interaction & Glow Expansion */
 .btn-neon:hover,
 .btn-primary:hover,
-.btn-cta-glow:hover,
-#auth-btn:hover {
+.btn-cta-glow:hover {
     transform: translateY(-2px) scale(1.02) !important;
     background: #1e293b !important;
     color: #ffffff !important;
@@ -1266,8 +1262,7 @@ section {
 
 .btn-neon:hover::after,
 .btn-primary:hover::after,
-.btn-cta-glow:hover::after,
-#auth-btn:hover::after {
+.btn-cta-glow:hover::after {
     filter: blur(22px);
     opacity: 1;
 }
