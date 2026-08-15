@@ -24,7 +24,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <!-- Custom Landing Page Styles -->
-    <link rel="stylesheet" href="landing.css?v=1500">
+    <link rel="stylesheet" href="landing.css?v=1600">
     <style>
         /* Force Hide All Scrollbars on Live Demo Cards */
         #wa-demo-body::-webkit-scrollbar,
@@ -397,72 +397,44 @@
                 </p>
             </div>
 
-            <!-- Dashboard Representation Card -->
-            <div class="glass-card" style="padding:2rem; border-color:var(--border-glass-light); box-shadow:var(--shadow-glow-blue);">
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1.5rem; margin-bottom:2rem;">
-                    <div style="background:rgba(11,15,25,0.7); border:1px solid var(--border-glass); padding:1.25rem; border-radius:12px;">
-                        <span style="font-size:0.8rem; color:var(--text-muted);">Saldo Consolidado</span>
-                        <div style="font-size:1.6rem; font-weight:800; color:var(--text-main); margin-top:4px;">R$ 8.450,20</div>
-                    </div>
-                    <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); padding:1.25rem; border-radius:12px;">
-                        <span style="font-size:0.8rem; color:#10b981;">Receitas do Mês</span>
-                        <div style="font-size:1.6rem; font-weight:800; color:#10b981; margin-top:4px;">+ R$ 6.200,00</div>
-                    </div>
-                    <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); padding:1.25rem; border-radius:12px;">
-                        <span style="font-size:0.8rem; color:#ef4444;">Despesas do Mês</span>
-                        <div style="font-size:1.6rem; font-weight:800; color:#ef4444; margin-top:4px;">- R$ 2.749,80</div>
-                    </div>
-                </div>
+            <!-- SVG Filter for Gooey Liquid Morph Effect -->
+            <svg style="position: absolute; width: 0; height: 0; pointer-events: none;" aria-hidden="true">
+              <defs>
+                <filter id="morphGoo">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur" />
+                  <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" />
+                  <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+                </filter>
+              </defs>
+            </svg>
 
-                <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:1.5rem;">
-                    <div style="background:rgba(11,15,25,0.7); border:1px solid var(--border-glass); padding:1.25rem; border-radius:12px;">
-                        <div style="font-weight:700; font-size:0.95rem; margin-bottom:1rem;">Lançamentos Recentes</div>
-                        
-                        <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.02); border-radius:8px;">
-                                <div>
-                                    <div style="font-weight:600;">Supermercado Carrefour</div>
-                                    <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
-                                        <span class="cat-badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid rgba(245,158,11,0.4);">Alimentação</span>
-                                        <span style="font-size:0.75rem; color:var(--text-dim);">• Nubank • 14/08/2026</span>
-                                    </div>
+            <!-- Dashboard Morph Card Container -->
+            <div class="morph-dashboard-wrapper">
+                <div class="morph-card">
+                    <!-- Liquid Morph Blobs -->
+                    <div class="morph-blob morph-blob-1"></div>
+                    <div class="morph-blob morph-blob-2"></div>
+                    <div class="morph-blob morph-blob-3"></div>
+
+                    <!-- Content: Real Dashboard Print Mockup Window -->
+                    <div class="morph-content">
+                        <div class="dashboard-mockup-frame">
+                            <div class="dashboard-mockup-header">
+                                <div class="mockup-dots">
+                                    <span></span><span></span><span></span>
                                 </div>
-                                <span style="font-weight:700; color:#ef4444;">- R$ 214,50</span>
+                                <div class="mockup-url">
+                                    <i data-lucide="lock" style="width:12px; height:12px; color:#10b981;"></i>
+                                    <span>pricexp.app/dashboard</span>
+                                </div>
                             </div>
-
-                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.02); border-radius:8px;">
-                                <div>
-                                    <div style="font-weight:600;">Abastecimento Shell</div>
-                                    <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
-                                        <span class="cat-badge" style="background:rgba(6,182,212,0.2); color:#22d3ee; border:1px solid rgba(6,182,212,0.4);">Transporte</span>
-                                        <span style="font-size:0.75rem; color:var(--text-dim);">• Sicredi • 13/08/2026</span>
-                                    </div>
-                                </div>
-                                <span style="font-weight:700; color:#ef4444;">- R$ 150,00</span>
-                            </div>
-
-                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.02); border-radius:8px;">
-                                <div>
-                                    <div style="font-weight:600;">Projeto Freelance Web</div>
-                                    <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
-                                        <span class="cat-badge" style="background:rgba(16,185,129,0.2); color:#34d399; border:1px solid rgba(16,185,129,0.4);">Receita</span>
-                                        <span style="font-size:0.75rem; color:var(--text-dim);">• Inter • 12/08/2026</span>
-                                    </div>
-                                </div>
-                                <span style="font-weight:700; color:#10b981;">+ R$ 2.500,00</span>
+                            <div class="dashboard-mockup-body">
+                                <img src="dashboard-preview.png" alt="PriceXP Painel Web Completo" class="dashboard-print-img">
                             </div>
                         </div>
-
-                    </div>
-
-                    <div style="background:rgba(11,15,25,0.7); border:1px solid var(--border-glass); padding:1.25rem; border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
-                        <i data-lucide="pie-chart" class="text-emerald" style="width:48px; height:48px; margin-bottom:1rem;"></i>
-                        <h4 style="font-size:1.1rem; font-weight:700; margin-bottom:0.4rem;">Relatórios Automáticos</h4>
-                        <p style="font-size:0.85rem; color:var(--text-muted); max-width:260px;">
-                            Entenda exatamente onde seu dinheiro está sendo gasto com gráficos limpos e separação por categorias.
-                        </p>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     </section>
@@ -890,7 +862,7 @@
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
     <!-- Custom Landing Page Script -->
-    <script src="landing.js?v=1500"></script>
+    <script src="landing.js?v=1600"></script>
 
     <script>
         // Initialize Lucide icons

@@ -1928,3 +1928,198 @@ section {
         left: 110%;
     }
 }
+
+/* ==========================================================================
+   UIVERSE ANARK_7616 GOOEY MORPHING DASHBOARD CARD
+   ========================================================================== */
+.morph-dashboard-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 1.5rem;
+    perspective: 1200px;
+}
+
+.morph-card {
+    position: relative;
+    width: 100%;
+    max-width: 1080px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: url(#morphGoo);
+    cursor: pointer;
+    padding: 1.5rem;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Base Liquid Morph Blobs forming the gooey card base */
+.morph-blob {
+    position: absolute;
+    background: #0b0f19;
+    border-radius: 50%;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.morph-blob-1 {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-radius: 28px;
+    animation: morphPulse1 10s ease-in-out infinite alternate;
+}
+
+.morph-blob-2 {
+    width: 240px;
+    height: 240px;
+    top: -25px;
+    left: 40px;
+    background: linear-gradient(135deg, #10b981, #3b82f6);
+    opacity: 0.35;
+    animation: morphPulse2 12s ease-in-out infinite alternate;
+}
+
+.morph-blob-3 {
+    width: 220px;
+    height: 220px;
+    bottom: -20px;
+    right: 50px;
+    background: linear-gradient(135deg, #3b82f6, #a855f7);
+    opacity: 0.35;
+    animation: morphPulse3 14s ease-in-out infinite alternate;
+}
+
+/* Hover Gooey Transformation (anark_7616 re-shaping) */
+.morph-card:hover .morph-blob-1 {
+    border-radius: 35px;
+    transform: rotate(-1.5deg) scale(1.01);
+}
+
+.morph-card:hover .morph-blob-2 {
+    width: 280px;
+    height: 280px;
+    top: -45px;
+    left: -15px;
+    transform: rotate(15deg);
+    opacity: 0.6;
+}
+
+.morph-card:hover .morph-blob-3 {
+    width: 260px;
+    height: 260px;
+    bottom: -35px;
+    right: 30px;
+    transform: rotate(-12deg);
+    opacity: 0.6;
+}
+
+/* Active State Compression */
+.morph-card:active .morph-blob {
+    transform: scale(0.96) !important;
+    transition-duration: 0.15s;
+}
+
+/* Organic Morphing Pulse Keyframes */
+@keyframes morphPulse1 {
+    0% { border-radius: 28px; transform: scale(1) rotate(0deg); }
+    50% { border-radius: 34px; transform: scale(1.01) rotate(0.5deg); }
+    100% { border-radius: 26px; transform: scale(1) rotate(-0.5deg); }
+}
+
+@keyframes morphPulse2 {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(30px, -20px) scale(1.15); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes morphPulse3 {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-30px, 20px) scale(1.2); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
+/* Dashboard Content Frame */
+.morph-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.5s ease;
+}
+
+.dashboard-mockup-frame {
+    width: 100%;
+    background: rgba(11, 15, 25, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), inset 0 0 20px rgba(255, 255, 255, 0.05);
+    transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.morph-card:hover .dashboard-mockup-frame {
+    transform: translateY(-4px) scale(1.008);
+    border-color: rgba(16, 185, 129, 0.45);
+    box-shadow: 0 35px 75px rgba(16, 185, 129, 0.28), inset 0 0 25px rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-mockup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.35rem;
+    background: rgba(15, 23, 42, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mockup-dots {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.mockup-dots span {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.mockup-dots span:nth-child(1) { background: #ef4444; }
+.mockup-dots span:nth-child(2) { background: #f59e0b; }
+.mockup-dots span:nth-child(3) { background: #10b981; }
+
+.mockup-url {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 0.3rem 0.95rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-mockup-body {
+    width: 100%;
+    overflow: hidden;
+    background: #0b0f19;
+}
+
+.dashboard-print-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.morph-card:hover .dashboard-print-img {
+    transform: scale(1.015);
+}
