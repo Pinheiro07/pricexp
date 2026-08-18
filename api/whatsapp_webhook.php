@@ -21,37 +21,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 // Tabela de rascunhos / sessão incremental de conversa do Patrick
-try {
-    $pdo->exec("CREATE TABLE IF NOT EXISTS whatsapp_pending_sessions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        phone VARCHAR(50) NOT NULL,
-        type VARCHAR(50) DEFAULT 'despesa',
-        amount DECIMAL(10, 2) DEFAULT 0.00,
-        description TEXT,
-        category VARCHAR(100) DEFAULT '',
-        bank_name VARCHAR(100) DEFAULT '',
-        payment_method VARCHAR(50) DEFAULT '',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )");
-    @$pdo->exec("ALTER TABLE whatsapp_pending_sessions MODIFY COLUMN type VARCHAR(50) DEFAULT 'despesa'");
-    @$pdo->exec("ALTER TABLE whatsapp_pending_sessions MODIFY COLUMN description TEXT");
-    @$pdo->exec("ALTER TABLE whatsapp_pending_sessions ADD COLUMN payment_method VARCHAR(50) DEFAULT ''");
-    @$pdo->exec("ALTER TABLE transactions MODIFY COLUMN description TEXT");
-} catch (Exception $e) {}
+if (!empty($pdo)) {
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS whatsapp_pending_sessions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            phone VARCHAR(50) NOT NULL,
+            type VARCHAR(50) DEFAULT 'despesa',
+            amount DECIMAL(10, 2) DEFAULT 0.00,
+            description TEXT,
+            category VARCHAR(100) DEFAULT '',
+            bank_name VARCHAR(100) DEFAULT '',
+            payment_method VARCHAR(50) DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )");
+        @$pdo->exec("ALTER TABLE whatsapp_pending_sessions MODIFY COLUMN type VARCHAR(50) DEFAULT 'despesa'");
+        @$pdo->exec("ALTER TABLE whatsapp_pending_sessions MODIFY COLUMN description TEXT");
+        @$pdo->exec("ALTER TABLE whatsapp_pending_sessions ADD COLUMN payment_method VARCHAR(50) DEFAULT ''");
+        @$pdo->exec("ALTER TABLE transactions MODIFY COLUMN description TEXT");
 
-// Limpeza automática de bancos legados poluídos no banco de dados
-try {
-    $pdo->exec("ALTER TABLE transactions MODIFY COLUMN description TEXT");
-    $pdo->exec("UPDATE transactions SET bank_name = 'Nubank' WHERE bank_name LIKE 'Nubank (%'");
-    $pdo->exec("UPDATE transactions SET bank_name = 'Banco Inter' WHERE bank_name LIKE 'Banco Inter (%' OR bank_name LIKE 'Inter (%'");
-    $pdo->exec("UPDATE transactions SET bank_name = 'C6 Bank' WHERE bank_name LIKE 'C6 Bank (%' OR bank_name LIKE 'C6 (%'");
-    $pdo->exec("UPDATE transactions SET bank_name = 'Sicredi' WHERE bank_name LIKE 'Sicredi (%'");
-    $pdo->exec("UPDATE transactions SET bank_name = 'Itaú' WHERE bank_name LIKE 'Itaú (%'");
-    $pdo->exec("UPDATE transactions SET bank_name = 'Bradesco' WHERE bank_name LIKE 'Bradesco (%'");
-    $pdo->exec("UPDATE transactions SET bank_name = 'Santander' WHERE bank_name LIKE 'Santander (%'");
-    $pdo->exec("UPDATE transactions SET bank_name = 'Caixa' WHERE bank_name LIKE 'Caixa (%'");
-} catch (Exception $e) {}
+        $pdo->exec("CREATE TABLE IF NOT EXISTS whatsapp_sales_sessions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            phone VARCHAR(50) NOT NULL UNIQUE,
+            first_name VARCHAR(100) DEFAULT NULL,
+            last_name VARCHAR(100) DEFAULT NULL,
+            email VARCHAR(255) DEFAULT NULL,
+            whatsapp VARCHAR(50) DEFAULT NULL,
+            plan VARCHAR(50) DEFAULT NULL,
+            state VARCHAR(50) DEFAULT 'WAITING_SALES_LEAD_DATA',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS sales_leads (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            first_name VARCHAR(100) NOT NULL,
+            last_name VARCHAR(100) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            whatsapp VARCHAR(50) NOT NULL,
+            plan VARCHAR(50) NOT NULL,
+            status ENUM('new', 'em_atendimento', 'fechado', 'perdido') DEFAULT 'new',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    } catch (Exception $e) {}
+
+    // Limpeza automática de bancos legados poluídos no banco de dados
+    try {
+        $pdo->exec("ALTER TABLE transactions MODIFY COLUMN description TEXT");
+        $pdo->exec("UPDATE transactions SET bank_name = 'Nubank' WHERE bank_name LIKE 'Nubank (%'");
+        $pdo->exec("UPDATE transactions SET bank_name = 'Banco Inter' WHERE bank_name LIKE 'Banco Inter (%' OR bank_name LIKE 'Inter (%'");
+        $pdo->exec("UPDATE transactions SET bank_name = 'C6 Bank' WHERE bank_name LIKE 'C6 Bank (%' OR bank_name LIKE 'C6 (%'");
+        $pdo->exec("UPDATE transactions SET bank_name = 'Sicredi' WHERE bank_name LIKE 'Sicredi (%'");
+        $pdo->exec("UPDATE transactions SET bank_name = 'Itaú' WHERE bank_name LIKE 'Itaú (%'");
+        $pdo->exec("UPDATE transactions SET bank_name = 'Bradesco' WHERE bank_name LIKE 'Bradesco (%'");
+        $pdo->exec("UPDATE transactions SET bank_name = 'Santander' WHERE bank_name LIKE 'Santander (%'");
+        $pdo->exec("UPDATE transactions SET bank_name = 'Caixa' WHERE bank_name LIKE 'Caixa (%'");
+    } catch (Exception $e) {}
+}
 
 // --- HELPER PARA DISPARO AUTOMÁTICO DE RESPOSTAS VIA EVOLUTION API ---
 function sendWhatsAppReply($recipient, $text) {
@@ -61,15 +88,17 @@ function sendWhatsAppReply($recipient, $text) {
     $instance = 'pricexp-bot';
 
     $possible_urls = [
+        'http://172.17.0.1:8086',
+        'http://172.18.0.1:8086',
+        'http://172.19.0.1:8086',
+        'http://127.0.0.1:8086',
+        'http://localhost:8086',
+        'http://evolution-api:8080',
+        'http://evolution-api:8086',
+        'http://172.17.0.1:8080',
         'http://172.17.0.1:8085',
-        'http://172.18.0.1:8085',
-        'http://172.19.0.1:8085',
-        'http://172.20.0.1:8085',
-        'http://172.21.0.1:8085',
-        'http://172.22.0.1:8085',
-        'http://localhost:8085',
-        'http://127.0.0.1:8085',
-        'http://evolution-api:8080'
+        'http://127.0.0.1:8080',
+        'http://127.0.0.1:8085'
     ];
 
     $cleanNum = preg_replace('/\D/', '', $recipient);
@@ -78,7 +107,7 @@ function sendWhatsAppReply($recipient, $text) {
     $payload = [
         'number' => $cleanNum,
         'options' => [
-            'delay' => 800,
+            'delay' => 500,
             'presence' => 'composing'
         ],
         'text' => $text
@@ -95,12 +124,14 @@ function sendWhatsAppReply($recipient, $text) {
             'Content-Type: application/json',
             'apikey: ' . $api_key
         ]);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 4);
-        $res = curl_exec($ch);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        $res = @curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        @curl_close($ch);
 
-        if ($http_code === 200 || $http_code === 201) {
+        if ($http_code >= 200 && $http_code < 300) {
             return true;
         }
     }
@@ -112,10 +143,14 @@ $senderPhone = '';
 // Envia a resposta no WhatsApp automaticamente no encerramento da execução
 register_shutdown_function(function() use (&$senderPhone) {
     $output = ob_get_contents();
-    if (!empty($output) && !empty($senderPhone)) {
-        $json = json_decode($output, true);
-        if (is_array($json) && !empty($json['reply'])) {
-            @sendWhatsAppReply($senderPhone, $json['reply']);
+    ob_end_clean();
+    if (!empty($output)) {
+        echo $output;
+        if (!empty($senderPhone)) {
+            $json = json_decode($output, true);
+            if (is_array($json) && !empty($json['reply'])) {
+                @sendWhatsAppReply($senderPhone, $json['reply']);
+            }
         }
     }
 });
@@ -124,16 +159,20 @@ ob_start();
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true) ?? $_POST;
 
-// Ignora mensagens enviadas pelo próprio robô (fromMe) e eventos que não são mensagens
-$fromMe = $data['data']['key']['fromMe'] ?? $data['key']['fromMe'] ?? $data['fromMe'] ?? false;
-if ($fromMe === true) {
-    echo json_encode(['success' => true, 'message' => 'Ignorando mensagem própria']);
-    exit;
+// Deduplicação por ID de mensagem (evita resposta dupla local+global da Evolution API)
+$_dedupMsgId = $data['data']['key']['id'] ?? null;
+if (!empty($_dedupMsgId)) {
+    $cacheFile = sys_get_temp_dir() . '/wh_' . md5($_dedupMsgId) . '.lock';
+    if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < 30) {
+        http_response_code(200);
+        exit;
+    }
+    touch($cacheFile);
 }
 
-$eventType = $data['event'] ?? '';
-if (!empty($eventType) && $eventType !== 'messages.upsert') {
-    echo json_encode(['success' => true, 'message' => 'Evento ignorado']);
+$eventType = strtolower((string)($data['event'] ?? ''));
+if (!empty($eventType) && strpos($eventType, 'messages') === false) {
+    echo json_encode(['success' => true, 'message' => 'Evento ignorado', 'received_event' => $eventType]);
     exit;
 }
 
@@ -141,11 +180,15 @@ $rawText = '';
 
 $possiblePhones = [
     $data['phone'] ?? '',
-    $data['sender'] ?? '',
     $data['from'] ?? '',
+    $data['data']['key']['remoteJidAlt'] ?? '',
+    $data['data']['remoteJidAlt'] ?? '',
+    $data['remoteJidAlt'] ?? '',
     $data['data']['key']['participant'] ?? '',
     $data['data']['key']['remoteJid'] ?? '',
+    $data['remoteJid'] ?? '',
     $data['entry'][0]['changes'][0]['value']['messages'][0]['from'] ?? ''
+    // $data['sender'] removido — é o número do próprio bot, não do usuário
 ];
 
 foreach ($possiblePhones as $p) {
@@ -154,22 +197,34 @@ foreach ($possiblePhones as $p) {
         break;
     }
 }
+
 if (empty($senderPhone)) {
-    $senderPhone = $data['phone'] ?? $data['sender'] ?? $data['from'] ?? '';
+    foreach ($possiblePhones as $p) {
+        if (!empty($p) && is_string($p)) {
+            $senderPhone = $p;
+            break;
+        }
+    }
 }
 
 // Extrator Universal de Texto / Legenda de Mensagens (Texto, Imagem, Vídeo, Áudio, Documento)
 $isMediaMessage = false;
 
 $possibleTexts = [
-    // Captions de imagem e mídia (Evolution API / Baileys v1 e v2)
+    // Evolution API v2 / v1
+    $data['data']['message']['conversation'] ?? '',
+    $data['data']['message']['extendedTextMessage']['text'] ?? '',
     $data['data']['message']['imageMessage']['caption'] ?? '',
     $data['data']['message']['videoMessage']['caption'] ?? '',
     $data['data']['message']['documentMessage']['caption'] ?? '',
-    $data['data']['message']['extendedTextMessage']['text'] ?? '',
+    $data['data']['messageText'] ?? '',
+    $data['data']['text'] ?? '',
+    $data['data']['body'] ?? '',
+
+    $data['message']['conversation'] ?? '',
+    $data['message']['extendedTextMessage']['text'] ?? '',
     $data['message']['imageMessage']['caption'] ?? '',
     $data['message']['videoMessage']['caption'] ?? '',
-    $data['message']['extendedTextMessage']['text'] ?? '',
     $data['message']['caption'] ?? '',
     $data['caption'] ?? '',
     
@@ -178,8 +233,7 @@ $possibleTexts = [
     $data['entry'][0]['changes'][0]['value']['messages'][0]['video']['caption'] ?? '',
     $data['entry'][0]['changes'][0]['value']['messages'][0]['text']['body'] ?? '',
     
-    // Mensagens de texto puras
-    $data['data']['message']['conversation'] ?? '',
+    // Fallbacks
     is_array($data['body'] ?? null) ? ($data['body']['text'] ?? '') : ($data['body'] ?? ''),
     is_array($data['text'] ?? null) ? ($data['text']['message'] ?? '') : ($data['text'] ?? ''),
     is_array($data['message'] ?? null) ? ($data['message']['conversation'] ?? $data['message']['text'] ?? '') : ($data['message'] ?? ''),
@@ -190,6 +244,13 @@ foreach ($possibleTexts as $t) {
         $rawText = trim($t);
         break;
     }
+}
+
+// Ignora mensagens de status/sistema sem texto. Permite testes enviados para o próprio número.
+$fromMe = $data['data']['key']['fromMe'] ?? $data['key']['fromMe'] ?? $data['fromMe'] ?? false;
+if ($fromMe === true && empty($rawText)) {
+    echo json_encode(['success' => true, 'message' => 'Ignorando mensagem própria vazia']);
+    exit;
 }
 
 // Verifica se é uma mensagem de mídia (Imagem, Documento, etc.)
@@ -215,7 +276,238 @@ if (empty($rawText)) {
     exit;
 }
 
-$lowerText = mb_strtolower($rawText, 'UTF-8');
+// --- HELPER DE NORMALIZAÇÃO DE TEXTO PARA CATEGORIZAÇÃO E FLUXO COMERCIAL ---
+if (!function_exists('normalizeStringForCategory')) {
+    function normalizeStringForCategory($text) {
+        $text = mb_strtolower((string)$text, 'UTF-8');
+        $utf8_map = [
+            'á'=>'a','à'=>'a','â'=>'a','ã'=>'a','ä'=>'a',
+            'é'=>'e','è'=>'e','ê'=>'e','ë'=>'e',
+            'í'=>'i','ì'=>'i','î'=>'i','ï'=>'i',
+            'ó'=>'o','ò'=>'o','ô'=>'o','õ'=>'o','ö'=>'o',
+            'ú'=>'u','ù'=>'u','û'=>'u','ü'=>'u',
+            'ç'=>'c','ñ'=>'n'
+        ];
+        $text = strtr($text, $utf8_map);
+        $text = preg_replace('/[^a-z0-9\s]/u', ' ', $text);
+        return trim(preg_replace('/\s+/', ' ', $text));
+    }
+}
+
+$normText = normalizeStringForCategory($rawText);
+
+// ------------------------------------------------------------------
+// --- FLUXO COMERCIAL ISOLADO (CAPTAÇÃO DE INTERESSADOS / LEADS) ---
+// ------------------------------------------------------------------
+
+// 1. Verificação de sessão de vendas pré-existente
+$stmtSalesSess = $pdo->prepare("SELECT * FROM whatsapp_sales_sessions WHERE phone = ?");
+$stmtSalesSess->execute([$cleanPhone]);
+$salesSess = $stmtSalesSess->fetch();
+
+// 2. Expiração de Sessão Comercial (24 horas sem atualização)
+if ($salesSess) {
+    $lastUpdated = strtotime($salesSess['updated_at'] ?? $salesSess['created_at']);
+    if ($lastUpdated > 0 && (time() - $lastUpdated > 86400)) {
+        // Sessão expirada após 24h: remove sessão silenciosamente
+        $pdo->prepare("DELETE FROM whatsapp_sales_sessions WHERE phone = ?")->execute([$cleanPhone]);
+        $salesSess = false;
+    }
+}
+
+// 3. Detecção Refinada de Intenção Comercial (evitando falsos positivos como "não quero contratar")
+$isNegativeIntent = (
+    strpos($normText, 'nao quero') !== false ||
+    strpos($normText, 'nao tenho interesse') !== false ||
+    strpos($normText, 'nem pensar') !== false
+);
+
+$explicitCommercialIntents = [
+    'quero contratar',
+    'quero assinar',
+    'quero usar o pricexp',
+    'tenho interesse no pricexp',
+    'tenho interesse',
+    'quero o plano standard',
+    'quero o plano anual',
+    'quero plano standard',
+    'quero plano anual',
+    'contratar'
+];
+
+$isCommercialIntent = false;
+if (!$isNegativeIntent) {
+    foreach ($explicitCommercialIntents as $intent) {
+        if ($normText === $intent || strpos($normText, $intent) !== false) {
+            $isCommercialIntent = true;
+            break;
+        }
+    }
+}
+
+// 4. Tratamento de Cancelamento durante atendimento comercial ativo
+if ($salesSess || $isCommercialIntent) {
+    $cancelKeywords = ['cancelar', 'sair', 'parar', 'desistir', 'cancelar contratacao', 'cancelar atendimento'];
+    if (in_array($normText, $cancelKeywords)) {
+        $pdo->prepare("DELETE FROM whatsapp_sales_sessions WHERE phone = ?")->execute([$cleanPhone]);
+        $replyMsg = "Tudo certo. O atendimento de contratação foi cancelado.\n\nQuando quiser novamente, é só enviar \"Quero contratar\".";
+        sendWhatsAppReply($cleanPhone, $replyMsg);
+        exit;
+    }
+}
+
+if ($isCommercialIntent || $salesSess) {
+    if (!$salesSess) {
+        $pdo->prepare("INSERT INTO whatsapp_sales_sessions (phone, state) VALUES (?, 'WAITING_SALES_LEAD_DATA')")->execute([$cleanPhone]);
+        $stmtSalesSess->execute([$cleanPhone]);
+        $salesSess = $stmtSalesSess->fetch();
+    }
+
+    $firstName = $salesSess['first_name'] ?? '';
+    $lastName  = $salesSess['last_name'] ?? '';
+    $email     = $salesSess['email'] ?? '';
+    $phoneVal  = $salesSess['whatsapp'] ?? '';
+    $plan      = $salesSess['plan'] ?? '';
+
+    // Extrair ou normalizar plano
+    if (empty($plan) || !in_array($plan, ['standard', 'annual'])) {
+        if (strpos($normText, 'anual') !== false) {
+            $plan = 'annual';
+        } elseif (strpos($normText, 'standard') !== false || strpos($normText, 'mensal') !== false) {
+            $plan = 'standard';
+        }
+    }
+
+    // Processar linhas enviadas pelo usuário
+    $lines = explode("\n", $rawText);
+    foreach ($lines as $line) {
+        $lineClean = trim($line);
+        if (preg_match('/(?:nome)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
+            $val = trim($m[1]);
+            if (strpos(mb_strtolower($val, 'UTF-8'), 'whatsapp') === false) {
+                $parts = explode(' ', $val, 2);
+                $firstName = trim($parts[0]);
+                if (isset($parts[1]) && empty($lastName)) {
+                    $lastName = trim($parts[1]);
+                }
+            }
+        }
+        if (preg_match('/(?:sobrenome)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
+            $lastName = trim($m[1]);
+        }
+        if (preg_match('/(?:email|e-mail|melhor email|melhor e-mail)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
+            $candidateEmail = trim($m[1]);
+            if (filter_var($candidateEmail, FILTER_VALIDATE_EMAIL)) {
+                $email = $candidateEmail;
+            }
+        }
+        if (preg_match('/(?:whatsapp|telefone|celular|número de whatsapp|numero de whatsapp)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
+            $candidatePhone = preg_replace('/\D/', '', $m[1]);
+            if (strlen($candidatePhone) >= 8) {
+                $phoneVal = $candidatePhone;
+            }
+        }
+        if (preg_match('/(?:plano|plano desejado)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
+            $pVal = mb_strtolower(trim($m[1]), 'UTF-8');
+            if (strpos($pVal, 'anual') !== false) {
+                $plan = 'annual';
+            } elseif (strpos($pVal, 'standard') !== false || strpos($pVal, 'mensal') !== false) {
+                $plan = 'standard';
+            }
+        }
+    }
+
+    // Extrair e-mail solto se não encontrou rótulo
+    if (empty($email) && preg_match('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $rawText, $mEmail)) {
+        if (filter_var($mEmail[0], FILTER_VALIDATE_EMAIL)) {
+            $email = $mEmail[0];
+        }
+    }
+
+    // Se respondeu apenas a um campo específico quando pendente
+    if (!$isCommercialIntent) {
+        if (empty($phoneVal) && preg_match('/^\s*\d{8,13}\s*$/', trim($rawText))) {
+            $phoneVal = preg_replace('/\D/', '', $rawText);
+        }
+        if (empty($plan) || !in_array($plan, ['standard', 'annual'])) {
+            if (strpos($normText, 'anual') !== false) {
+                $plan = 'annual';
+            } elseif (strpos($normText, 'standard') !== false || strpos($normText, 'mensal') !== false) {
+                $plan = 'standard';
+            }
+        }
+    }
+
+    // Fallback: se whatsapp não informado no texto, utiliza $cleanPhone
+    if (empty($phoneVal) && !empty($cleanPhone)) {
+        $phoneVal = $cleanPhone;
+    }
+
+    // Atualiza estado da sessão de vendas
+    $stmtUpdSess = $pdo->prepare("UPDATE whatsapp_sales_sessions SET first_name = ?, last_name = ?, email = ?, whatsapp = ?, plan = ?, updated_at = NOW() WHERE phone = ?");
+    $stmtUpdSess->execute([$firstName, $lastName, $email, $phoneVal, $plan, $cleanPhone]);
+
+    // Recalcular pendências
+    $missing = [];
+    if (empty($firstName)) $missing[] = '• Nome:';
+    if (empty($lastName)) $missing[] = '• Sobrenome:';
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) $missing[] = '• Melhor e-mail:';
+    if (empty($phoneVal) || strlen(preg_replace('/\D/', '', $phoneVal)) < 8) $missing[] = '• Número de WhatsApp:';
+    if (empty($plan) || !in_array($plan, ['standard', 'annual'])) $missing[] = '• Plano desejado: Standard ou Anual';
+
+    if (empty($missing)) {
+        // PREVENÇÃO DE DUPLICATAS: Verifica se já existe lead com o mesmo e-mail ou whatsapp em status aberto ('new' ou 'em_atendimento')
+        $stmtCheckDup = $pdo->prepare("SELECT id FROM sales_leads WHERE (email = ? OR whatsapp = ?) AND status IN ('new', 'em_atendimento') LIMIT 1");
+        $stmtCheckDup->execute([$email, $phoneVal]);
+        $existingLead = $stmtCheckDup->fetch();
+
+        if ($existingLead) {
+            // Atualiza os dados do lead existente
+            $stmtUpdLead = $pdo->prepare("UPDATE sales_leads SET first_name = ?, last_name = ?, email = ?, whatsapp = ?, plan = ?, updated_at = NOW() WHERE id = ?");
+            $stmtUpdLead->execute([$firstName, $lastName, $email, $phoneVal, $plan, $existingLead['id']]);
+
+            // Remove a sessão de vendas
+            $pdo->prepare("DELETE FROM whatsapp_sales_sessions WHERE phone = ?")->execute([$cleanPhone]);
+
+            $replyMsg = "Já recebemos seus dados.\n\nNossa equipe já tem sua solicitação e vai continuar o atendimento por aqui.";
+            sendWhatsAppReply($cleanPhone, $replyMsg);
+            exit;
+        }
+
+        // NOVO LEAD: Insere registro em sales_leads
+        $stmtInsLead = $pdo->prepare("INSERT INTO sales_leads (first_name, last_name, email, whatsapp, plan, status) VALUES (?, ?, ?, ?, ?, 'new')");
+        $stmtInsLead->execute([$firstName, $lastName, $email, $phoneVal, $plan]);
+
+        // Remove a sessão de vendas
+        $pdo->prepare("DELETE FROM whatsapp_sales_sessions WHERE phone = ?")->execute([$cleanPhone]);
+
+        $replyMsg = "Perfeito, {$firstName}!\n\n"
+                  . "Recebemos suas informações.\n\n"
+                  . "Aguarde só um momento que nossa equipe já vai te atender por aqui.";
+
+        sendWhatsAppReply($cleanPhone, $replyMsg);
+        exit;
+    } else {
+        // PENDENTE: Pede os campos faltantes
+        if (!empty($firstName) || !empty($email) || (!empty($plan) && in_array($plan, ['standard', 'annual']))) {
+            $replyMsg = "Perfeito" . (!empty($firstName) ? ", {$firstName}" : "") . ".\n\n"
+                      . "Só falta(m) a(s) seguinte(s) informação(ões):\n\n"
+                      . implode("\n", $missing);
+        } else {
+            $replyMsg = "Olá! 👋\n\n"
+                      . "Que bom que você quer conhecer o PriceXP.\n\n"
+                      . "Para continuarmos, me envie as informações abaixo em uma única mensagem:\n\n"
+                      . "Nome:\n"
+                      . "Sobrenome:\n"
+                      . "Melhor e-mail:\n"
+                      . "Número de WhatsApp:\n"
+                      . "Plano desejado: Standard ou Anual";
+        }
+
+        sendWhatsAppReply($cleanPhone, $replyMsg);
+        exit;
+    }
+}
 
 // ------------------------------------------------------------------
 // --- COMANDO DE AUTO-VINCULAÇÃO E ATIVAÇÃO INSTANTÂNEA DE WHATSAPP ---
@@ -466,11 +758,49 @@ function parseBank($text, $workspace_id = null, $pdo = null) {
     return null;
 }
 
+// --- HELPER DE EXTRAÇÃO E PROCESSAMENTO DE PARCELAMENTOS ---
+function parseInstallments($text, $amount = 0) {
+    $installments = 1;
+    $totalAmount = (float)$amount;
+    $installmentAmount = (float)$amount;
+    $isInstallmentPattern = false;
+
+    // Padrão 1: Valor por parcela explícito (ex: "6x de 200", "6 parcelas de R$ 200,00", "10x de 50.50")
+    if (preg_match('/(?:\b|^)(\d{1,2})\s*(?:x|parcelas?|vezes)\s*de\s*(?:r\$\s*)?(\d+(?:[\.,]\d{1,2})?)/iu', $text, $m)) {
+        $count = (int)$m[1];
+        $instVal = (float)str_replace(',', '.', $m[2]);
+        if ($count >= 2 && $count <= 120 && $instVal > 0) {
+            $installments = $count;
+            $installmentAmount = $instVal;
+            $totalAmount = round($count * $instVal, 2);
+            $isInstallmentPattern = true;
+        }
+    } 
+    // Padrão 2: Valor total + quantidade de parcelas (ex: "parcelado em 6x", "em 6x", "6x", "6 parcelas", "6 vezes", "parcelado 6x")
+    elseif (preg_match('/(?:\bparcelad[oa]?(?:\s+em)?|\bem|\b)\s*(\d{1,2})\s*(?:x|parcelas?|vezes)\b/iu', $text, $m)) {
+        $count = (int)$m[1];
+        if ($count >= 2 && $count <= 120) {
+            $installments = $count;
+            if ($totalAmount > 0) {
+                $installmentAmount = round($totalAmount / $count, 2);
+            }
+            $isInstallmentPattern = true;
+        }
+    }
+
+    return [
+        'count'              => $installments,
+        'total_amount'       => $totalAmount,
+        'installment_amount' => $installmentAmount,
+        'is_installment'     => $isInstallmentPattern
+    ];
+}
+
 // --- HELPER DE EXTRAÇÃO DE FORMA DE PAGAMENTO ---
 function parsePaymentMethod($text) {
     if (preg_match('/\b(pix)\b/i', $text)) return 'PIX';
     if (preg_match('/\b(débito|debito)\b/i', $text)) return 'Débito';
-    if (preg_match('/\b(crédito|credito|cartão|cartao)\b/i', $text)) return 'Crédito';
+    if (preg_match('/\b(crédito|credito|cartão|cartao|parcelad[oa]?|\d{1,2}\s*x|\d{1,2}\s*parcelas?)\b/i', $text)) return 'Crédito';
     if (preg_match('/\b(dinheiro|especie|espécie)\b/i', $text)) return 'Dinheiro';
     if (preg_match('/\b(transferência|transferencia|ted|doc)\b/i', $text)) return 'Transferência';
     if (preg_match('/\b(boleto)\b/i', $text)) return 'Boleto';
@@ -512,6 +842,10 @@ function parseDescription($text, $type, $amount = null, $bankName = null, $payme
         $clean = preg_replace('/\b' . preg_quote($paymentMethod, '/') . '\b/iu', ' ', $clean);
     }
     $clean = preg_replace('/\b(pix|credito|crédito|debito|débito|dinheiro|especie|espécie|transferencia|transferência|ted|doc|boleto)\b/iu', ' ', $clean);
+
+    // Remove menções e valores de parcelamento
+    $clean = preg_replace('/(?:\bparcelad[oa]?(?:\s+em)?|\bem|\b)\s*\d{1,2}\s*(?:x|parcelas?|vezes)(?:\s*de\s*(?:r\$\s*)?\d+(?:[\.,]\d{1,2})?)?/iu', ' ', $clean);
+    $clean = preg_replace('/\b(parcelado|parcelada|parcelas|parcela|vezes)\b/iu', ' ', $clean);
 
     // Remove palavras de ruído e conectores
     $actionVerbs = [
@@ -1749,9 +2083,113 @@ if (!empty($missing)) {
 // ------------------------------------------------------------------
 // --- REGISTRO DO LANÇAMENTO COMPLETO ---
 // ------------------------------------------------------------------
-$category = inferCategoryStrict($description, $rawText, $type);
-$date = date('Y-m-d');
+$category  = inferCategoryStrict($description, $rawText, $type);
+$date      = date('Y-m-d');
 $finalBank = $bank_name ?: 'Geral';
+
+// Verifica se há parcelamento explícito na mensagem (ex: "parcelado em 6x", "6x de 200")
+$installmentsData = parseInstallments($rawText, $amount);
+if ($installmentsData['is_installment'] && $installmentsData['count'] > 1 && $type === 'despesa') {
+    $installmentsCount = $installmentsData['count'];
+    $totalAmount       = $installmentsData['total_amount'];
+    if ($totalAmount <= 0 && $amount > 0) {
+        $totalAmount = $amount;
+    }
+    $installmentAmount = ($totalAmount > 0) ? round($totalAmount / $installmentsCount, 2) : 0;
+    $baseInstallment   = floor(($totalAmount * 100) / $installmentsCount) / 100.0;
+    $remainderCents    = (int)round(($totalAmount * 100) - ($baseInstallment * 100 * $installmentsCount));
+
+    $payment_method = 'Crédito';
+    $createdTxIds   = [];
+    $todayDate      = new DateTime();
+
+    $card_id = null;
+    try {
+        $stmtCard = $pdo->prepare("SELECT id FROM credit_cards WHERE user_id = ? AND LOWER(name) LIKE ? LIMIT 1");
+        $stmtCard->execute([$workspace_id, '%' . strtolower($finalBank) . '%']);
+        $card_id = $stmtCard->fetchColumn() ?: null;
+    } catch (Exception $e) {}
+
+    try {
+        $pdo->beginTransaction();
+
+        $stmtInsInst = $pdo->prepare("INSERT INTO transactions (user_id, created_by_user_id, type, category, description, amount, date, bank_name, card_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+        for ($i = 0; $i < $installmentsCount; $i++) {
+            $currentNum    = $i + 1;
+            $currentDesc   = "{$description} ({$currentNum}/{$installmentsCount})";
+            $currentAmount = $baseInstallment + ($i < $remainderCents ? 0.01 : 0.00);
+
+            $clonedDate = clone $todayDate;
+            if ($i > 0) {
+                $clonedDate->modify("+{$i} month");
+            }
+            $currentDateStr = $clonedDate->format('Y-m-d');
+
+            $stmtInsInst->execute([
+                $workspace_id,
+                $user_id,
+                $type,
+                $category,
+                $currentDesc,
+                $currentAmount,
+                $currentDateStr,
+                $finalBank,
+                $card_id
+            ]);
+
+            $createdTxIds[] = $pdo->lastInsertId();
+        }
+
+        try {
+            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+            $stmtInsLast = $pdo->prepare("INSERT INTO whatsapp_pending_sessions (user_id, phone, type, amount, description, bank_name, payment_method) VALUES (?, ?, 'last_created_batch', ?, ?, ?, 'Crédito')");
+            $stmtInsLast->execute([$user_id, $cleanPhone, $totalAmount, 'batch_ids:' . implode(',', $createdTxIds), $finalBank]);
+        } catch (Exception $exSess) {}
+
+        $pdo->commit();
+    } catch (Exception $eInst) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        echo json_encode([
+            'success' => false,
+            'reply'   => "⚠️ *PriceXP — Assistente Financeiro*\n\nOcorreu um erro ao registrar a compra parcelada: " . $eInst->getMessage()
+        ]);
+        exit;
+    }
+
+    foreach ($createdTxIds as $idx => $tId) {
+        logUserActivity($pdo, $user_id, 'WHATSAPP_LANCAMENTO_PARCELADO', "Lançamento parcelado via WhatsApp #{$tId}: {$type} - {$description} (" . ($idx + 1) . "/{$installmentsCount})", $totalAmount, ['bank' => $finalBank, 'phone' => $cleanPhone]);
+    }
+
+    $formattedTotal = number_format($totalAmount, 2, ',', '.');
+    $formattedInst  = number_format($installmentAmount, 2, ',', '.');
+    $firstDueDate   = date('d/m/Y');
+
+    $replyMsg = "✅ *PriceXP — Confirmação de Lançamento Parcelado*\n\n"
+              . "• Tipo: Despesa 🔴\n"
+              . "• Valor Total: R$ {$formattedTotal}\n"
+              . "• Parcelamento: *{$installmentsCount}x de R$ {$formattedInst}*\n"
+              . "• Descrição: {$description}\n"
+              . "• Categoria: {$category}\n"
+              . "• Banco: {$finalBank}\n"
+              . "• Forma de Pagamento: Crédito\n"
+              . "• 1ª Parcela: {$firstDueDate}\n\n"
+              . "🚀 _As {$installmentsCount} parcelas foram agendadas mensalmente com sucesso no seu painel PriceXP._\n\n"
+              . "🔘 *Opções Rápidas (Responda para acionar):*\n"
+              . "1️⃣ Responda *1* ou *\"Editar\"* ➔ Alterar este lançamento parcelado\n"
+              . "2️⃣ Responda *2* ou *\"Excluir\"* ➔ Cancelar este parcelamento (exclui as {$installmentsCount} parcelas)";
+
+    echo json_encode([
+        'success'   => true,
+        'ids'       => $createdTxIds,
+        'user'      => $userName,
+        'remoteJid' => $remoteJid,
+        'reply'     => $replyMsg
+    ]);
+    exit;
+}
 
 $card_id = null;
 if ($type === 'despesa' && $payment_method === 'Crédito') {

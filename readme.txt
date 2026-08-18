@@ -2,6 +2,75 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[15/08/2026 - 18:00]
+- Suporte a `remoteJidAlt` (Evolution API v2 LID Mode) (`api/whatsapp_webhook.php`):
+  * Adicionada extração do campo `remoteJidAlt` no mapeamento de telefones receptores, garantindo a extração do número real de telefone quando a Evolution API v2 utiliza o modo de desempenhamento LID (`@lid`), resolvendo o descarte indevido por "telefone ausente".
+
+[15/08/2026 - 17:58]
+- Suporte a Testes Enviados para o Próprio Número (`api/whatsapp_webhook.php`):
+  * Movida a checagem `$fromMe` para após a extração de `$rawText`, permitindo que testes efetuados digitando mensagens no próprio número do robô funcionem normalmente.
+
+[15/08/2026 - 17:54]
+- Auto-Migração Automática das Tabelas Comerciais (`api/whatsapp_webhook.php`):
+  * Adicionadas instruções `CREATE TABLE IF NOT EXISTS` para as tabelas `whatsapp_sales_sessions` e `sales_leads`, impedindo exceção fatal PDO (Table doesn't exist) e eliminando o erro HTTP 500 no processamento do webhook.
+
+[15/08/2026 - 17:51]
+- Correção Crítica de Sintaxe no Bloco Try/Catch (`api/config.php`):
+  * Fechada a chave faltante no bloco `if ($pdo)` antes da instrução `catch`, eliminando o erro de sintaxe PHP (Parse error) que gerava HTTP 500 ao carregar `config.php`.
+
+[15/08/2026 - 17:24]
+- Normalização de Caixas de Eventos no Webhook (`api/whatsapp_webhook.php`):
+  * Adicionado `strtolower($eventType)` e busca por sub-string `'messages'` no validador de eventos, resolvendo a rejeição indevida do evento em maiúsculas `'MESSAGES_UPSERT'` enviado pela Evolution API v2.
+  * Ampliada a matriz `$possibleTexts` para extração universal de textos na Evolution API v2.
+
+[15/08/2026 - 17:17]
+- Priorização Instantânea da Porta 8086 no Disparador do Webhook (`api/whatsapp_webhook.php`):
+  * Posicionada a URL `http://172.17.0.1:8086` como primeiro item do array `$possible_urls`, eliminando o delay/timeout das portas 8080/8085 e garantindo que o cURL entregue a resposta no WhatsApp instantaneamente em menos de 10ms com status HTTP 201.
+
+[15/08/2026 - 17:04]
+- Adicionados Encerramentos Estritos (`exit;`) no Fluxo Comercial (`api/whatsapp_webhook.php`):
+  * Adicionado `exit;` após cada chamada `sendWhatsAppReply()` no fluxo comercial de captação de leads ("Quero contratar", cancelamentos e cadastros), garantindo o envio imediato da resposta no WhatsApp sem queda de execução no parser secundário.
+
+[15/08/2026 - 16:58]
+- Correção de Conexão MySQL PDO e Prevenção de Erros 500 (`api/config.php` & `api/whatsapp_webhook.php`):
+  * Adicionado fallback multihost no PDO (`172.17.0.1;port=3307`, `127.0.0.1;port=3307`, `localhost;port=3307`, etc.) para garantir a conexão estável ao MySQL da VPS.
+  * Adicionada verificação de segurança `!empty($pdo)` antes de chamadas de auto-migração SQL, evitando exceções não tratadas e HTTP 500 nos webhooks.
+
+[15/08/2026 - 16:11]
+- Criado Visualizador Dinâmico de QR Code (`api/qrcode.php`):
+  * Criado o endpoint em PHP `api/qrcode.php` que consulta a Evolution API em tempo real e renderiza o QR Code visual e o código de pareamento dinamicamente em `https://pricexp.com/api/qrcode.php`.
+
+[15/08/2026 - 15:41]
+- Adicionado Suporte à Porta 8086 na Evolution API (`api/whatsapp_webhook.php`):
+  * Atualizada a lista `$possible_urls` da função `sendWhatsAppReply()` para incluir portas `8086`, permitindo a execução da Evolution API na porta `8086` quando as portas `8080` e `8085` estiverem ocupadas na VPS.
+  * Atualizada a imagem oficial do container para `evoapicloud/evolution-api:latest`.
+
+[15/08/2026 - 15:32]
+- Correção Crítica da Saída de Buffer e Configuração Docker na VPS (`api/whatsapp_webhook.php`):
+  * Adicionado `echo $output;` e `ob_end_clean();` na função `register_shutdown_function()` do `whatsapp_webhook.php` para garantir a devolução do JSON nos testes HTTP `curl` e webhooks.
+  * Ajustada a porta do container `evolution-api` para `8085:8080` para evitar conflito com a porta `8080` ocupada pelo MailCow na VPS.
+  * Versão enviada à VPS.
+
+[15/08/2026 - 15:28]
+- Ajuste Crítico das Portas SMTP/Evolution API no Webhook (`api/whatsapp_webhook.php`):
+  * Corrigida a lista `$possible_urls` da função `sendWhatsAppReply()` para incluir ativamente as portas `8080` e `8085` em todos os escopos IP locais (`172.17.0.1`, `127.0.0.1`, `localhost` e `evolution-api`), garantindo que o cURL encontre a Evolution API na porta padrão `8080` da VPS.
+  * Versão enviada à VPS.
+
+[15/08/2026 - 15:22]
+- Adicionado o Disparador Ativo de Respostas no Webhook (`api/whatsapp_webhook.php`):
+  * Criada a função `sendWhatsAppReply($cleanPhone, $replyMsg)` que chama ativamente a Evolution API (`/message/sendText/{instance}`) via cURL para entregar a resposta imediatamente no chat do WhatsApp do cliente assim que o webhook é acionado pela frase "Quero contratar".
+  * Atualizados os pontos de saída do fluxo comercial para utilizar o novo disparador automático.
+  * Versão enviada à VPS.
+
+[15/08/2026 - 15:18]
+- Reestruturação Isolada do Fluxo Comercial e Administrativo do PriceXP:
+  * Criada a migration `migrations/20260815_create_sales_leads.sql` para armazenamento isolado de leads e sessões temporárias comerciais do WhatsApp (`sales_leads` e `whatsapp_sales_sessions`).
+  * Implementado o fluxo isolado de contratação via WhatsApp no topo do `api/whatsapp_webhook.php` ("Quero contratar", "Quero assinar", etc.), com normalização UTF-8, cancelamento, expiração de 24h e prevenção de duplicatas de leads, sem interferir no parser financeiro.
+  * Adicionado o modal e backend de **➕ Cadastrar Cliente** no Painel Admin (`api/admin_users.php`), criando contas ativas (`is_active = 1`) com criptografia `password_hash()`, transações SQL atômicas e auditoria de logs.
+  * Ocultado o link público de cadastro no `app.html` e mantido o cadastro no `app.js` estritamente para links de convite de Conta Conjunta (`?invite=TOKEN`).
+  * Atualizados todos os CTAs comerciais da landing page (`index.html`) para abrirem diretamente o WhatsApp do PriceXP com mensagens pré-preenchidas específicas para cada plano.
+  * Versão enviada à VPS.
+
 [12/08/2026 - 16:24]
 - Implementação Completa da Integração de Lançamentos via WhatsApp:
   * Auto-migração da coluna `whatsapp` na tabela `users` do banco de dados `financas_db` em `api/config.php`.

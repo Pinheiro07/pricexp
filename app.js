@@ -506,6 +506,9 @@ async function checkInviteLink() {
     const urlParams = new URLSearchParams(window.location.search);
     const inviteToken = urlParams.get('invite');
     if (inviteToken) {
+        const authSwitchWrapper = document.getElementById('auth-switch-wrapper');
+        if (authSwitchWrapper) authSwitchWrapper.style.display = 'block';
+
         const inviteInput = document.getElementById('auth-invite-token');
         if (inviteInput) inviteInput.value = inviteToken;
         

@@ -108,6 +108,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Ação 3: Criação Direta de Usuário/Cliente pelo Administrador
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_user') {
+    $firstName = trim($_POST['first_name'] ?? '');
+    $lastName  = trim($_POST['last_name'] ?? '');
+    $email     = trim(mb_strtolower($_POST['email'] ?? '', 'UTF-8'));
+    $whatsapp  = preg_replace('/\D/', '', $_POST['whatsapp'] ?? '');
+    $password  = $_POST['password'] ?? '';
+    $confirmPw = $_POST['confirm_password'] ?? '';
+
+    if (!$firstName || !$email || !$password) {
+        $msg = 'Preencha todos os campos obrigatórios (Nome, E-mail e Senha).';
+        $msgType = 'danger';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $msg = 'Digite um e-mail válido.';
+        $msgType = 'danger';
+    } elseif ($password !== $confirmPw) {
+        $msg = 'A senha e a confirmação de senha não coincidem.';
+        $msgType = 'danger';
+    } else {
+        try {
+            // Validação de E-mail Único no backend
+            $stmtCheck = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+            $stmtCheck->execute([$email]);
+            if ($stmtCheck->fetch()) {
+                $msg = 'Este e-mail já possui uma conta no PriceXP.';
+                $msgType = 'danger';
+            } else {
+                // Transação SQL Segura
+                $pdo->beginTransaction();
+
+                $hash = password_hash($password, PASSWORD_DEFAULT);
+                $profilePicture = 'default.png';
+
+                // Cadastro administrativo nasce ativo (is_active = 1, sem código de confirmação)
+                $stmtIns = $pdo->prepare("INSERT INTO users (first_name, last_name, email, password_hash, profile_picture, is_active, whatsapp, verification_code, code_expires_at) VALUES (?, ?, ?, ?, ?, 1, ?, NULL, NULL)");
+                $stmtIns->execute([$firstName, $lastName, $email, $hash, $profilePicture, $whatsapp]);
+                $newUserId = $pdo->lastInsertId();
+
+                logUserActivity($pdo, $_SESSION['user_id'], 'ADMIN_CRIAR_USUARIO', "Administrador criou a conta de cliente #{$newUserId} ({$email})");
+
+                $pdo->commit();
+
+                $msg = "Cliente {$firstName} ({$email}) cadastrado com sucesso! A conta já está ativa para login.";
+                $msgType = 'success';
+            }
+        } catch (\PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("Erro PDO ao cadastrar cliente pelo admin: " . $e->getMessage());
+            $msg = 'Não foi possível cadastrar o cliente. Tente novamente.';
+            $msgType = 'danger';
+        }
+    }
+}
+
 // Aba ativa
 $activeTab = $_GET['tab'] ?? 'users';
 if (!in_array($activeTab, ['users', 'logs', 'transactions'])) {
@@ -438,6 +494,96 @@ if (isset($_GET['format']) && $_GET['format'] === 'json') {
 
         <!-- ABA 1: GERENCIAMENTO DE USUÁRIOS -->
         <?php if ($activeTab === 'users'): ?>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: #f8fafc; font-weight: 600;">Lista de Clientes & Usuários</h3>
+                <button type="button" onclick="openCreateUserModal()" class="btn-action btn-primary no-print" style="display: flex; align-items: center; gap: 0.5rem; background: #10b981; border: none; font-weight: 600;">
+                    <span>➕ Cadastrar Cliente</span>
+                </button>
+            </div>
+
+            <!-- MODAL CADASTRAR CLIENTE -->
+            <div id="modal-create-user" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+                <div style="background: #1e293b; border: 1px solid #334155; border-radius: 1rem; width: 100%; max-width: 500px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); position: relative; margin: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #334155;">
+                        <h3 style="margin: 0; color: #f8fafc; font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            👤 Cadastrar Novo Cliente
+                        </h3>
+                        <button type="button" onclick="closeCreateUserModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+                    </div>
+
+                    <form method="POST" id="form-create-user" onsubmit="return confirmCreateUser(this);">
+                        <input type="hidden" name="action" value="create_user">
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 0.35rem; font-weight: 500;">Nome *</label>
+                                <input type="text" name="first_name" required placeholder="Ex: João" style="width: 100%; padding: 0.6rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem; color: #fff; outline: none; font-size: 0.9rem;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 0.35rem; font-weight: 500;">Sobrenome</label>
+                                <input type="text" name="last_name" placeholder="Ex: Silva" style="width: 100%; padding: 0.6rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem; color: #fff; outline: none; font-size: 0.9rem;">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 0.35rem; font-weight: 500;">E-mail do Cliente *</label>
+                            <input type="email" name="email" required placeholder="exemplo@email.com" style="width: 100%; padding: 0.6rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem; color: #fff; outline: none; font-size: 0.9rem;">
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 0.35rem; font-weight: 500;">WhatsApp (com DDD)</label>
+                            <input type="tel" name="whatsapp" placeholder="Ex: 27999998888" style="width: 100%; padding: 0.6rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem; color: #fff; outline: none; font-size: 0.9rem;">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 0.35rem; font-weight: 500;">Senha *</label>
+                                <input type="password" name="password" id="admin-new-pw" required style="width: 100%; padding: 0.6rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem; color: #fff; outline: none; font-size: 0.9rem;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 0.35rem; font-weight: 500;">Confirmar Senha *</label>
+                                <input type="password" name="confirm_password" id="admin-confirm-pw" required style="width: 100%; padding: 0.6rem 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem; color: #fff; outline: none; font-size: 0.9rem;">
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.82rem; color: #93c5fd;">
+                            ℹ️ <strong>Conta Ativa Instantaneamente:</strong> Esta conta será criada com status <strong>Ativo (`is_active = 1`)</strong> para que o cliente possa fazer o login normal.
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                            <button type="button" onclick="closeCreateUserModal()" class="btn-action btn-secondary">Cancelar</button>
+                            <button type="submit" id="btn-submit-create-user" class="btn-action btn-primary" style="background: #10b981;">Cadastrar cliente</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+            function openCreateUserModal() {
+                document.getElementById('modal-create-user').style.display = 'flex';
+            }
+            function closeCreateUserModal() {
+                document.getElementById('modal-create-user').style.display = 'none';
+            }
+            function confirmCreateUser(form) {
+                var pw = document.getElementById('admin-new-pw').value;
+                var confirmPw = document.getElementById('admin-confirm-pw').value;
+                if (pw !== confirmPw) {
+                    alert('A senha e a confirmação de senha não coincidem.');
+                    return false;
+                }
+                var email = form.email.value;
+                var name = form.first_name.value + ' ' + form.last_name.value;
+                if (!confirm('Cadastrar este cliente?\n\n' + name + '\n' + email)) {
+                    return false;
+                }
+                var btn = document.getElementById('btn-submit-create-user');
+                btn.disabled = true;
+                btn.innerText = 'Cadastrando...';
+                return true;
+            }
+            </script>
+
             <table>
                 <thead>
                     <tr>
