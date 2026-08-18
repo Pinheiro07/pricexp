@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[18/08/2026 - 20:29]
+- Silenciamento 100% Absoluto do Bot em Diálogos e Mensagens Sem Valor Financeiro (`api/whatsapp_webhook.php`):
+  * Removido qualquer envio de mensagem de erro/orientação para textos casuais sem valor numérico ou verbo de ação.
+  * O robô agora permanece 100% em silêncio quando cliente ou atendente trocam mensagens casuais ("Boa noite, lucas", "Como posso ajudar?", "Qual valor?").
+  * O bot só reage quando houver: 1) Lançamento financeiro com valor/verbo de gasto, 2) Intenção comercial ("Quero contratar"), 3) Comandos explícitos ("relatorio", "cancelar").
+
 [18/08/2026 - 20:27]
 - Exclusão Definitiva de Rascunhos Pendentes Antigos ao Receber Mensagens sem Valor (`api/whatsapp_webhook.php`):
   * Corrigida a falha onde um rascunho financeiro pendente antigo no banco sequestrava novas mensagens casuais sem valor numérico.

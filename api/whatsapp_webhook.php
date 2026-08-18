@@ -2054,6 +2054,7 @@ if ($type === 'despesa' && empty($payment_method)) {
 
 if (!empty($missing)) {
     // Se a mensagem enviada NÃO possui valor numérico ($newAmount <= 0) e NENHUM banco/método foi informado:
+    // O robô DEVE FICAR 100% SILENCIOSO para permitir atendimento humano livre sem qualquer interferência!
     if ($newAmount <= 0 && empty($newBank) && empty($newMethod)) {
         // Se havia um rascunho antigo pendente, limpa ele para não prender conversas futuras
         if (!empty($pendingId)) {
@@ -2062,27 +2063,11 @@ if (!empty($missing)) {
             } catch (Exception $exClr) {}
         }
 
-        // 1. Tratamento amigável de saudações casuais (ex: "boa noite", "bom dia", "olá", "oi")
-        if (preg_match('/^\s*(boa\s+noite|bom\s+dia|boa\s+tarde|ol[aá]|oi|oie|opa|tudo\s+bem|como\s+vai)\b/iu', trim($rawText))) {
-            $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\n"
-                      . "Olá! 👋 Como posso te ajudar?\n\n"
-                      . "💡 *Para registrar um gasto ou receita*, envie mensagens como:\n"
-                      . "• _\"Gastei 50 no PIX padaria\"_\n"
-                      . "• _\"Recebi 1500 no Nubank freela\"_\n"
-                      . "• _\"Parcelado em 6x 1300 no crédito Sicredi conserto moto\"_\n\n"
-                      . "👉 Para contratar ou tirar dúvidas, envie *\"Quero contratar\"*! 🚀";
-            echo json_encode(['success' => true, 'reply' => $replyMsg]);
-            exit;
-        }
-
-        // 2. Se a mensagem não possui verbo de ação explícito (gastei, paguei), responde com orientação limpa e sai
+        // Se a mensagem NÃO possui verbo de ação financeiro explícito (gastei, paguei, comprei, recebi):
+        // FICA 100% SILENCIOSO E SAI! Permite que o atendente e o cliente conversem livremente.
         $hasActionVerb = preg_match('/(gastei|paguei|comprei|recebi|ganhei|custou|saiu)/i', $rawText);
         if (!$hasActionVerb) {
-            $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\n"
-                      . "Não identifiquei um valor financeiro na sua mensagem.\n\n"
-                      . "💡 *Para registrar um lançamento*, informe o valor (ex: *50 no PIX padaria*).\n"
-                      . "👉 Para assinar ou falar com a equipe, envie *\"Quero contratar\"*! 🚀";
-            echo json_encode(['success' => true, 'reply' => $replyMsg]);
+            echo json_encode(['success' => true, 'message' => 'Silenciando bot para conversa casual humana']);
             exit;
         }
     }
