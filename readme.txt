@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[18/08/2026 - 18:56]
+- Silenciamento de Mensagens de Atendentes/Operadores (`api/whatsapp_webhook.php`):
+  * Adicionada verificação estrita para ignorar mensagens enviadas pelo próprio número/atendente humano no WhatsApp (`fromMe === true`) que não contenham valores numéricos ou comandos financeiros explícitos.
+  * Impede que o robô interrompa conversas de atendentes com clientes ao enviar cumprimentos ou mensagens manuais ("Boa noite", "Tudo bem?").
+  * Tratamento cortês de saudações casuais de clientes sem requisições pendentes.
+
 [18/08/2026 - 18:50]
 - Fluxo Conversacional Passo a Passo para Captação de Leads Comercial (`api/whatsapp_webhook.php`):
   * Reformulado o atendimento de "Quero contratar" para perguntas sequenciais amigáveis um passo por vez: 1º Nome e Sobrenome ➔ 2º Melhor E-mail ➔ 3º Plano Desejado (Standard ou Anual).

@@ -276,6 +276,16 @@ if (empty($rawText)) {
     exit;
 }
 
+// Ignora mensagens enviadas pelo próprio robô / atendente humano no WhatsApp sem valor nem comando
+if ($fromMe === true) {
+    $checkAmt = parseAmount($rawText);
+    $isCmd = preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|extrato|balanço|balanco|relatório|relatorio|semanal|semana|mensal|mês|mes|anual|ano|hoje|ontem|diário|diario|cancelar|ajuda)/i', $rawText);
+    if ($checkAmt <= 0 && !$isCmd) {
+        echo json_encode(['success' => true, 'message' => 'Ignorando mensagem propria enviada pelo atendente/bot']);
+        exit;
+    }
+}
+
 // --- HELPER DE NORMALIZAÇÃO DE TEXTO PARA CATEGORIZAÇÃO E FLUXO COMERCIAL ---
 if (!function_exists('normalizeStringForCategory')) {
     function normalizeStringForCategory($text) {
@@ -2030,6 +2040,21 @@ if ($type === 'despesa' && empty($payment_method)) {
 }
 
 if (!empty($missing)) {
+    // Tratamento amigável de saudações casuais (ex: "boa noite", "bom dia", "olá", "oi") quando não há rascunho ativo
+    if ($amount <= 0 && empty($pendingId)) {
+        if (preg_match('/^\s*(boa\s+noite|bom\s+dia|boa\s+tarde|ol[aá]|oi|oie|opa|tudo\s+bem|como\s+vai)\b/iu', trim($rawText))) {
+            $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\n"
+                      . "Olá! 👋 Como posso te ajudar?\n\n"
+                      . "💡 *Para registrar um gasto ou receita*, envie mensagens como:\n"
+                      . "• _\"Gastei 50 no PIX padaria\"_\n"
+                      . "• _\"Recebi 1500 no Nubank freela\"_\n"
+                      . "• _\"Parcelado em 6x 1300 no crédito Sicredi conserto moto\"_\n\n"
+                      . "👉 Para contratar ou tirar dúvidas, envie *\"Quero contratar\"*! 🚀";
+            echo json_encode(['success' => true, 'reply' => $replyMsg]);
+            exit;
+        }
+    }
+
     try {
         if ($pendingId) {
             $stmtUpd = $pdo->prepare("UPDATE whatsapp_pending_sessions SET type=?, amount=?, description=?, bank_name=?, payment_method=? WHERE id=?");
