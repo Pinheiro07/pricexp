@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[18/08/2026 - 19:07]
+- Cancelamento Global e Universal de Rascunhos Pendentes (`api/whatsapp_webhook.php`):
+  * Implementado interceptador global para comandos de cancelamento (`cancelar`, `sair`, `parar`, `desistir`, `limpar`, `voltar`).
+  * Remove imediatamente qualquer rascunho de lançamento ou sessão de atendimento pendente em `whatsapp_pending_sessions` e `whatsapp_sales_sessions`.
+  * Envia a confirmação "👍 PriceXP — Operação Cancelada" e encerra o fluxo sem repetir perguntas de lançamentos antigos.
+
 [18/08/2026 - 18:56]
 - Silenciamento de Mensagens de Atendentes/Operadores (`api/whatsapp_webhook.php`):
   * Adicionada verificação estrita para ignorar mensagens enviadas pelo próprio número/atendente humano no WhatsApp (`fromMe === true`) que não contenham valores numéricos ou comandos financeiros explícitos.

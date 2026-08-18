@@ -307,6 +307,29 @@ if (!function_exists('normalizeStringForCategory')) {
 $normText = normalizeStringForCategory($rawText);
 
 // ------------------------------------------------------------------
+// --- CANCELAMENTO GLOBAL E UNIVERSAL DE QUALQUER OPERAÇÃO / RASCUNHO ---
+// ------------------------------------------------------------------
+if (in_array(strtolower(trim($normText)), ['cancelar', 'sair', 'parar', 'desistir', 'limpar', 'voltar', 'cancelar operacao', 'cancelar rascunho'])) {
+    try {
+        if (!empty($user_id)) {
+            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE user_id = ?")->execute([$user_id]);
+        }
+        $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE phone = ?")->execute([$cleanPhone]);
+    } catch (Exception $exCancel) {}
+
+    try {
+        $pdo->prepare("DELETE FROM whatsapp_sales_sessions WHERE phone = ?")->execute([$cleanPhone]);
+    } catch (Exception $exSalesCancel) {}
+
+    $replyMsg = "👍 *PriceXP — Operação Cancelada*\n\n"
+              . "O rascunho / operação foi cancelado com sucesso. Nenhuma alteração foi realizada.\n\n"
+              . "💡 Quando quiser registrar algo novo, é só enviar a mensagem!";
+    
+    sendWhatsAppReply($cleanPhone, $replyMsg);
+    exit;
+}
+
+// ------------------------------------------------------------------
 // --- FLUXO COMERCIAL ISOLADO (CAPTAÇÃO DE INTERESSADOS / LEADS) ---
 // ------------------------------------------------------------------
 
