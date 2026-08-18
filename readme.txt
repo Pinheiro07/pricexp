@@ -2,6 +2,16 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[18/08/2026 - 17:55]
+- Suporte a Lançamento de Compras Parceladas no WhatsApp (`api/whatsapp_webhook.php`):
+  * Implementado o motor `parseInstallments` para detecção de compras parceladas em linguagem natural (ex: "parcelado em 6x", "6x de 200", "6 parcelas", "6 vezes").
+  * Implementada a geração automática em lote de todas as N parcelas mensais futuras no painel PriceXP, com ajuste automático de centavos e numeração sequencial (1/6, 2/6... 6/6).
+  * Limpeza inteligente de termos de parcelamento na descrição e definição automática da forma de pagamento como "Crédito".
+- Eliminação da Barra de Rolagem Duplicada na Landing Page (`landing.css`, `index.html`, `landing.html`):
+  * Removido `overflow-x: hidden` da tag `body` para evitar a geração de barra de rolagem secundária no Chrome/Windows, mantendo uma única barra de rolagem limpa e elegante.
+- Prevenção de Duplicatas e Seleção do Número no Webhook (`api/whatsapp_webhook.php`):
+  * Removidos falsos positivos com o número do próprio bot no extrator de telefones e adicionada deduplicação por Message ID.
+
 [15/08/2026 - 18:00]
 - Suporte a `remoteJidAlt` (Evolution API v2 LID Mode) (`api/whatsapp_webhook.php`):
   * Adicionada extração do campo `remoteJidAlt` no mapeamento de telefones receptores, garantindo a extração do número real de telefone quando a Evolution API v2 utiliza o modo de desempenhamento LID (`@lid`), resolvendo o descarte indevido por "telefone ausente".
