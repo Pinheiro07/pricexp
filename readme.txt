@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[18/08/2026 - 20:27]
+- Exclusão Definitiva de Rascunhos Pendentes Antigos ao Receber Mensagens sem Valor (`api/whatsapp_webhook.php`):
+  * Corrigida a falha onde um rascunho financeiro pendente antigo no banco sequestrava novas mensagens casuais sem valor numérico.
+  * Sempre que uma nova mensagem sem valor numérico, banco ou forma de pagamento for enviada, o sistema apaga automaticamente qualquer rascunho pendente anterior em `whatsapp_pending_sessions`.
+  * Impede que o robô insista em perguntas de lançamentos antigos ao receber cumprimentos ou diálogos humanos ("Boa noite Lucas", "Como posso ajudar?").
+
 [18/08/2026 - 20:24]
 - Blindagem Absoluta contra Interferência do Bot em Conversas Humanas (`api/whatsapp_webhook.php`):
   * Extração universal e estrita de `$isFromMe` aceitando booleanos, strings (`"true"`, `"1"`) e inteiros em todas as estruturas da Evolution API v2/Baileys/Meta.

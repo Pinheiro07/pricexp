@@ -2053,8 +2053,16 @@ if ($type === 'despesa' && empty($payment_method)) {
 }
 
 if (!empty($missing)) {
-    // 1. Tratamento amigável de saudações casuais (ex: "boa noite", "bom dia", "olá", "oi") quando não há valor
-    if ($amount <= 0 && empty($pendingId)) {
+    // Se a mensagem enviada NÃO possui valor numérico ($newAmount <= 0) e NENHUM banco/método foi informado:
+    if ($newAmount <= 0 && empty($newBank) && empty($newMethod)) {
+        // Se havia um rascunho antigo pendente, limpa ele para não prender conversas futuras
+        if (!empty($pendingId)) {
+            try {
+                $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE id = ?")->execute([$pendingId]);
+            } catch (Exception $exClr) {}
+        }
+
+        // 1. Tratamento amigável de saudações casuais (ex: "boa noite", "bom dia", "olá", "oi")
         if (preg_match('/^\s*(boa\s+noite|bom\s+dia|boa\s+tarde|ol[aá]|oi|oie|opa|tudo\s+bem|como\s+vai)\b/iu', trim($rawText))) {
             $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\n"
                       . "Olá! 👋 Como posso te ajudar?\n\n"
@@ -2067,7 +2075,7 @@ if (!empty($missing)) {
             exit;
         }
 
-        // 2. Se não tem valor nem verbo de ação explícito (ex: "Boa noite Lucas"), NÃO cria rascunho nem pede banco!
+        // 2. Se a mensagem não possui verbo de ação explícito (gastei, paguei), responde com orientação limpa e sai
         $hasActionVerb = preg_match('/(gastei|paguei|comprei|recebi|ganhei|custou|saiu)/i', $rawText);
         if (!$hasActionVerb) {
             $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\n"
