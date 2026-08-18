@@ -2,6 +2,13 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[18/08/2026 - 20:24]
+- Blindagem Absoluta contra Interferência do Bot em Conversas Humanas (`api/whatsapp_webhook.php`):
+  * Extração universal e estrita de `$isFromMe` aceitando booleanos, strings (`"true"`, `"1"`) e inteiros em todas as estruturas da Evolution API v2/Baileys/Meta.
+  * O bot agora ignora 100% de qualquer mensagem enviada pelo atendente humano/proprietário do WhatsApp que não possua um valor numérico financeiro explícito ou comando.
+  * Impedida a criação automática de rascunhos financeiros em `whatsapp_pending_sessions` para mensagens sem valor numérico ou verbo de ação (ex: "Boa noite Lucas", "Como posso ajudar?"), permitindo diálogos normais entre cliente e atendente sem interrupção automática do bot.
+  * Expiração automática de rascunhos antigos (> 10 minutos).
+
 [18/08/2026 - 19:07]
 - Cancelamento Global e Universal de Rascunhos Pendentes (`api/whatsapp_webhook.php`):
   * Implementado interceptador global para comandos de cancelamento (`cancelar`, `sair`, `parar`, `desistir`, `limpar`, `voltar`).

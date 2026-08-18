@@ -246,38 +246,19 @@ foreach ($possibleTexts as $t) {
     }
 }
 
-// Ignora mensagens de status/sistema sem texto. Permite testes enviados para o próprio número.
-$fromMe = $data['data']['key']['fromMe'] ?? $data['key']['fromMe'] ?? $data['fromMe'] ?? false;
-if ($fromMe === true && empty($rawText)) {
-    echo json_encode(['success' => true, 'message' => 'Ignorando mensagem própria vazia']);
-    exit;
-}
+// Extração robusta do campo fromMe da Evolution API / Baileys / Meta Webhook
+$rawFromMe = $data['data']['key']['fromMe']
+          ?? $data['key']['fromMe']
+          ?? $data['fromMe']
+          ?? $data['data']['fromMe']
+          ?? $data['data']['message']['key']['fromMe']
+          ?? $data['message']['key']['fromMe']
+          ?? false;
 
-// Verifica se é uma mensagem de mídia (Imagem, Documento, etc.)
-if (!empty($data['data']['message']['imageMessage']) || !empty($data['message']['imageMessage']) || !empty($data['entry'][0]['changes'][0]['value']['messages'][0]['image']) || (!empty($data['mediaType']) && $data['mediaType'] === 'image')) {
-    $isMediaMessage = true;
-}
-
-$cleanPhone = preg_replace('/\D/', '', $senderPhone);
-$remoteJid  = $data['remoteJid'] ?? $senderPhone;
-
-if (empty($senderPhone)) {
-    echo json_encode(['success' => false, 'error' => 'Payload inválido: telefone ausente']);
-    exit;
-}
-
-if (empty($rawText)) {
-    if ($isMediaMessage) {
-        $replyMsg = "📸 *PriceXP — Foto Recebida!*\n\nRecebi a sua imagem! Por favor, responda a esta foto informando o *valor, banco e descrição* para eu registrar (ex: *92.70 Mercado Pago crédito*).";
-        echo json_encode(['success' => true, 'reply' => $replyMsg]);
-        exit;
-    }
-    echo json_encode(['success' => false, 'error' => 'Payload inválido: texto ausente']);
-    exit;
-}
+$isFromMe = ($rawFromMe === true || $rawFromMe === 1 || $rawFromMe === '1' || strtolower((string)$rawFromMe) === 'true');
 
 // Ignora mensagens enviadas pelo próprio robô / atendente humano no WhatsApp sem valor nem comando
-if ($fromMe === true) {
+if ($isFromMe) {
     $checkAmt = parseAmount($rawText);
     $isCmd = preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|extrato|balanço|balanco|relatório|relatorio|semanal|semana|mensal|mês|mes|anual|ano|hoje|ontem|diário|diario|cancelar|ajuda)/i', $rawText);
     if ($checkAmt <= 0 && !$isCmd) {
@@ -2012,11 +1993,23 @@ if (count($batchItems) >= 2) {
 }
 
 // ------------------------------------------------------------------
+// ------------------------------------------------------------------
 // --- BUSCA SESSÃO PENDENTE DO USUÁRIO (RASCUNHOS APENAS) ---
 // ------------------------------------------------------------------
 $stmtPending = $pdo->prepare("SELECT * FROM whatsapp_pending_sessions WHERE user_id = ? AND type NOT IN ('last_created_tx', 'last_created_batch', 'waiting_batch_edit_selection', 'edit_mode') ORDER BY id DESC LIMIT 1");
 $stmtPending->execute([$user_id]);
 $pending = $stmtPending->fetch();
+
+// Expiração automática de rascunhos antigos (> 10 minutos)
+if ($pending) {
+    $pendingTime = strtotime($pending['created_at'] ?? 'now');
+    if ($pendingTime > 0 && (time() - $pendingTime > 600)) {
+        try {
+            $pdo->prepare("DELETE FROM whatsapp_pending_sessions WHERE id = ?")->execute([$pending['id']]);
+        } catch (Exception $exExp) {}
+        $pending = false;
+    }
+}
 
 $newType   = parseType($lowerText);
 $newAmount = parseAmount($lowerText);
@@ -2026,10 +2019,7 @@ $newDesc   = parseDescription($rawText, $newType ?: 'despesa');
 
 if ($pending) {
     $type = $newType ?: ($pending['type'] ?: 'despesa');
-    
-    // Se o usuário digitou um novo valor numérico (> 0), ele tem prioridade total sobre o rascunho anterior
     $amount = ($newAmount > 0) ? $newAmount : (float)$pending['amount'];
-
     $bank_name      = $newBank ?: $pending['bank_name'];
     $payment_method = $newMethod ?: $pending['payment_method'];
 
@@ -2063,7 +2053,7 @@ if ($type === 'despesa' && empty($payment_method)) {
 }
 
 if (!empty($missing)) {
-    // Tratamento amigável de saudações casuais (ex: "boa noite", "bom dia", "olá", "oi") quando não há rascunho ativo
+    // 1. Tratamento amigável de saudações casuais (ex: "boa noite", "bom dia", "olá", "oi") quando não há valor
     if ($amount <= 0 && empty($pendingId)) {
         if (preg_match('/^\s*(boa\s+noite|bom\s+dia|boa\s+tarde|ol[aá]|oi|oie|opa|tudo\s+bem|como\s+vai)\b/iu', trim($rawText))) {
             $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\n"
@@ -2073,6 +2063,17 @@ if (!empty($missing)) {
                       . "• _\"Recebi 1500 no Nubank freela\"_\n"
                       . "• _\"Parcelado em 6x 1300 no crédito Sicredi conserto moto\"_\n\n"
                       . "👉 Para contratar ou tirar dúvidas, envie *\"Quero contratar\"*! 🚀";
+            echo json_encode(['success' => true, 'reply' => $replyMsg]);
+            exit;
+        }
+
+        // 2. Se não tem valor nem verbo de ação explícito (ex: "Boa noite Lucas"), NÃO cria rascunho nem pede banco!
+        $hasActionVerb = preg_match('/(gastei|paguei|comprei|recebi|ganhei|custou|saiu)/i', $rawText);
+        if (!$hasActionVerb) {
+            $replyMsg = "💼 *PriceXP — Assistente Financeiro*\n\n"
+                      . "Não identifiquei um valor financeiro na sua mensagem.\n\n"
+                      . "💡 *Para registrar um lançamento*, informe o valor (ex: *50 no PIX padaria*).\n"
+                      . "👉 Para assinar ou falar com a equipe, envie *\"Quero contratar\"*! 🚀";
             echo json_encode(['success' => true, 'reply' => $replyMsg]);
             exit;
         }
