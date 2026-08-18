@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[18/08/2026 - 18:02]
+- Otimização Completa para Dispositivos Móveis e Smartphones (`landing.css`, `style.css`):
+  * Ajustadas as media queries de breakpoint (1024px, 768px, 480px, 380px) na landing page e no painel SaaS.
+  * Dimensionamento proporcional dos cartões/mockups de smartphone (frame Rodrypaladin) no hero para caberem perfeitamente em telas pequenas (320px–420px) sem estourar a largura.
+  * Empilhamento dinâmico dos botões de CTA no celular com áreas de toque de 48px+, garantindo navegação mobile fluida.
+
 [18/08/2026 - 17:55]
 - Suporte a Lançamento de Compras Parceladas no WhatsApp (`api/whatsapp_webhook.php`):
   * Implementado o motor `parseInstallments` para detecção de compras parceladas em linguagem natural (ex: "parcelado em 6x", "6x de 200", "6 parcelas", "6 vezes").

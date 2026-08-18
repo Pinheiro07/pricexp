@@ -1107,7 +1107,7 @@ section {
 
 @media (max-width: 768px) {
     section {
-        padding: 3.5rem 0;
+        padding: 3rem 1rem;
     }
 
     .nav-menu {
@@ -1115,50 +1115,91 @@ section {
     }
     
     .mobile-nav-toggle {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-glass);
+        color: var(--text-main);
+        cursor: pointer;
     }
     
     .hero-title {
-        font-size: 2rem;
+        font-size: clamp(1.8rem, 6vw, 2.5rem);
+        line-height: 1.25;
+    }
+
+    .hero-ctas {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.75rem;
+    }
+
+    .hero-ctas .btn {
+        width: 100%;
+        justify-content: center;
+        min-height: 48px;
     }
     
     .hero-demo-container {
-        grid-template-columns: 1fr;
-    }
-    
-    .steps-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .comp-grid {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        width: 100%;
     }
 
-    .features-grid {
-        grid-template-columns: 1fr;
+    .phone-rodry-card {
+        width: 275px !important;
+        height: 450px !important;
+        margin: 0 auto;
     }
-
+    
+    .steps-grid,
+    .comp-grid,
+    .features-grid,
     .pricing-grid {
         grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .pricing-card {
+        padding: 2rem 1.5rem;
     }
 
     .footer-wrapper {
         flex-direction: column;
+        gap: 1.5rem;
         text-align: center;
     }
 }
 
 @media (max-width: 480px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
     .hero-title {
-        font-size: 1.75rem;
+        font-size: 1.65rem;
+    }
+
+    .phone-rodry-card {
+        width: 255px !important;
+        height: 420px !important;
     }
     
     .btn-primary, .btn-secondary {
         width: 100%;
+        padding: 0.85rem 1.25rem;
     }
     
     .price-amount {
-        font-size: 2.25rem;
+        font-size: 2rem;
     }
 }
 
