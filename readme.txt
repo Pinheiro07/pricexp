@@ -2,6 +2,12 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[18/08/2026 - 18:50]
+- Fluxo Conversacional Passo a Passo para Captação de Leads Comercial (`api/whatsapp_webhook.php`):
+  * Reformulado o atendimento de "Quero contratar" para perguntas sequenciais amigáveis um passo por vez: 1º Nome e Sobrenome ➔ 2º Melhor E-mail ➔ 3º Plano Desejado (Standard ou Anual).
+  * Eliminada a solicitação manual do número de WhatsApp (o número do cliente já é capturado automaticamente do remetente da mensagem).
+  * Personalização do atendimento utilizando o primeiro nome do cliente a partir do 2º passo.
+
 [18/08/2026 - 18:02]
 - Otimização Completa para Dispositivos Móveis e Smartphones (`landing.css`, `style.css`):
   * Ajustadas as media queries de breakpoint (1024px, 768px, 480px, 380px) na landing page e no painel SaaS.

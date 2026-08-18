@@ -366,142 +366,129 @@ if ($isCommercialIntent || $salesSess) {
     $firstName = $salesSess['first_name'] ?? '';
     $lastName  = $salesSess['last_name'] ?? '';
     $email     = $salesSess['email'] ?? '';
-    $phoneVal  = $salesSess['whatsapp'] ?? '';
+    $phoneVal  = $cleanPhone;
     $plan      = $salesSess['plan'] ?? '';
 
-    // Extrair ou normalizar plano
-    if (empty($plan) || !in_array($plan, ['standard', 'annual'])) {
-        if (strpos($normText, 'anual') !== false) {
-            $plan = 'annual';
-        } elseif (strpos($normText, 'standard') !== false || strpos($normText, 'mensal') !== false) {
-            $plan = 'standard';
+    // Se NÃO é a primeira mensagem de intenção comercial ("Quero contratar"), extrai o dado respondido
+    if (!$isCommercialIntent) {
+        // 1. Tenta extrair E-mail se estiver pendente
+        if (empty($email) && preg_match('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $rawText, $mEmail)) {
+            if (filter_var($mEmail[0], FILTER_VALIDATE_EMAIL)) {
+                $email = $mEmail[0];
+            }
         }
-    }
 
-    // Processar linhas enviadas pelo usuário
-    $lines = explode("\n", $rawText);
-    foreach ($lines as $line) {
-        $lineClean = trim($line);
-        if (preg_match('/(?:nome)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
-            $val = trim($m[1]);
-            if (strpos(mb_strtolower($val, 'UTF-8'), 'whatsapp') === false) {
-                $parts = explode(' ', $val, 2);
+        // 2. Tenta extrair Plano se estiver pendente
+        if (empty($plan) || !in_array($plan, ['standard', 'annual'])) {
+            if (preg_match('/\b(2|anual|annual|ano)\b/i', $normText)) {
+                $plan = 'annual';
+            } elseif (preg_match('/\b(1|standard|estandar|mensal|mes)\b/i', $normText)) {
+                $plan = 'standard';
+            }
+        }
+
+        // 3. Se ainda não temos Nome, a mensagem do usuário é a resposta do Nome / Nome e Sobrenome
+        if (empty($firstName) && empty($email) && empty($plan)) {
+            $cleanedInputName = trim(preg_replace('/[^\p{L}\s]/u', '', $rawText));
+            if (!empty($cleanedInputName) && mb_strlen($cleanedInputName, 'UTF-8') >= 2) {
+                $parts = explode(' ', $cleanedInputName, 2);
                 $firstName = trim($parts[0]);
-                if (isset($parts[1]) && empty($lastName)) {
+                if (isset($parts[1]) && !empty($parts[1])) {
                     $lastName = trim($parts[1]);
                 }
             }
         }
-        if (preg_match('/(?:sobrenome)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
-            $lastName = trim($m[1]);
-        }
-        if (preg_match('/(?:email|e-mail|melhor email|melhor e-mail)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
-            $candidateEmail = trim($m[1]);
-            if (filter_var($candidateEmail, FILTER_VALIDATE_EMAIL)) {
-                $email = $candidateEmail;
+    } else {
+        // Se a mensagem inicial ("Quero contratar...") já veio com dados estruturados ou soltos:
+        $lines = explode("\n", $rawText);
+        foreach ($lines as $line) {
+            $lineClean = trim($line);
+            if (preg_match('/(?:nome)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
+                $parts = explode(' ', trim($m[1]), 2);
+                $firstName = trim($parts[0]);
+                if (isset($parts[1])) $lastName = trim($parts[1]);
+            }
+            if (preg_match('/(?:email|e-mail)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
+                if (filter_var(trim($m[1]), FILTER_VALIDATE_EMAIL)) $email = trim($m[1]);
+            }
+            if (preg_match('/(?:plano)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
+                $pVal = mb_strtolower(trim($m[1]), 'UTF-8');
+                if (strpos($pVal, 'anual') !== false) $plan = 'annual';
+                elseif (strpos($pVal, 'standard') !== false || strpos($pVal, 'mensal') !== false) $plan = 'standard';
             }
         }
-        if (preg_match('/(?:whatsapp|telefone|celular|número de whatsapp|numero de whatsapp)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
-            $candidatePhone = preg_replace('/\D/', '', $m[1]);
-            if (strlen($candidatePhone) >= 8) {
-                $phoneVal = $candidatePhone;
-            }
+        if (empty($email) && preg_match('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $rawText, $mEmail)) {
+            if (filter_var($mEmail[0], FILTER_VALIDATE_EMAIL)) $email = $mEmail[0];
         }
-        if (preg_match('/(?:plano|plano desejado)\s*[:=\-]\s*(.+)/i', $lineClean, $m)) {
-            $pVal = mb_strtolower(trim($m[1]), 'UTF-8');
-            if (strpos($pVal, 'anual') !== false) {
-                $plan = 'annual';
-            } elseif (strpos($pVal, 'standard') !== false || strpos($pVal, 'mensal') !== false) {
-                $plan = 'standard';
-            }
+        if (empty($plan)) {
+            if (strpos($normText, 'anual') !== false) $plan = 'annual';
+            elseif (strpos($normText, 'standard') !== false || strpos($normText, 'mensal') !== false) $plan = 'standard';
         }
     }
 
-    // Extrair e-mail solto se não encontrou rótulo
-    if (empty($email) && preg_match('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $rawText, $mEmail)) {
-        if (filter_var($mEmail[0], FILTER_VALIDATE_EMAIL)) {
-            $email = $mEmail[0];
-        }
+    if (empty($lastName) && !empty($firstName)) {
+        $lastName = $firstName;
     }
 
-    // Se respondeu apenas a um campo específico quando pendente
-    if (!$isCommercialIntent) {
-        if (empty($phoneVal) && preg_match('/^\s*\d{8,13}\s*$/', trim($rawText))) {
-            $phoneVal = preg_replace('/\D/', '', $rawText);
-        }
-        if (empty($plan) || !in_array($plan, ['standard', 'annual'])) {
-            if (strpos($normText, 'anual') !== false) {
-                $plan = 'annual';
-            } elseif (strpos($normText, 'standard') !== false || strpos($normText, 'mensal') !== false) {
-                $plan = 'standard';
-            }
-        }
-    }
+    $phoneVal = $cleanPhone;
 
-    // Fallback: se whatsapp não informado no texto, utiliza $cleanPhone
-    if (empty($phoneVal) && !empty($cleanPhone)) {
-        $phoneVal = $cleanPhone;
-    }
-
-    // Atualiza estado da sessão de vendas
+    // Atualiza estado da sessão de vendas no banco
     $stmtUpdSess = $pdo->prepare("UPDATE whatsapp_sales_sessions SET first_name = ?, last_name = ?, email = ?, whatsapp = ?, plan = ?, updated_at = NOW() WHERE phone = ?");
     $stmtUpdSess->execute([$firstName, $lastName, $email, $phoneVal, $plan, $cleanPhone]);
 
-    // Recalcular pendências
-    $missing = [];
-    if (empty($firstName)) $missing[] = '• Nome:';
-    if (empty($lastName)) $missing[] = '• Sobrenome:';
-    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) $missing[] = '• Melhor e-mail:';
-    if (empty($phoneVal) || strlen(preg_replace('/\D/', '', $phoneVal)) < 8) $missing[] = '• Número de WhatsApp:';
-    if (empty($plan) || !in_array($plan, ['standard', 'annual'])) $missing[] = '• Plano desejado: Standard ou Anual';
+    // Verificação de Conclusão do Cadastro do Lead
+    $hasName  = !empty($firstName);
+    $hasEmail = (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL));
+    $hasPlan  = (!empty($plan) && in_array($plan, ['standard', 'annual']));
 
-    if (empty($missing)) {
-        // PREVENÇÃO DE DUPLICATAS: Verifica se já existe lead com o mesmo e-mail ou whatsapp em status aberto ('new' ou 'em_atendimento')
+    if ($hasName && $hasEmail && $hasPlan) {
+        // LEAD COMPLETO!
         $stmtCheckDup = $pdo->prepare("SELECT id FROM sales_leads WHERE (email = ? OR whatsapp = ?) AND status IN ('new', 'em_atendimento') LIMIT 1");
         $stmtCheckDup->execute([$email, $phoneVal]);
         $existingLead = $stmtCheckDup->fetch();
 
         if ($existingLead) {
-            // Atualiza os dados do lead existente
             $stmtUpdLead = $pdo->prepare("UPDATE sales_leads SET first_name = ?, last_name = ?, email = ?, whatsapp = ?, plan = ?, updated_at = NOW() WHERE id = ?");
             $stmtUpdLead->execute([$firstName, $lastName, $email, $phoneVal, $plan, $existingLead['id']]);
 
-            // Remove a sessão de vendas
             $pdo->prepare("DELETE FROM whatsapp_sales_sessions WHERE phone = ?")->execute([$cleanPhone]);
 
-            $replyMsg = "Já recebemos seus dados.\n\nNossa equipe já tem sua solicitação e vai continuar o atendimento por aqui.";
+            $replyMsg = "Perfeito, {$firstName}! 🎉\n\nJá atualizamos os seus dados. Nossa equipe comercial entrará em contato em instantes por aqui!";
             sendWhatsAppReply($cleanPhone, $replyMsg);
             exit;
         }
 
-        // NOVO LEAD: Insere registro em sales_leads
         $stmtInsLead = $pdo->prepare("INSERT INTO sales_leads (first_name, last_name, email, whatsapp, plan, status) VALUES (?, ?, ?, ?, ?, 'new')");
         $stmtInsLead->execute([$firstName, $lastName, $email, $phoneVal, $plan]);
 
-        // Remove a sessão de vendas
         $pdo->prepare("DELETE FROM whatsapp_sales_sessions WHERE phone = ?")->execute([$cleanPhone]);
 
-        $replyMsg = "Perfeito, {$firstName}!\n\n"
-                  . "Recebemos suas informações.\n\n"
-                  . "Aguarde só um momento que nossa equipe já vai te atender por aqui.";
+        $planLabel = ($plan === 'annual') ? 'Anual' : 'Standard';
+        $fullNameShow = trim($firstName . ($lastName !== $firstName ? " {$lastName}" : ""));
+
+        $replyMsg = "Perfeito, {$firstName}! 🎉\n\n"
+                  . "Recebemos suas informações com sucesso:\n"
+                  . "• *Nome:* {$fullNameShow}\n"
+                  . "• *E-mail:* {$email}\n"
+                  . "• *Plano desejado:* {$planLabel}\n\n"
+                  . "Aguarde só um instante que nossa equipe já vai te atender por aqui para finalizar sua assinatura! 🚀";
 
         sendWhatsAppReply($cleanPhone, $replyMsg);
         exit;
     } else {
-        // PENDENTE: Pede os campos faltantes
-        if (!empty($firstName) || !empty($email) || (!empty($plan) && in_array($plan, ['standard', 'annual']))) {
-            $replyMsg = "Perfeito" . (!empty($firstName) ? ", {$firstName}" : "") . ".\n\n"
-                      . "Só falta(m) a(s) seguinte(s) informação(ões):\n\n"
-                      . implode("\n", $missing);
-        } else {
+        // PERGUNTAS SEQUENCIAIS PASSO A PASSO
+        if (!$hasName) {
             $replyMsg = "Olá! 👋\n\n"
-                      . "Que bom que você quer conhecer o PriceXP.\n\n"
-                      . "Para continuarmos, me envie as informações abaixo em uma única mensagem:\n\n"
-                      . "Nome:\n"
-                      . "Sobrenome:\n"
-                      . "Melhor e-mail:\n"
-                      . "Número de WhatsApp:\n"
-                      . "Plano desejado: Standard ou Anual";
+                      . "Que bom que você quer conhecer o PriceXP! 🚀\n\n"
+                      . "Para começarmos o seu atendimento, qual é o seu *Nome e Sobrenome*?";
+        } elseif (!$hasEmail) {
+            $replyMsg = "Prazer, *{$firstName}*! 👋\n\n"
+                      . "Qual é o seu *melhor e-mail* para cadastro?";
+        } elseif (!$hasPlan) {
+            $replyMsg = "Perfeito, *{$firstName}*! ✉️\n\n"
+                      . "Qual *plano* você prefere contratar?\n\n"
+                      . "1️⃣ *Standard* (Mensal)\n"
+                      . "2️⃣ *Anual*";
         }
 
         sendWhatsAppReply($cleanPhone, $replyMsg);
