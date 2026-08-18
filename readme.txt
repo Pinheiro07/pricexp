@@ -2,6 +2,11 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[18/08/2026 - 20:32]
+- Correção de Falso Positivo de Relatório Anual ao Digitar "Plano" (`api/whatsapp_webhook.php`):
+  * Corrigida a expressão regular de relatórios para utilizar limites de palavra estritos (`\b(ano|anual)\b`), impedindo que a palavra "plano" disparasse um Relatório Financeiro Anual indevido.
+  * Adicionada detecção tolerante a erros de digitação para a intenção comercial (ex: "Quero contrar o plano standard", "contrata", "planos"), ativando corretamente o fluxo de captação de leads.
+
 [18/08/2026 - 20:29]
 - Silenciamento 100% Absoluto do Bot em Diálogos e Mensagens Sem Valor Financeiro (`api/whatsapp_webhook.php`):
   * Removido qualquer envio de mensagem de erro/orientação para textos casuais sem valor numérico ou verbo de ação.

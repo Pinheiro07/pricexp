@@ -260,7 +260,7 @@ $isFromMe = ($rawFromMe === true || $rawFromMe === 1 || $rawFromMe === '1' || st
 // Ignora mensagens enviadas pelo próprio robô / atendente humano no WhatsApp sem valor nem comando
 if ($isFromMe) {
     $checkAmt = parseAmount($rawText);
-    $isCmd = preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|extrato|balanço|balanco|relatório|relatorio|semanal|semana|mensal|mês|mes|anual|ano|hoje|ontem|diário|diario|cancelar|ajuda)/i', $rawText);
+    $isCmd = preg_match('/\b(resumo|saldo|financas|extrato|balanco|relatorio|semanal|semana|mensal|anual|hoje|ontem|diario|cancelar|ajuda)\b/i', $normText) || preg_match('/quanto\s+(gastei|recebi)/i', $normText);
     if ($checkAmt <= 0 && !$isCmd) {
         echo json_encode(['success' => true, 'message' => 'Ignorando mensagem propria enviada pelo atendente/bot']);
         exit;
@@ -336,25 +336,29 @@ $isNegativeIntent = (
     strpos($normText, 'nem pensar') !== false
 );
 
-$explicitCommercialIntents = [
-    'quero contratar',
-    'quero assinar',
-    'quero usar o pricexp',
-    'tenho interesse no pricexp',
-    'tenho interesse',
-    'quero o plano standard',
-    'quero o plano anual',
-    'quero plano standard',
-    'quero plano anual',
-    'contratar'
-];
-
 $isCommercialIntent = false;
 if (!$isNegativeIntent) {
-    foreach ($explicitCommercialIntents as $intent) {
-        if ($normText === $intent || strpos($normText, $intent) !== false) {
-            $isCommercialIntent = true;
-            break;
+    $commercialRegex = '/\b(contratar|contrar|contrata|assinar|assinatura|standard|anual|plano|planos|preço|preco|comprar)\b/i';
+    if (preg_match($commercialRegex, $normText)) {
+        $isCommercialIntent = true;
+    } else {
+        $explicitCommercialIntents = [
+            'quero contratar',
+            'quero assinar',
+            'quero usar o pricexp',
+            'tenho interesse no pricexp',
+            'tenho interesse',
+            'quero o plano standard',
+            'quero o plano anual',
+            'quero plano standard',
+            'quero plano anual',
+            'contratar'
+        ];
+        foreach ($explicitCommercialIntents as $intent) {
+            if ($normText === $intent || strpos($normText, $intent) !== false) {
+                $isCommercialIntent = true;
+                break;
+            }
         }
     }
 }
@@ -1187,27 +1191,27 @@ function inferCategoryStrict($description, $text, $type, $workspace_id = null, $
 // ------------------------------------------------------------------
 // --- COMANDO DE RELATÓRIO FINANCEIRO CORPORATIVO (DIÁRIO, ONTEM, SEMANAL, MENSAL, ANUAL) ---
 // ------------------------------------------------------------------
-if (preg_match('/(resumo|saldo|finanças|financas|quanto gastei|quanto recebi|extrato|balanço|balanco|relatório|relatorio|semanal|semana|mensal|mês|mes|anual|ano|hoje|ontem|diário|diario)/i', $lowerText)) {
+if (preg_match('/\b(resumo|saldo|financas|extrato|balanco|relatorio)\b/i', $normText) || preg_match('/quanto\s+(gastei|recebi)/i', $normText)) {
     
     $periodTitle = "MENSAL";
     $periodLabel = "Mês (" . date('m/Y') . ")";
 
-    if (preg_match('/(hoje|diário|diario)/i', $lowerText)) {
+    if (preg_match('/\b(hoje|diario)\b/i', $normText)) {
         $periodTitle = "DIÁRIO";
         $firstDay = date('Y-m-d');
         $lastDay  = date('Y-m-d');
         $periodLabel = "Hoje (" . date('d/m/Y') . ")";
-    } elseif (preg_match('/(ontem)/i', $lowerText)) {
+    } elseif (preg_match('/\b(ontem)\b/i', $normText)) {
         $periodTitle = "DE ONTEM";
         $firstDay = date('Y-m-d', strtotime('-1 day'));
         $lastDay  = date('Y-m-d', strtotime('-1 day'));
         $periodLabel = "Ontem (" . date('d/m/Y', strtotime('-1 day')) . ")";
-    } elseif (preg_match('/(semanal|semana)/i', $lowerText)) {
+    } elseif (preg_match('/\b(semanal|semana)\b/i', $normText)) {
         $periodTitle = "SEMANAL";
         $firstDay = date('Y-m-d', strtotime('monday this week'));
         $lastDay  = date('Y-m-d', strtotime('sunday this week'));
         $periodLabel = "Semana (" . date('d/m', strtotime($firstDay)) . " a " . date('d/m', strtotime($lastDay)) . ")";
-    } elseif (preg_match('/(anual|ano)/i', $lowerText)) {
+    } elseif (preg_match('/\b(anual|ano)\b/i', $normText)) {
         $periodTitle = "ANUAL";
         $firstDay = date('Y-01-01');
         $lastDay  = date('Y-12-31');
