@@ -1,4 +1,9 @@
 <?php
+header('HTTP/1.1 403 Forbidden');
+header('Content-Type: application/json');
+echo json_encode(['error' => 'Acesso negado. Atualização remota via web desativada por segurança.']);
+exit;
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 

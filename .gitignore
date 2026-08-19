@@ -26,3 +26,11 @@ uploads/*
 test.php
 api/test_smtp.php
 api/test_db.php
+
+# Graphify knowledge graph output
+graphify-out/
+
+*.bak  
+*.sql  
+init.sql  
+docker-compose.yml 

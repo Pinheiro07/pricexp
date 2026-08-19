@@ -2,6 +2,14 @@
                PRICE XP - HISTÓRICO COMPLETO DE ALTERAÇÕES (README)
 ====================================================================
 
+[19/08/2026 - 15:10]
+- Fase 1 de Contenção Emergencial de Segurança (`api/update.php`, `api/config.php`, `.gitignore`):
+  * Mapeados e salvos em backup privado fora do webroot todos os arquivos de backup `.bak`.
+  * Removidos do webroot os arquivos `.bak` que retornavam HTTP 200 OK.
+  * Desativado o acesso web ao script de atualização remota `api/update.php` retornando HTTP 403 Forbidden.
+  * Atualizado o `api/config.php` para suporte a variáveis de ambiente (`getenv()`) permitindo injeção de segredos SMTP e MySQL.
+  * Atualizado o `.gitignore` para ignorar extensões `.bak`, `.sql`, `init.sql`, `docker-compose.yml`, `backups/`, `logs/`.
+
 [18/08/2026 - 20:32]
 - Correção de Falso Positivo de Relatório Anual ao Digitar "Plano" (`api/whatsapp_webhook.php`):
   * Corrigida a expressão regular de relatórios para utilizar limites de palavra estritos (`\b(ano|anual)\b`), impedindo que a palavra "plano" disparasse um Relatório Financeiro Anual indevido.
